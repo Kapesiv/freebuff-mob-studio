@@ -10,6 +10,7 @@ import { applyBoxTextureUVs, computeFaceRects } from './utils/boxuv.js';
 import { PALETTE_CATEGORIES, loadCustomColors, saveCustomColors, normalizeHex } from './utils/palette.js';
 import { zipFiles } from './utils/zip.js';
 import { buildResourcePack, previewPackFiles } from './utils/pack-export.js';
+import { renderPackIcon } from './utils/pack-icon.js';
 import { initUVEditor } from './uv-editor.js';
 import { initAnimation } from './animation.js';
 import { LIBRARY_MOBS, prepareMob } from './mobs/library.js';
@@ -2227,6 +2228,7 @@ function setupFileIO() {
         const ns = slugify(packNsInput.value || id) || id;
         ensureTexture();
         const animations = currentAnimations(); // palauttaa null jos ei animaatioita
+        const packIcon = renderPackIcon(state.model, state.textureCanvas, 256);
         const { files } = buildResourcePack(state.model, {
             formats,
             namespace: ns,
@@ -2235,6 +2237,7 @@ function setupFileIO() {
             textureCanvas: state.textureCanvas,
             emissiveDataURL: state.emissiveDataURL || null,
             eggColors: averageEggColors(state.textureCanvas),
+            packIcon,
             behavior: {
                 type: currentPackBehavior(),
                 health: parseInt(packHealthInput.value) || 20,

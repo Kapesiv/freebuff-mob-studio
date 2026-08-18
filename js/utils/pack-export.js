@@ -360,6 +360,7 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
     if (formats.includes('bedrock')) {
         out.push(
             'resource_pack/manifest.json',
+            'resource_pack/pack_icon.png',
             `resource_pack/entity/${id}.entity.json`,
             `resource_pack/models/entity/${id}.geo.json`,
             `resource_pack/textures/entity/${id}.png`,
@@ -369,12 +370,13 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
         if (hasAnims) out.push(`resource_pack/animations/${id}.animation.json`);
         out.push(
             'behavior_pack/manifest.json',
+            'behavior_pack/pack_icon.png',
             `behavior_pack/entities/${id}.json`,
             `behavior_pack/spawn_rules/${id}.json`,
         );
     }
     if (formats.includes('java')) {
-        out.push('pack.mcmeta', `assets/${ns}/geo/${id}.geo.json`, `assets/${ns}/textures/entity/${id}.png`);
+        out.push('pack.mcmeta', 'pack.png', `assets/${ns}/geo/${id}.geo.json`, `assets/${ns}/textures/entity/${id}.png`);
         if (hasGlow) out.push(`assets/${ns}/textures/entity/${id}_glow.png`);
         if (hasAnims) out.push(`assets/${ns}/animations/${id}.animation.json`);
         out.push(
@@ -398,7 +400,8 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
  * @param opts.textureCanvas 2D-canvas (tai dataURL-merkkijono) tekstuurista
  * @param opts.emissiveDataURL   glow-kerroksen PNG dataURL-merkkijono (tai null)
  * @param opts.eggColors    { base, overlay } spawn-eggin värit (tai null → oletus)
- * @param opts.behavior     { type: 'passive'|'neutral'|'hostile', health, damage }
+ * @param opts.packIcon     ikonikuvan canvas tai dataURL (pack_icon.png / pack.png)
+ * @param opts.behavior     { type: 'passive'|'neutral'|'hostile', health, damage, speed, jump, flying }
  * @returns { files: [{path, data}], filePaths: [string] }
  */
 export function buildResourcePack(model, opts = {}) {
@@ -410,11 +413,13 @@ export function buildResourcePack(model, opts = {}) {
     const files = [];
     const png = pngBytesFromTexture(opts.textureCanvas);
     const glow = opts.emissiveDataURL ? pngBytesFromTexture(opts.emissiveDataURL) : null;
+    const icon = opts.packIcon ? pngBytesFromTexture(opts.packIcon) : null;
     const hasAnims = opts.animations && Object.keys(opts.animations).length > 0;
 
     if (formats.includes('bedrock')) {
         const rpModuleUuid = uuid();
         files.push({ path: 'resource_pack/manifest.json', data: jsonBytes(bedrockManifest(name, rpModuleUuid)) });
+        if (icon) files.push({ path: 'resource_pack/pack_icon.png', data: icon });
         files.push({ path: `resource_pack/entity/${id}.entity.json`, data: jsonBytes(bedrockEntityFile(model, id, ns, opts.animations, opts.eggColors)) });
         files.push({ path: `resource_pack/models/entity/${id}.geo.json`, data: jsonBytes(exportBedrockGeometry(model)) });
         files.push({ path: `resource_pack/render_controllers/${id}.render_controllers.json`, data: jsonBytes(bedrockRenderControllers()) });
@@ -423,12 +428,14 @@ export function buildResourcePack(model, opts = {}) {
         if (hasAnims) files.push({ path: `resource_pack/animations/${id}.animation.json`, data: jsonBytes(exportJavaAnimations(model, opts.animations)) });
         // Behavior pack — mobi spawnaa pelissä
         files.push({ path: 'behavior_pack/manifest.json', data: jsonBytes(behaviorManifest(name, rpModuleUuid)) });
+        if (icon) files.push({ path: 'behavior_pack/pack_icon.png', data: icon });
         files.push({ path: `behavior_pack/entities/${id}.json`, data: jsonBytes(bedrockEntityBehavior(model, id, ns, opts.behavior)) });
         files.push({ path: `behavior_pack/spawn_rules/${id}.json`, data: jsonBytes(bedrockSpawnRules(id, ns)) });
     }
 
     if (formats.includes('java')) {
         files.push({ path: 'pack.mcmeta', data: jsonBytes(packMcmeta(name)) });
+        if (icon) files.push({ path: 'pack.png', data: icon });
         files.push({ path: `assets/${ns}/geo/${id}.geo.json`, data: jsonBytes(exportBedrockGeometry(model)) });
         if (png) files.push({ path: `assets/${ns}/textures/entity/${id}.png`, data: png });
         if (glow) files.push({ path: `assets/${ns}/textures/entity/${id}_glow.png`, data: glow });
