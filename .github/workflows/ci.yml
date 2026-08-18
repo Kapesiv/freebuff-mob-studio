@@ -1,0 +1,38 @@
+name: CI — build & verifiers
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify UV layout
+        run: npm run verify:uv
+
+      - name: Verify render correctness
+        run: npm run verify:render
+
+      - name: Build self-contained preview
+        run: npm run build:preview
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview
+          path: preview.html
+          if-no-files-found: error
