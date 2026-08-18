@@ -1153,6 +1153,11 @@ body {
     border-radius: 6px;
     background: radial-gradient(circle at 50% 35%, #2b313a, #16191e 75%);
 }
+#pack-icon-canvas {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #16191e;
+}
 .pack-egg-info {
     display: flex;
     flex-direction: column;

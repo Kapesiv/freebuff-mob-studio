@@ -2158,6 +2158,7 @@ function setupFileIO() {
         packFlyingInput.checked = !!po.flying;
         packDialog.style.display = 'flex';
         drawEggPreview();
+        drawPackIconPreview();
         updatePackFileList();
     }
     function closePackDialog() { packDialog.style.display = 'none'; }
@@ -2389,6 +2390,17 @@ function drawEggPreview() {
     document.getElementById('pack-egg-overlay-swatch').style.background = colors.overlay;
     document.getElementById('pack-egg-base').textContent = colors.base;
     document.getElementById('pack-egg-overlay').textContent = colors.overlay;
+}
+
+/** Piirtää pakki-ikonin esikatselun 📦 Pack -dialogiin. */
+function drawPackIconPreview() {
+    const canvas = document.getElementById('pack-icon-canvas');
+    if (!canvas) return;
+    ensureTexture();
+    const icon = renderPackIcon(state.model, state.textureCanvas, 128);
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(icon, 0, 0);
 }
 
 /** Spawn-eggin värit tekstuurin keskiarvosta (4×4 alasample). */
