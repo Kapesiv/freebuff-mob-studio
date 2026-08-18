@@ -2089,6 +2089,15 @@ function setupFileIO() {
     const packFmtBtns = document.querySelectorAll('#pack-formats button');
     const packNsInput = document.getElementById('pack-namespace');
     const packFileList = document.getElementById('pack-file-list');
+    const packBehaviorBtns = document.querySelectorAll('#pack-behavior button');
+    const packHealthInput = document.getElementById('pack-health');
+    const packDamageInput = document.getElementById('pack-damage');
+    const BEHAVIOR_DEFAULTS = { passive: { health: 10, damage: 0 }, neutral: { health: 20, damage: 4 }, hostile: { health: 30, damage: 6 } };
+
+    function currentPackBehavior() {
+        const active = document.querySelector('#pack-behavior button.active');
+        return active ? active.dataset.behavior : 'neutral';
+    }
 
     function currentPackFormats() {
         const active = document.querySelector('#pack-formats button.active');
@@ -2131,6 +2140,23 @@ function setupFileIO() {
             updatePackFileList();
         });
     });
+    packBehaviorBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            packBehaviorBtns.forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            const def = BEHAVIOR_DEFAULTS[btn.dataset.behavior] || BEHAVIOR_DEFAULTS.neutral;
+            packHealthInput.value = def.health;
+            packDamageInput.value = def.damage;
+            document.getElementById('pack-health-val').textContent = def.health;
+            document.getElementById('pack-damage-val').textContent = def.damage;
+        });
+    });
+    packHealthInput.addEventListener('input', () => {
+        document.getElementById('pack-health-val').textContent = packHealthInput.value;
+    });
+    packDamageInput.addEventListener('input', () => {
+        document.getElementById('pack-damage-val').textContent = packDamageInput.value;
+    });
     packNsInput.addEventListener('input', updatePackFileList);
 
     document.getElementById('pack-download').addEventListener('click', () => {
@@ -2147,6 +2173,11 @@ function setupFileIO() {
             textureCanvas: state.textureCanvas,
             emissiveDataURL: state.emissiveDataURL || null,
             eggColors: averageEggColors(state.textureCanvas),
+            behavior: {
+                type: currentPackBehavior(),
+                health: parseInt(packHealthInput.value) || 20,
+                damage: parseInt(packDamageInput.value) || 4,
+            },
         });
         const zip = zipFiles(files);
         const blob = new Blob([zip], { type: 'application/zip' });

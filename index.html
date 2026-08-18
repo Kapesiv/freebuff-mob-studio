@@ -299,6 +299,18 @@
                 <input type="text" id="pack-namespace" value="freebuff" spellcheck="false" placeholder="freebuff">
                 <span class="modal-field-note" id="pack-note">Tiedostot näkyvät latauksessa</span>
             </div>
+            <div class="modal-field">
+                <label>Käytös (🎮 Bedrock)</label>
+                <div id="pack-behavior" class="seg">
+                    <button type="button" data-behavior="passive">🐑 Lempeä</button>
+                    <button type="button" data-behavior="neutral" class="active">🐺 Neutraali</button>
+                    <button type="button" data-behavior="hostile">😈 Vihamielinen</button>
+                </div>
+            </div>
+            <div class="modal-field pack-sliders">
+                <label class="pack-slider-row">HP <input type="range" id="pack-health" min="4" max="200" value="20"><span id="pack-health-val">20</span></label>
+                <label class="pack-slider-row">Vahinko <input type="range" id="pack-damage" min="0" max="40" value="4"><span id="pack-damage-val">4</span></label>
+            </div>
             <div class="modal-field pack-egg-row">
                 <canvas id="pack-egg-canvas" width="48" height="60" title="Spawn-eggin värit tekstuurin keskiarvosta"></canvas>
                 <div class="pack-egg-info">

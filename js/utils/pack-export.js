@@ -157,9 +157,62 @@ function bedrockEntityFile(model, id, ns, animations, eggColors) {
     };
 }
 
-/** BP:n behavior-entity — peruskomponentit, joilla mobi toimii ja taistelee. */
-function bedrockEntityBehavior(model, id, ns) {
+/**
+ * BP:n behavior-entity — peruskomponentit, joilla mobi toimii ja taistelee.
+ * @param opts { type: 'passive'|'neutral'|'hostile', health: number, damage: number }
+ */
+function bedrockEntityBehavior(model, id, ns, opts = {}) {
     const box = modelBounds(model);
+    const type = opts.type || 'neutral';
+    const health = Math.max(1, Math.round(opts.health ?? 20));
+    const damage = Math.max(0, Math.round(opts.damage ?? 4));
+
+    const components = {
+        'minecraft:type_family': { family: ['freebuff', 'mob'] },
+        'minecraft:health': { value: health, max: health },
+        'minecraft:movement': { value: 0.25 },
+        'minecraft:movement.basic': {},
+        'minecraft:jump.static': {},
+        'minecraft:collision_box': { width: box.width, height: box.height },
+        'minecraft:physics': {},
+        'minecraft:pushable': { is_pushable: true, is_pushable_by_piston: true },
+        'minecraft:nameable': {},
+        'minecraft:despawn': {
+            despawn_from_distance: { min_distance: 32, max_distance: 128 },
+        },
+        'minecraft:behavior.float': { priority: 0 },
+        'minecraft:behavior.random_stroll': { priority: 4, speed_multiplier: 1.0 },
+        'minecraft:behavior.look_at_player': { priority: 5, probability: 0.02 },
+        'minecraft:damage_sensor': {
+            triggers: [{ cause: 'fall', deals_damage: false }],
+        },
+        'minecraft:scale': { value: 1.0 },
+    };
+
+    if (type === 'passive') {
+        // Lempeä: pakenee kun sattuu, ei hyökkää
+        components['minecraft:behavior.panic'] = { priority: 1, speed_multiplier: 1.25 };
+    } else {
+        components['minecraft:behavior.hurt_by_target'] = { priority: 2 };
+        if (type === 'hostile') {
+            // Vihamielinen: hyökkää pelaajan nähdessään
+            components['minecraft:behavior.nearest_attackable_target'] = {
+                priority: 1,
+                entity_types: [{
+                    filters: { test: 'is_family', subject: 'other', value: 'player' },
+                    max_dist: 16,
+                    must_see: true,
+                }],
+            };
+            components['minecraft:behavior.melee_attack'] = { priority: 3, speed_multiplier: 1.25 };
+        } else {
+            components['minecraft:behavior.melee_attack'] = { priority: 3, speed_multiplier: 1.0 };
+        }
+        if (damage > 0) {
+            components['minecraft:attack'] = { damage };
+        }
+    }
+
     return {
         format_version: '1.16.0',
         'minecraft:entity': {
@@ -169,30 +222,7 @@ function bedrockEntityBehavior(model, id, ns) {
                 is_summonable: true,
                 is_experimental: false,
             },
-            components: {
-                'minecraft:type_family': { family: ['freebuff', 'mob'] },
-                'minecraft:health': { value: 20, max: 20 },
-                'minecraft:movement': { value: 0.25 },
-                'minecraft:movement.basic': {},
-                'minecraft:jump.static': {},
-                'minecraft:collision_box': { width: box.width, height: box.height },
-                'minecraft:physics': {},
-                'minecraft:pushable': { is_pushable: true, is_pushable_by_piston: true },
-                'minecraft:nameable': {},
-                'minecraft:despawn': {
-                    despawn_from_distance: { min_distance: 32, max_distance: 128 },
-                },
-                'minecraft:behavior.float': { priority: 0 },
-                'minecraft:behavior.random_stroll': { priority: 4, speed_multiplier: 1.0 },
-                'minecraft:behavior.look_at_player': { priority: 5, probability: 0.02 },
-                'minecraft:behavior.hurt_by_target': { priority: 2 },
-                'minecraft:behavior.melee_attack': { priority: 3, speed_multiplier: 1.0 },
-                'minecraft:attack': { damage: 4 },
-                'minecraft:damage_sensor': {
-                    triggers: [{ cause: 'fall', deals_damage: false }],
-                },
-                'minecraft:scale': { value: 1.0 },
-            },
+            components,
         },
     };
 }
@@ -274,6 +304,7 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
  * @param opts.textureCanvas 2D-canvas (tai dataURL-merkkijono) tekstuurista
  * @param opts.emissiveDataURL   glow-kerroksen PNG dataURL-merkkijono (tai null)
  * @param opts.eggColors    { base, overlay } spawn-eggin värit (tai null → oletus)
+ * @param opts.behavior     { type: 'passive'|'neutral'|'hostile', health, damage }
  * @returns { files: [{path, data}], filePaths: [string] }
  */
 export function buildResourcePack(model, opts = {}) {
@@ -298,7 +329,7 @@ export function buildResourcePack(model, opts = {}) {
         if (hasAnims) files.push({ path: `resource_pack/animations/${id}.animation.json`, data: jsonBytes(exportJavaAnimations(model, opts.animations)) });
         // Behavior pack — mobi spawnaa pelissä
         files.push({ path: 'behavior_pack/manifest.json', data: jsonBytes(behaviorManifest(name, rpModuleUuid)) });
-        files.push({ path: `behavior_pack/entities/${id}.json`, data: jsonBytes(bedrockEntityBehavior(model, id, ns)) });
+        files.push({ path: `behavior_pack/entities/${id}.json`, data: jsonBytes(bedrockEntityBehavior(model, id, ns, opts.behavior)) });
         files.push({ path: `behavior_pack/spawn_rules/${id}.json`, data: jsonBytes(bedrockSpawnRules(id, ns)) });
     }
 
