@@ -52,6 +52,7 @@ const state = {
     gamePreview: false,        // pelin näköinen esikatselu (Minecraft-valaistus + varjot)
     gamePreviewDefault: true,  // kytke Game Preview automaattisesti mobin latauksen jälkeen
     gamePreviewNight: false,   // yötila: tumma taivas, kuunvalo, glow-boost
+    savedPreviewOptions: null, // projektin/autosaven preview-asetukset palautettavaksi
     _editorClearColor: 0x343a46, // editorin taustaväri talteen Game Preview -tilaa varten
     packOptions: { ...DEFAULT_PACK_OPTIONS }, // 📦 Pack -dialogin valinnat
     modelVersion: 0
@@ -72,6 +73,7 @@ if (saved && saved.model) {
     state.savedProjectAnimations = saved.projectAnimations || null;
     state.savedCurrentAnimName = saved.currentAnimName || null;
     state.packOptions = saved.packOptions || { ...DEFAULT_PACK_OPTIONS };
+    state.savedPreviewOptions = saved.previewOptions || null;
 } else {
     // Oletus: Deep Voidin ikoninen Stalker (sama hahmo kuin modin
     // kuvituksessa: pitkä tumma luurankohumanoidi, valkoiset hehkuvat
@@ -281,6 +283,45 @@ function setGamePreview(on) {
 function setGamePreviewNight(on) {
     state.gamePreviewNight = on;
     applyGamePreviewLights();
+}
+
+/** Kerää nykyiset preview-asetukset projektitiedostoon/autosaveen. */
+function getPreviewOptions() {
+    const bgInput = document.getElementById('bg-color');
+    return {
+        gamePreviewDefault: !!state.gamePreviewDefault,
+        gamePreviewNight: !!state.gamePreviewNight,
+        bgColor: bgInput ? bgInput.value : null
+    };
+}
+
+/**
+ * Palauta preview-asetukset projektista/autosavesta: päivä/yö, taustaväri
+ * ja Game Preview -oletus. Kutsutaan mobin latauksen jälkeen.
+ */
+function applyPreviewOptions(opts) {
+    if (!opts) return;
+    const bgInput = document.getElementById('bg-color');
+    if (bgInput && opts.bgColor) {
+        bgInput.value = opts.bgColor;
+        state._editorClearColor = parseInt(opts.bgColor.replace('#', ''), 16);
+        if (renderer && !state.gamePreview) renderer.setClearColor(bgInput.value);
+    }
+    state.gamePreviewDefault = opts.gamePreviewDefault !== false;
+    state.gamePreviewNight = !!opts.gamePreviewNight;
+    const nightChk = document.getElementById('chk-game-night');
+    if (nightChk) nightChk.checked = state.gamePreviewNight;
+    if (state.gamePreviewDefault) {
+        applyGamePreviewDefault();
+        if (state.gamePreviewNight) {
+            setGamePreviewNight(true);
+            setStatus('🌙 Yötila päällä — kuunvalo, glow loistaa voimakkaammin');
+        }
+    } else {
+        const chk = document.getElementById('chk-game-preview');
+        if (chk) chk.checked = false;
+        setGamePreview(false);
+    }
 }
 
 /**
@@ -2148,7 +2189,8 @@ function scheduleAutosave() {
                 } : null,
                 projectAnimations: state.projectAnimations,
                 currentAnimName: state.currentAnimName,
-                packOptions: state.packOptions
+                packOptions: state.packOptions,
+                previewOptions: getPreviewOptions()
             }));
         } catch (e) {
             console.warn('Autosave failed:', e);
@@ -2313,7 +2355,8 @@ function setupFileIO() {
                 tracks: state.animation.tracks
             } : null,
             projectAnimations: state.projectAnimations,
-            packOptions: state.packOptions
+            packOptions: state.packOptions,
+            previewOptions: getPreviewOptions()
         };
         downloadJson(data, `${state.model.modelId.replace('geometry.', '')}.mobstudio.json`);
         setStatus('Project saved');
@@ -2348,6 +2391,8 @@ function setupFileIO() {
                     applyTextureDataURL();
                     deselectAll();
                     rebuildModel();
+                    // Preview-asetukset (päivä/yö, taustaväri) palautuvat
+                    applyPreviewOptions(data.previewOptions);
                     scheduleAutosave();
                     setStatus(`Opened: ${file.name}`);
                 } else {
@@ -3310,6 +3355,8 @@ if (saved && saved.model && state.savedEmissiveDataURL) {
 }
 if (state.textureDataURL) applyTextureDataURL();
 rebuildModel();
+// Palauta autosaven preview-asetukset (päivä/yö, taustaväri, Game Preview -oletus)
+if (saved && saved.previewOptions) applyPreviewOptions(saved.previewOptions);
 animate();
 
 if (!state.webgl) {
