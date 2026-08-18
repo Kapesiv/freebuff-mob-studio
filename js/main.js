@@ -11,6 +11,7 @@ import { PALETTE_CATEGORIES, loadCustomColors, saveCustomColors, normalizeHex } 
 import { zipFiles } from './utils/zip.js';
 import { buildResourcePack, previewPackFiles } from './utils/pack-export.js';
 import { renderPackIcon } from './utils/pack-icon.js';
+import { generateAutoAnimations as generateAutoAnimationsForModel } from './utils/auto-anim.js';
 import { initUVEditor } from './uv-editor.js';
 import { initAnimation } from './animation.js';
 import { LIBRARY_MOBS, prepareMob } from './mobs/library.js';
@@ -1391,6 +1392,37 @@ function setupLibrary() {
         loadAnimationData(state.projectAnimations[next]);
         setStatus(`Poistettu — nyt: ${next}`);
     });
+
+    // 🕺 Auto: Spore-tyylinen animaatiogenerointi luurangosta
+    document.getElementById('anim-auto').addEventListener('click', generateAutoAnimations);
+}
+
+/**
+ * 🕺 Generoi idle/walk/attack (ja fly/swim jos rakenne sen sallii)
+ * automaattisesti analysoimalla luurangon — jalojen geometria, kädet,
+ * siivet, häntä ja pää. Korvaa projektin animaatiot yhdellä klikkauksella.
+ */
+function generateAutoAnimations() {
+    saveCurrentAnimation();
+    const { animations, analysis } = generateAutoAnimationsForModel(state.model);
+    const names = Object.keys(animations);
+    if (!names.length) {
+        setStatus('⚠️ Ei luurankoa — lisää kuutioita ensin');
+        return;
+    }
+    state.projectAnimations = animations;
+    state.currentAnimName = names[0];
+    refreshAnimationSelect();
+    loadAnimationData(animations[names[0]]);
+    const parts = [];
+    if (analysis.body) parts.push('vartalo');
+    if (analysis.legs.length) parts.push(`${analysis.legs.length} jalkaa`);
+    if (analysis.arms.length) parts.push(`${analysis.arms.length} kättä`);
+    if (analysis.wings.length >= 2) parts.push('siivet');
+    if (analysis.tail) parts.push('häntä');
+    if (analysis.head) parts.push('pää');
+    setStatus(`🕺 Generoitu ${names.join(', ')} — luuranko: ${parts.join(', ')}. Muokkaa keyframejä tai vie paketissa.`);
+    scheduleAutosave();
 }
 
 /** Tallenna nykyisen timeline-editorin sisältö projektin animaatioon. */
