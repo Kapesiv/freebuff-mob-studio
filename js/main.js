@@ -50,6 +50,7 @@ const state = {
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
     symmetryEdit: false,       // symmetria-editointi: muokkaa toista puolta, toinen peilautuu livenä
     gamePreview: false,        // pelin näköinen esikatselu (Minecraft-valaistus + varjot)
+    gamePreviewNight: false,   // yötila: tumma taivas, kuunvalo, glow-boost
     _editorClearColor: 0x343a46, // editorin taustaväri talteen Game Preview -tilaa varten
     packOptions: { ...DEFAULT_PACK_OPTIONS }, // 📦 Pack -dialogin valinnat
     modelVersion: 0
@@ -172,6 +173,32 @@ const EDITOR_LIGHTS = {
 const GAME_LIGHTS = {
     ambient: 0.18, dir: 1.35, fill: 0.15, rim: 0.05, boost: 0.0, hemi: 0.85
 };
+// Yö: kuunvalo kylmän sinertävä, glow loistaa — tumma taivas.
+const NIGHT_SKY = 0x0b1220;
+const NIGHT_GROUND = 0x16202e;
+const NIGHT_LIGHTS = {
+    ambient: 0.05, dir: 0.4, fill: 0.05, rim: 0.04, boost: 0.0, hemi: 0.25
+};
+const NIGHT_GLOW_BOOST = 2.2;   // emissiivinen kerroin yöllä
+const DAY_GLOW_INTENSITY = 1.0; // emissiivinen päivällä/editorissa
+
+/** Palauta emissiiviset intensiteetit päivän/editorin arvoihin. */
+function resetGlowIntensities() {
+    for (const mesh of state.cubes) {
+        if (mesh.material && mesh.material.emissiveMap) {
+            mesh.material.emissiveIntensity = DAY_GLOW_INTENSITY;
+        }
+    }
+}
+
+/** Nosta emissiiviset intensiteetit yön glow-boostiin. */
+function boostGlowIntensities() {
+    for (const mesh of state.cubes) {
+        if (mesh.material && mesh.material.emissiveMap) {
+            mesh.material.emissiveIntensity = NIGHT_GLOW_BOOST;
+        }
+    }
+}
 
 /** Päivitä shadow-kameran ja maatason koko mallin bounding-boxin mukaan. */
 function updateShadowBounds() {
@@ -201,33 +228,58 @@ function updateShadowBounds() {
     groundPlane.rotation.x = 0;
 }
 
-/** Aseta pelin näköinen esikatselu päälle/pois. */
-function setGamePreview(on) {
-    state.gamePreview = on;
-    const L = on ? GAME_LIGHTS : EDITOR_LIGHTS;
+/** Aseta päivä/yö-valaistus (Game Preview -tilassa). */
+function applyGamePreviewLights() {
+    const night = state.gamePreview && state.gamePreviewNight;
+    const L = !state.gamePreview ? EDITOR_LIGHTS : night ? NIGHT_LIGHTS : GAME_LIGHTS;
     ambientLight.intensity = L.ambient;
     dirLight.intensity = L.dir;
+    dirLight.color.setHex(night ? 0xaac4ff : 0xffffff); // kuu vs. aurinko
     fillLight.intensity = L.fill;
     rimLight.intensity = L.rim;
     ambientBoost.intensity = L.boost;
     hemisphereLight.intensity = L.hemi;
-    groundPlane.visible = on;
-    gridHelper.visible = on ? false : document.getElementById('chk-grid').checked;
-    axesHelper.visible = !on;
+    hemisphereLight.color.setHex(night ? NIGHT_SKY : skyColor);
+    hemisphereLight.groundColor.setHex(night ? NIGHT_GROUND : groundColor);
     if (renderer) {
-        if (on) {
-            // Pelin näköinen taivas — säilytetään käyttäjän bg-väri talteen
-            state._editorClearColor = renderer.getClearColor(new THREE.Color()).getHex();
-            renderer.setClearColor(skyColor);
+        if (state.gamePreview) {
+            renderer.setClearColor(night ? NIGHT_SKY : skyColor);
         } else {
             renderer.setClearColor(state._editorClearColor);
         }
     }
-    // Varjot päälle/pois: castShadow vain pelinäkymässä pitää editorin kevyenä
-    for (const mesh of state.cubes) {
-        mesh.castShadow = on;
-        mesh.receiveShadow = on;
+    // Glow: yöllä loistaa voimakkaammin, muuten normaali
+    if (night) boostGlowIntensities();
+    else resetGlowIntensities();
+}
+
+/** Aseta pelin näköinen esikatselu päälle/pois. */
+function setGamePreview(on) {
+    state.gamePreview = on;
+    if (on) {
+        // Pelin näköinen taivas — säilytetään käyttäjän bg-väri talteen
+        state._editorClearColor = renderer.getClearColor(new THREE.Color()).getHex();
+        // Varjot päälle pelinäkymässä
+        for (const mesh of state.cubes) {
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+        }
+    } else {
+        for (const mesh of state.cubes) {
+            mesh.castShadow = false;
+            mesh.receiveShadow = false;
+        }
     }
+    groundPlane.visible = on;
+    gridHelper.visible = on ? false : document.getElementById('chk-grid').checked;
+    axesHelper.visible = !on;
+    applyGamePreviewLights();
+}
+
+/** Aseta yötila päälle/pois (vaatii Game Previewin). */
+function setGamePreviewNight(on) {
+    state.gamePreviewNight = on;
+    applyGamePreviewLights();
 }
 
 // Grid
@@ -959,6 +1011,7 @@ function rebuildModel() {
     if (state.gamePreview) {
         updateShadowBounds();
         for (const mesh of state.cubes) { mesh.castShadow = true; mesh.receiveShadow = true; }
+        if (state.gamePreviewNight) boostGlowIntensities();
     }
     checkRenderConsistency();
 }
@@ -1455,6 +1508,24 @@ function setupToolbar() {
         });
         // Pidä varjot editorissa pois päältä oletuksena — kevyempi
         setGamePreview(false);
+    }
+
+    // 🌙 Yötila — vain Game Preview -tilassa: tumma taivas, kuunvalo, glow loistaa
+    const nightChk = document.getElementById('chk-game-night');
+    if (nightChk) {
+        nightChk.addEventListener('change', (e) => {
+            if (e.target.checked && !state.gamePreview) {
+                // Yö kytkee Game Previewin automaattisesti päälle
+                gamePreviewChk.checked = true;
+                setGamePreview(true);
+                updateShadowBounds();
+            }
+            setGamePreviewNight(e.target.checked);
+            setStatus(e.target.checked
+                ? '🌙 Yötila päällä — kuunvalo, glow loistaa voimakkaammin'
+                : state.gamePreview ? '☀️ Päivä palautettu' : 'Yötila pois');
+        });
+        setGamePreviewNight(false);
     }
 }
 
