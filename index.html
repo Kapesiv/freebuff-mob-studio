@@ -63,6 +63,30 @@
                         </label>
                     </div>
                     <div id="mob-library" class="mob-grid"></div>
+                    <div class="voxel-dropzone" id="voxel-dropzone" title="Vedä GLB/OBJ-malli tähän — vokseloidaan suoraan selaimessa">
+                        <div class="voxel-drop-row">
+                            <span class="voxel-drop-icon">📦</span>
+                            <div class="voxel-drop-text">
+                                <strong>Vokseloi oma malli</strong>
+                                <span>Vedä .glb / .obj tähän (mukana .mtl + tekstuurikuva jos on)</span>
+                            </div>
+                            <button id="voxel-file-btn" class="action-btn" type="button">Valitse tiedosto…</button>
+                        </div>
+                        <div class="voxel-drop-opts">
+                            <label title="Mallin korkeus lohkoina (16 yksikköä = 1 lohko)">Korkeus
+                                <input type="number" id="voxel-height" value="2" min="0.5" max="20" step="0.5" /> lohkoa
+                            </label>
+                            <label title="Vokselikoko — tarkka säilyttää yksityiskohdat mutta tuottaa enemmän kuutioita">Vokseli
+                                <select id="voxel-size">
+                                    <option value="1">Tarkka (1/16 lohkoa)</option>
+                                    <option value="2" selected>Normaali (1/8 lohkoa)</option>
+                                    <option value="4">Karkea (1/4 lohkoa)</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div id="voxel-status" class="voxel-drop-status"></div>
+                        <input type="file" id="voxel-file" accept=".glb,.obj,.mtl,.png,.jpg,.jpeg" hidden multiple />
+                    </div>
                 </div>
 
                 <div class="panel-section">
@@ -158,6 +182,11 @@
                         <button id="btn-mirror-paint" class="tool-btn" title="Mirror paint — maalaa myös peilikuva vastakkaiselle puolelle">🪞</button>
                         <input type="color" id="uv-paint-color" value="#000000" title="Brush / fill color">
                         <input type="range" id="uv-brush-size" min="1" max="12" value="3" title="Brush size">
+                        <button id="btn-toggle-palette" class="tool-btn" title="Väripaletti">🎨</button>
+                    </div>
+                    <div id="uv-palette" class="uv-palette" hidden>
+                        <div class="palette-cats" id="palette-cats"></div>
+                        <div class="palette-grid" id="palette-grid"></div>
                     </div>
                     <div class="uv-canvas-wrap">
                         <canvas id="uv-canvas"></canvas>
@@ -247,6 +276,51 @@
             <div class="modal-actions">
                 <button id="new-mob-create" class="primary">🚀 Luo mobi</button>
                 <button id="new-mob-cancel">Peruuta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mob stats modal (HP / kyvyt / kutsuminen — Deep Void -pelin bytecodesta) -->
+    <div id="mob-stats-modal" class="modal-overlay" style="display:none">
+        <div class="modal mob-stats-modal">
+            <div class="mob-stats-head">
+                <span id="mstats-emoji" class="mob-stats-emoji">🐍</span>
+                <div class="mob-stats-title">
+                    <h2 id="mstats-name">False Hydra</h2>
+                    <span id="mstats-sub" class="modal-hint"></span>
+                </div>
+                <button id="mstats-close" class="modal-close" title="Sulje">✕</button>
+            </div>
+
+            <div class="mob-stats-body">
+                <div class="mob-stats-col">
+                    <h3>❤️ Elämä (pelin bytecodesta)</h3>
+                    <div id="mstats-hp" class="mstats-hp"></div>
+                    <div class="mstats-hearts" id="mstats-hearts"></div>
+
+                    <h3>📊 Ominaisuudet</h3>
+                    <div class="mstats-grid" id="mstats-grid"></div>
+
+                    <h3>🎮 Kutsuminen</h3>
+                    <div class="mstats-summon">
+                        <code id="mstats-summon" class="mstats-code"></code>
+                        <button id="mstats-copy" class="action-btn" title="Kopioi komento">📋 Kopioi</button>
+                    </div>
+                    <div class="modal-field-note">Rekisteri-id: <code id="mstats-registry"></code> · lähde: <code>the_deep_void</code> -modin lang/en_us.json</div>
+                </div>
+
+                <div class="mob-stats-col">
+                    <h3>⚔️ Kyvyt / AI-tavoitteet (bytecode)</h3>
+                    <ul id="mstats-goals" class="mstats-goals"></ul>
+
+                    <h3>🎬 Animaatiot</h3>
+                    <div id="mstats-anims" class="mstats-anims"></div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button id="mstats-load" class="primary">🚀 Lataa editoriin</button>
+                <button id="mstats-close2">Sulje</button>
             </div>
         </div>
     </div>

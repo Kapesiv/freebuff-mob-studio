@@ -7,9 +7,12 @@ import { exportBedrockAnimations, exportJavaAnimations } from './formats/animati
 import { createExampleMob } from './formats/example.js';
 import { History } from './utils/history.js';
 import { applyBoxTextureUVs, computeFaceRects } from './utils/boxuv.js';
+import { PALETTE_CATEGORIES, loadCustomColors, saveCustomColors, normalizeHex } from './utils/palette.js';
 import { initUVEditor } from './uv-editor.js';
 import { initAnimation } from './animation.js';
-import { LIBRARY_MOBS } from './mobs/library.js';
+import { LIBRARY_MOBS, prepareMob } from './mobs/library.js';
+import { MOB_STATS } from './mobs/stats.js';
+import { voxelizeModel } from './voxelizer.js';
 import { MOB_TEMPLATES } from './mobs/templates.js';
 import { parseBBModel } from './formats/bbmodel.js';
 
@@ -1178,6 +1181,9 @@ function setupToolbar() {
  *  perusteella, lajittelee oletuksella / isoimmat ensin / pienimmät ensin /
  *  aakkosilla, ja voi rajata vain Deep Void -otoksiin. */
 const libraryFilter = { search: '', sort: 'default', deepvoidOnly: false, voxelOnly: false, sizeClass: 'all' };
+// setupLibrary sulkee renderLibrary:n sisäänsä — tämä hook päästää
+// setupVoxelDropin (vokseloinnin jälkeinen kirjastopäivitys) käsiksi siihen.
+let refreshLibraryUI = null;
 
 function setupLibrary() {
     const container = document.getElementById('mob-library');
@@ -1199,6 +1205,17 @@ function setupLibrary() {
         btn.innerHTML = `<span class="mob-emoji">${mob.emoji}</span><span>${mob.name}</span>` +
             `<span class="mob-size-badge">${sizeLabels[mob.sizeClass] || ''}</span>`;
         btn.addEventListener('click', () => loadLibraryMob(mob));
+        if (mob.category === 'deepvoid' && MOB_STATS[mob.id]) {
+            const statsBtn = document.createElement('span');
+            statsBtn.className = 'mob-stats-btn';
+            statsBtn.title = '📊 HP / kyvyt / kutsuminen — pelin bytecodesta';
+            statsBtn.textContent = '📊';
+            statsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openMobStats(mob);
+            });
+            btn.appendChild(statsBtn);
+        }
         return btn;
     }
 
@@ -1269,7 +1286,26 @@ function setupLibrary() {
         libraryFilter.sizeClass = sizeEl.value;
         renderLibrary();
     });
+    refreshLibraryUI = renderLibrary;
     renderLibrary();
+
+    // Mobi-stats-modal: sulkeminen (✕, Sulje, overlay-klikki, Esc)
+    const statsModal = document.getElementById('mob-stats-modal');
+    if (statsModal) {
+        const closeStats = () => { statsModal.style.display = 'none'; };
+        document.getElementById('mstats-close').addEventListener('click', closeStats);
+        document.getElementById('mstats-close2').addEventListener('click', closeStats);
+        statsModal.addEventListener('click', (e) => {
+            if (e.target === statsModal) closeStats();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && statsModal.style.display !== 'none') closeStats();
+        });
+    }
+
+    // ---- Oma malli → vokselointi selaimessa (drag & drop GLB/OBJ) ----
+    setupVoxelDrop();
+
     // Uuden mobin pohjat — valmiit luurangot aloittamiseen
     const tplContainer = document.getElementById('template-grid');
     if (tplContainer) {
@@ -1393,6 +1429,99 @@ function loadAnimationData(anim) {
     if (state.animation.redrawKeys) state.animation.redrawKeys();
 }
 
+/**
+ * Avaa HP/kyvyt/kutsuminen-näkymän mobille. Kaikki arvot ovat pelin
+ * bytecodesta (createAttributes + registerGoals + bossbar) ja lang-tiedoston
+ * rekisteri-id:stä — ei arvauksia.
+ */
+function openMobStats(mob) {
+    const stats = MOB_STATS[mob.id];
+    if (!stats) return;
+    const modal = document.getElementById('mob-stats-modal');
+    if (!modal) return;
+
+    document.getElementById('mstats-emoji').textContent = mob.emoji || '❓';
+    document.getElementById('mstats-name').textContent = mob.name || mob.id;
+    const bits = [];
+    if (mob.size) bits.push(`${mob.size} lohkoa korkea`);
+    if (stats.bossbar) bits.push('👑 Bossbar-pomo');
+    if (mob.tier === 'boss') bits.push('👑 BOSSI');
+    bits.push(`${mob.model.bones.length} luuta`);
+    document.getElementById('mstats-sub').textContent = bits.join(' · ');
+
+    // ❤️ HP
+    const hpEl = document.getElementById('mstats-hp');
+    const heartsEl = document.getElementById('mstats-hearts');
+    if (stats.hp != null) {
+        const hearts = stats.hp / 2;
+        const pct = Math.min(100, (stats.hp / 999) * 100);
+        hpEl.innerHTML = `${stats.hp} <small>HP = ${hearts} ❤ sydäntä</small>`;
+        const bar = document.createElement('div');
+        bar.className = 'mstats-hp-bar';
+        const fill = document.createElement('i');
+        fill.style.width = pct + '%';
+        bar.appendChild(fill);
+        hpEl.insertAdjacentElement('afterend', bar);
+        // sydänrivistö (rajoitettu 30 näkyvään + laskuri)
+        const show = Math.min(30, Math.ceil(hearts));
+        let html = '';
+        for (let i = 0; i < show; i++) {
+            html += (i < Math.floor(hearts)) ? '❤' : '<span class="empty">🖤</span>';
+        }
+        if (hearts > show) html += ` <span class="empty">+${Math.round(hearts - show)}</span>`;
+        heartsEl.innerHTML = html;
+    } else {
+        hpEl.textContent = '— (ei entity-luokkaa tässä JAR-versiossa)';
+        heartsEl.innerHTML = '';
+    }
+
+    // 📊 ominaisuudet
+    const rows = [
+        ['Panssari (armor)', stats.armor],
+        ['Panssarin kesto (toughness)', stats.toughness],
+        ['Liikenopeus', stats.speed != null ? stats.speed : null],
+        ['Lentonopeus', stats.flySpeed != null ? stats.flySpeed : null],
+        ['Seuraamisetäisyys', stats.follow != null ? `${stats.follow} lohkoa` : null],
+        ['Rekyyttömyys (knockback)', stats.knockback != null ? (stats.knockback >= 999 ? 'täysi (999)' : stats.knockback) : null],
+        ['Hyökkäysvahinko', stats.damage != null ? stats.damage : null],
+    ].filter(([, v]) => v != null);
+    const grid = document.getElementById('mstats-grid');
+    grid.innerHTML = rows.map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('');
+
+    // ⚔️ kyvyt
+    const goalsEl = document.getElementById('mstats-goals');
+    if (stats.goals && stats.goals.length) {
+        goalsEl.innerHTML = stats.goals.map((g) => `<li title="${g.id}">${g.label}</li>`).join('');
+    } else {
+        goalsEl.innerHTML = '<li style="border:none">Ei vakiintuneita AI-tavoitteita (staattinen/scriptattu)</li>';
+    }
+
+    // 🎬 animaatiot
+    const animsEl = document.getElementById('mstats-anims');
+    const animNames = Object.keys(mob.animations || (mob.animation ? { animation: mob.animation } : {}) || {});
+    animsEl.innerHTML = animNames.length
+        ? animNames.map((n) => `<span class="mstats-anim-chip">🎬 ${n}</span>`).join('')
+        : '<span class="modal-hint">Ei animaatioita</span>';
+
+    // 🎮 kutsuminen
+    document.getElementById('mstats-summon').textContent = stats.summon;
+    document.getElementById('mstats-registry').textContent = stats.registry;
+
+    // napit
+    document.getElementById('mstats-load').onclick = () => {
+        modal.style.display = 'none';
+        loadLibraryMob(mob);
+    };
+    document.getElementById('mstats-copy').onclick = () => {
+        navigator.clipboard && navigator.clipboard.writeText(stats.summon);
+        const b = document.getElementById('mstats-copy');
+        b.textContent = '✅ Kopioitu';
+        setTimeout(() => (b.textContent = '📋 Kopioi'), 1200);
+    };
+
+    modal.style.display = 'flex';
+}
+
 /** Täytä animaatiovalitsin mobin omilla animaatioilla (idle/walk/attack). */
 function loadLibraryMobAnimations(mob) {
     // Kopioidaan mobin animaatiot projektin muokattaviksi animaatioiksi
@@ -1413,6 +1542,67 @@ function loadLibraryMobAnimations(mob) {
         state.animation.syncSlider && state.animation.syncSlider();
         state.animation.redrawKeys && state.animation.redrawKeys();
         state.animation.applyPose();
+    }
+}
+
+/** Vokseloi käyttäjän oma GLB/OBJ-malli selaimessa ja lataa se editoriin. */
+function setupVoxelDrop() {
+    const zone = document.getElementById('voxel-dropzone');
+    if (!zone) return;
+    const fileInput = document.getElementById('voxel-file');
+    const fileBtn = document.getElementById('voxel-file-btn');
+    const heightInput = document.getElementById('voxel-height');
+    const sizeSelect = document.getElementById('voxel-size');
+    const statusEl = document.getElementById('voxel-status');
+    const tick = () => new Promise(r => setTimeout(r, 30)); // anna UI:n piirtyä
+    const setStatus = (msg, cls) => {
+        statusEl.textContent = msg;
+        statusEl.className = 'voxel-drop-status' + (cls ? ' ' + cls : '');
+    };
+
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+    zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('drag');
+        if (e.dataTransfer && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+    fileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) handleFiles(fileInput.files);
+        fileInput.value = '';
+    });
+
+    async function handleFiles(files) {
+        const list = [...files];
+        const hasGlb = list.some(f => /^.*\.glb$/i.test(f.name));
+        const hasObj = list.some(f => /^.*\.obj$/i.test(f.name));
+        if (!hasGlb && !hasObj) {
+            setStatus('⚠️ Vedä .glb- tai .obj-tiedosto (mukana voi olla .mtl + tekstuurikuva)', 'error');
+            return;
+        }
+        setStatus('📦 Luetaan tiedostoja…');
+        await tick();
+        const buffers = new Map();
+        for (const f of list) buffers.set(f.name, await f.arrayBuffer());
+        const primary = list.find(f => /^.*\.(glb|obj)$/i.test(f.name));
+        const baseName = primary.name.replace(/\.(glb|obj)$/i, '');
+        const heightBlocks = Math.max(0.5, Math.min(20, parseFloat(heightInput.value) || 2));
+        const voxel = parseInt(sizeSelect.value, 10) || 2;
+        setStatus('🧊 Vokseloidaan… (iso malli voi kestää hetken)');
+        await tick();
+        try {
+            const mob = await voxelizeModel(buffers, { name: baseName, heightBlocks, voxel });
+            mob.category = 'voxel';
+            prepareMob(mob);
+            LIBRARY_MOBS.push(mob);
+            if (refreshLibraryUI) refreshLibraryUI();
+            loadLibraryMob(mob);
+            const cubes = mob.model.bones.reduce((n, b) => n + b.cubes.length, 0);
+            setStatus(`✅ ${mob.name} vokseloitu — ${mob.model.bones.length} luuta, ${cubes} kuutiota, ${mob.size} lohkoa. Ladattu editoriin!`, 'ok');
+        } catch (err) {
+            setStatus('❌ ' + (err && err.message ? err.message : String(err)), 'error');
+        }
     }
 }
 
@@ -2274,11 +2464,113 @@ function setupUVEditor() {
 
     document.getElementById('uv-paint-color').addEventListener('input', (e) => {
         state.uvEditor.setPaintColor(e.target.value);
+        renderPalette();
     });
 
     document.getElementById('uv-brush-size').addEventListener('input', (e) => {
         state.uvEditor.setBrushSize(parseInt(e.target.value));
     });
+
+    // ---- väripaletti ---------------------------------------------
+    const palettePanel = document.getElementById('uv-palette');
+    const catsEl = document.getElementById('palette-cats');
+    const gridEl = document.getElementById('palette-grid');
+    const colorInput = document.getElementById('uv-paint-color');
+    let paletteCat = 'skin';
+    let customColors = loadCustomColors();
+
+    function currentPalette() {
+        if (paletteCat === 'custom') return customColors;
+        const cat = PALETTE_CATEGORIES.find((c) => c.id === paletteCat);
+        return cat ? cat.colors : [];
+    }
+
+    function renderPalette() {
+        if (palettePanel.hidden) return;
+        const allCats = [...PALETTE_CATEGORIES, { id: 'custom', name: 'Omat' }];
+        catsEl.innerHTML = '';
+        for (const cat of allCats) {
+            const b = document.createElement('button');
+            b.className = 'palette-cat' + (cat.id === paletteCat ? ' active' : '');
+            b.textContent = cat.name;
+            b.dataset.cat = cat.id;
+            catsEl.appendChild(b);
+        }
+        gridEl.innerHTML = '';
+        const cur = normalizeHex(state.uvEditor.getPaintColor());
+        currentPalette().forEach((c, i) => {
+            const s = document.createElement('button');
+            s.className = 'palette-swatch' + (normalizeHex(c) === cur ? ' selected' : '');
+            s.style.background = c;
+            s.dataset.color = c;
+            s.dataset.idx = i;
+            s.title = c;
+            gridEl.appendChild(s);
+        });
+        if (paletteCat === 'custom') {
+            const add = document.createElement('button');
+            add.className = 'palette-swatch action';
+            add.textContent = '+';
+            add.title = 'Lisää nykyinen maalausväri palettiin';
+            add.dataset.action = 'add';
+            gridEl.appendChild(add);
+            const clr = document.createElement('button');
+            clr.className = 'palette-swatch action';
+            clr.textContent = '🗑';
+            clr.title = 'Tyhjennä omat värit';
+            clr.dataset.action = 'clear';
+            gridEl.appendChild(clr);
+        }
+    }
+
+    function pickColor(hex) {
+        state.uvEditor.setPaintColor(hex);
+        colorInput.value = hex;
+        renderPalette();
+    }
+
+    catsEl.addEventListener('click', (e) => {
+        const b = e.target.closest('.palette-cat');
+        if (!b) return;
+        paletteCat = b.dataset.cat;
+        renderPalette();
+    });
+
+    gridEl.addEventListener('click', (e) => {
+        const s = e.target.closest('.palette-swatch');
+        if (!s) return;
+        if (s.dataset.action === 'add') {
+            const cur = normalizeHex(state.uvEditor.getPaintColor());
+            if (cur && !customColors.includes(cur)) {
+                customColors.push(cur);
+                saveCustomColors(customColors);
+                renderPalette();
+            }
+            return;
+        }
+        if (s.dataset.action === 'clear') {
+            customColors = [];
+            saveCustomColors(customColors);
+            renderPalette();
+            return;
+        }
+        pickColor(s.dataset.color);
+    });
+
+    gridEl.addEventListener('contextmenu', (e) => {
+        const s = e.target.closest('.palette-swatch');
+        if (!s || paletteCat !== 'custom' || s.dataset.action) return;
+        e.preventDefault();
+        customColors = customColors.filter((_, i) => i !== parseInt(s.dataset.idx));
+        saveCustomColors(customColors);
+        renderPalette();
+    });
+
+    document.getElementById('btn-toggle-palette').addEventListener('click', () => {
+        palettePanel.hidden = !palettePanel.hidden;
+        renderPalette();
+    });
+    renderPalette();
 
     window.addEventListener('resize', () => state.uvEditor.resize());
     setTimeout(() => state.uvEditor.resize(), 50);
