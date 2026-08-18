@@ -2145,6 +2145,7 @@ function setupFileIO() {
             animations,
             textureCanvas: state.textureCanvas,
             emissiveDataURL: state.emissiveDataURL || null,
+            eggColors: averageEggColors(state.textureCanvas),
         });
         const zip = zipFiles(files);
         const blob = new Blob([zip], { type: 'application/zip' });
@@ -2234,6 +2235,32 @@ function exportScreenshot() {
  * (with the live editor track merged into the selected one), or the
  * single editor animation.
  */
+/** Spawn-eggin värit tekstuurin keskiarvosta (4×4 alasample). */
+function averageEggColors(canvas) {
+    try {
+        const c = document.createElement('canvas');
+        c.width = 4;
+        c.height = 4;
+        const ctx = c.getContext('2d');
+        ctx.drawImage(canvas, 0, 0, 4, 4);
+        const d = ctx.getImageData(0, 0, 4, 4).data;
+        let r = 0, g = 0, b = 0, n = 0;
+        for (let i = 0; i < d.length; i += 4) {
+            if (d[i + 3] < 128) continue; // läpinäkyvät pois
+            r += d[i]; g += d[i + 1]; b += d[i + 2]; n++;
+        }
+        if (!n) return null;
+        r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+        const hex = (v) => v.toString(16).padStart(2, '0');
+        return {
+            base: '#' + hex(r) + hex(g) + hex(b),
+            overlay: '#' + hex(Math.round(r * 0.5)) + hex(Math.round(g * 0.5)) + hex(Math.round(b * 0.5)),
+        };
+    } catch {
+        return null;
+    }
+}
+
 function currentAnimations() {
     if (!state.projectAnimations || Object.keys(state.projectAnimations).length === 0) return null;
     // Merge live edits from the timeline into the selected animation
