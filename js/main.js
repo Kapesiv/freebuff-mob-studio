@@ -18,7 +18,7 @@ import { LIBRARY_MOBS, prepareMob } from './mobs/library.js';
 import { MOB_STATS } from './mobs/stats.js';
 import { voxelizeModel } from './voxelizer.js';
 import { MOB_TEMPLATES } from './mobs/templates.js';
-import { parseBBModel } from './formats/bbmodel.js';
+import { parseBBModel, exportBBModel } from './formats/bbmodel.js';
 
 // v5: hylkää vanhat autosavet (v4:stä puuttuu emissiivinen glow-tekstuuri,
 // joten modimobien hehku ei säilyisi) — oletuksena ladataan oikea
@@ -2070,6 +2070,28 @@ function setupFileIO() {
         };
         reader.readAsText(file);
         e.target.value = '';
+    });
+
+    // Blockbench (.bbmodel) export — vie malli tekstuureineen ja animaatioineen
+    document.getElementById('btn-export-bbmodel').addEventListener('click', () => {
+        const id = state.model.modelId.replace('geometry.', '');
+        ensureTexture();
+        const textureDataURL = state.textureCanvas ? state.textureCanvas.toDataURL() : state.textureDataURL || null;
+        const animations = currentAnimations(); // null jos ei animaatioita
+        const bb = exportBBModel(state.model, {
+            projectName: state.projectName || id,
+            textureDataURL,
+            animations,
+        });
+        const blob = new Blob([JSON.stringify(bb, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${id}.bbmodel`;
+        a.click();
+        URL.revokeObjectURL(url);
+        const cubeCount = state.model.bones.reduce((n, b) => n + (b.cubes ? b.cubes.length : 0), 0);
+        setStatus(`Blockbench-tiedosto ladattu (${id}.bbmodel) — ${cubeCount} kuutiota, ${animations ? Object.keys(animations).length + ' animaatiota' : 'ei animaatioita'}, tekstuuri ${textureDataURL ? 'mukana' : 'puuttuu'}`);
     });
 
     document.getElementById('btn-import-bedrock').addEventListener('click', () => {

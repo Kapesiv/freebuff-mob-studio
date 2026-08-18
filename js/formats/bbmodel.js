@@ -8,6 +8,137 @@
  * modded models in and edit them.
  */
 
+// ==================== EXPORT (.bbmodel) ====================
+
+function uuid() {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    });
+}
+
+const round2 = (v) => Math.round(v * 100) / 100;
+
+/** Kuution UV-offset (box_uv): cube.uv.offset tai north-rectin yläkulma. */
+function cubeUVOffset(cube) {
+    if (cube.uv && Array.isArray(cube.uv.offset)) return [cube.uv.offset[0], cube.uv.offset[1]];
+    try {
+        const rects = computeFaceRects(cube);
+        const north = rects.find((r) => r.face === 'north');
+        if (north) return [north.x, north.y];
+    } catch { /* jätetään [0,0] */ }
+    return [0, 0];
+}
+
+function cubeToElement(cube) {
+    const half = cube.size.map((s) => s / 2);
+    const from = cube.origin.map((o, i) => round2(o - half[i]));
+    const to = cube.origin.map((o, i) => round2(o + half[i]));
+    const el = {
+        name: cube.name || 'cube',
+        box_uv: true,
+        rescale: false,
+        locked: false,
+        from,
+        to,
+        faces: {},
+        type: 'cube',
+        uuid: uuid(),
+        mirror: !!cube.mirror,
+    };
+    const [u, v] = cubeUVOffset(cube);
+    for (const f of ['north', 'east', 'south', 'west', 'up', 'down']) {
+        el.faces[f] = { uv: [round2(u), round2(v)] };
+    }
+    // Bedrock-kuution yksiakselinen rotaatio → bbmodel-rot (origin = pivot)
+    if (cube.rotation && cube.rotation.some((x) => x !== 0)) {
+        const axisIdx = [0, 1, 2].find((i) => (cube.rotation[i] || 0) !== 0);
+        el.rotation = {
+            origin: (cube.pivot || [0, 0, 0]).map(round2),
+            axis: ['x', 'y', 'z'][axisIdx],
+            angle: round2(cube.rotation[axisIdx] || 0),
+        };
+    }
+    return el;
+}
+
+/** Projektin animaatiot (frame → sekunti, 20 fps) → bbmodel-animaattorit. */
+function animationsToBB(animations) {
+    const out = [];
+    for (const [name, anim] of Object.entries(animations || {})) {
+        const animators = {};
+        for (const [bone, track] of Object.entries(anim.tracks || {})) {
+            const keys = {};
+            for (const [frame, val] of Object.entries(track)) {
+                keys[round2(parseFloat(frame) / 20)] = val.map(round2);
+            }
+            if (Object.keys(keys).length) animators[bone] = { rotation: keys };
+        }
+        if (anim.posTracks) {
+            for (const [bone, track] of Object.entries(anim.posTracks)) {
+                const keys = {};
+                for (const [frame, val] of Object.entries(track)) {
+                    keys[round2(parseFloat(frame) / 20)] = val.map(round2);
+                }
+                if (Object.keys(keys).length) {
+                    animators[bone] = animators[bone] || {};
+                    animators[bone].position = keys;
+                }
+            }
+        }
+        out.push({
+            name,
+            loop: 'loop',
+            length: round2((anim.length || 40) / 20),
+            anim_time_update: 'query.anim_time + query.delta_time',
+            animators,
+        });
+    }
+    return out;
+}
+
+/**
+ * Vie mallin Blockbench .bbmodel-formaattiin (bedrock, box_uv) —
+ * outliner luina + pivotit, elementit kuutioina, tekstuuri dataURL:na
+ * ja animaatiot rot-/pos-keyframeina. Yhteensopiva oman importerin
+ * kanssa (round-trip) ja avautuu Blockbenchissä.
+ */
+export function exportBBModel(model, opts = {}) {
+    const id = (model.modelId || 'custom_mob').replace('geometry.', '');
+    const elements = [];
+    const outliner = [];
+    for (const bone of model.bones || []) {
+        const children = [];
+        for (const cube of bone.cubes || []) {
+            const el = cubeToElement(cube);
+            elements.push(el);
+            children.push(el.uuid);
+        }
+        const node = { name: bone.name, uuid: uuid(), origin: (bone.pivot || [0, 0, 0]).map(round2) };
+        if (bone.rotation && bone.rotation.some((x) => x !== 0)) node.rotation = bone.rotation.map(round2);
+        if (children.length) node.children = children;
+        outliner.push(node);
+    }
+    return {
+        meta: { format_version: '4.9', model_format: 'bedrock', box_uv: true },
+        name: opts.projectName || id,
+        resolution: { width: model.textureWidth || 64, height: model.textureHeight || 64 },
+        elements,
+        outliner,
+        textures: opts.textureDataURL ? [{
+            name: id,
+            id: uuid(),
+            source: opts.textureDataURL,
+            resolution: { width: model.textureWidth || 64, height: model.textureHeight || 64 },
+            uv_width: model.textureWidth || 64,
+            uv_height: model.textureHeight || 64,
+        }] : [],
+        animations: animationsToBB(opts.animations),
+        id: uuid(),
+    };
+}
+
 export function parseBBModel(json) {
     const model = {
         modelId: json.name ? `geometry.${json.name.toLowerCase().replace(/[^a-z0-9]+/g, '_')}` : 'geometry.imported_mob',
