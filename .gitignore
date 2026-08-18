@@ -1,0 +1,16 @@
+# Riippuvuudet
+node_modules/
+
+# Väliaikaiset lataukset ja työtila
+.fetch-tmp/
+.freebuff/
+
+# Build-artefakti — generoidaan komennolla `node build-preview.mjs`
+preview.html
+
+# macOS
+.DS_Store
+
+# Lokit
+npm-debug.log*
+*.log

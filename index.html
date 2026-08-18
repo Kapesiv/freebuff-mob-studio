@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Freebuff Mob Studio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header id="topbar">
+            <div class="logo">🧊 Freebuff Mob Studio <span id="project-name-label" class="project-name"></span></div>
+            <div class="topbar-actions">
+                <button id="btn-new" title="New Project">New</button>
+                <button id="btn-save" title="Save project file">Save</button>
+                <button id="btn-open" title="Open project file">Open</button>
+                <button id="btn-import-bbmodel" title="Import Blockbench (.bbmodel)">Import Blockbench</button>
+                <button id="btn-import-bedrock" title="Import Bedrock">Import Bedrock</button>
+                <button id="btn-export-bedrock" title="Export Bedrock">Export Bedrock</button>
+                <button id="btn-export-java" title="Export Java Edition">Export Java</button>
+                <button id="btn-export-anim-bedrock" title="Export animations (.animation.json, Bedrock)">Export Anim Bedrock</button>
+                <button id="btn-export-anim-java" title="Export animations (GeckoLib .animation.json, Java)">Export Anim Java</button>
+            </div>
+        </header>
+
+        <div id="workspace">
+            <aside id="left-panel">
+                <div class="panel-section">
+                    <h3>Toolbox</h3>
+                    <div id="toolbox" class="tool-grid">
+                        <button class="tool-btn active" data-tool="select" title="Select">🔘</button>
+                        <button class="tool-btn" data-tool="move" title="Move">✋</button>
+                        <button class="tool-btn" data-tool="rotate" title="Rotate">🔄</button>
+                        <button class="tool-btn" data-tool="scale" title="Scale">📐</button>
+                        <button class="tool-btn" data-tool="paint" title="Paint texture 3D — maalaa suoraan mallin pintaan">🖌</button>
+                        <button class="tool-btn" data-tool="pipette" title="Väripipetti — valitse väri suoraan mallista (palaa maalaukseen)">💉</button>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Mob Library <span class="hint" id="mob-count"></span></h3>
+                    <div class="mob-library-tools">
+                        <input id="mob-search" type="search" placeholder="🔍 Hae mobia…" autocomplete="off" />
+                        <select id="mob-sort" title="Lajittele">
+                            <option value="default">Oletus</option>
+                            <option value="biggest">Isoimmat ensin</option>
+                            <option value="smallest">Pienimmät ensin</option>
+                            <option value="name">A–Ö</option>
+                        </select>
+                        <select id="mob-size" title="Kokoluokka">
+                            <option value="all">Kaikki koot</option>
+                            <option value="jatti">🐘 Jättiläinen (≥8.5 lohkoa)</option>
+                            <option value="iso">🦍 Iso (4–8.5)</option>
+                            <option value="keski">🧍 Keskikoko (1.5–4)</option>
+                            <option value="pieni">🐜 Pieni (&lt;1.5)</option>
+                        </select>
+                        <label class="mob-filter-deepvoid" title="Näytä vain Deep Void -otukset">
+                            <input type="checkbox" id="mob-filter-deepvoid" /> Deep Void
+                        </label>
+                        <label class="mob-filter-deepvoid" title="Näytä vain vokseloidut oikeat eläimet">
+                            <input type="checkbox" id="mob-filter-voxel" /> Voxel-eläimet
+                        </label>
+                    </div>
+                    <div id="mob-library" class="mob-grid"></div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Add Element</h3>
+                    <button id="btn-add-cube" class="action-btn">+ Cube</button>
+                    <button id="btn-add-group" class="action-btn">+ Bone/Group</button>
+                    <button id="btn-mirror-copy" class="action-btn" title="Kopioi valittu kuutio/luu peilikuvana vastakkaiselle puolelle">🪞 Mirror Copy</button>
+                </div>
+
+                <div class="panel-section">
+                    <h3>New Mob Template <span class="hint">— aloita pohjasta</span></h3>
+                    <div id="template-grid" class="mob-grid"></div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Bones / Hierarchy</h3>
+                    <div id="bone-tree"></div>
+                </div>
+            </aside>
+
+            <main id="viewport">
+                <canvas id="three-canvas"></canvas>
+                <div id="viewport-overlay">
+                    <span id="viewport-info">Left-click: orbit | Right-click: pan | Scroll: zoom</span>
+                </div>
+                <div id="render-warning" title="Klikkaa valitaksesi ensimmäisen virheellisen kuution" hidden>
+                    ⚠️ <span id="render-warning-text"></span>
+                </div>
+            </main>
+
+            <aside id="right-panel">
+                <div class="panel-section">
+                    <h3>Properties</h3>
+                    <div id="properties-panel">
+                        <div class="prop-group">
+                            <label>Position</label>
+                            <div class="input-row">
+                                <input type="number" id="prop-pos-x" step="0.5" value="0" placeholder="X">
+                                <input type="number" id="prop-pos-y" step="0.5" value="0" placeholder="Y">
+                                <input type="number" id="prop-pos-z" step="0.5" value="0" placeholder="Z">
+                            </div>
+                        </div>
+                        <div class="prop-group">
+                            <label>Rotation</label>
+                            <div class="input-row">
+                                <input type="number" id="prop-rot-x" step="1" value="0" placeholder="X">
+                                <input type="number" id="prop-rot-y" step="1" value="0" placeholder="Y">
+                                <input type="number" id="prop-rot-z" step="1" value="0" placeholder="Z">
+                            </div>
+                        </div>
+                        <div class="prop-group">
+                            <label>Size</label>
+                            <div class="input-row">
+                                <input type="number" id="prop-size-x" step="0.5" value="1" min="0.25" placeholder="W">
+                                <input type="number" id="prop-size-y" step="0.5" value="1" min="0.25" placeholder="H">
+                                <input type="number" id="prop-size-z" step="0.5" value="1" min="0.25" placeholder="D">
+                            </div>
+                        </div>
+                        <div class="prop-group">
+                            <label>Origin</label>
+                            <div class="input-row">
+                                <input type="number" id="prop-origin-x" step="0.5" value="0" placeholder="X">
+                                <input type="number" id="prop-origin-y" step="0.5" value="0" placeholder="Y">
+                                <input type="number" id="prop-origin-z" step="0.5" value="0" placeholder="Z">
+                            </div>
+                        </div>
+                        <div class="prop-group">
+                            <label>Name</label>
+                            <input type="text" id="prop-name" value="" placeholder="element_name">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Color &amp; Texture</h3>
+                    <div class="prop-group">
+                        <label>Cube Color (fills its texture faces)</label>
+                        <div class="input-row">
+                            <input type="color" id="prop-color" value="#ffffff">
+                        </div>
+                    </div>
+                    <button id="btn-load-texture" class="action-btn">🖼 Load Texture</button>
+                    <button id="btn-remove-texture" class="action-btn">🗑 Reset Texture</button>
+                </div>
+
+                <div class="panel-section">
+                    <h3>UV Editor</h3>
+                    <div class="uv-toolbar">
+                        <button class="tool-btn uv-tool active" data-uvtool="select" title="Select / Move faces">🔍</button>
+                        <button class="tool-btn uv-tool" data-uvtool="fill" title="Fill face with color">🪣</button>
+                        <button class="tool-btn uv-tool" data-uvtool="paint" title="Paint texture">🖌</button>
+                        <button class="tool-btn uv-tool" data-uvtool="resize" title="Resize cube — vedä kasvon reunasta muuttaaksesi kokoa">📏</button>
+                        <button id="btn-mirror-paint" class="tool-btn" title="Mirror paint — maalaa myös peilikuva vastakkaiselle puolelle">🪞</button>
+                        <input type="color" id="uv-paint-color" value="#000000" title="Brush / fill color">
+                        <input type="range" id="uv-brush-size" min="1" max="12" value="3" title="Brush size">
+                    </div>
+                    <div class="uv-canvas-wrap">
+                        <canvas id="uv-canvas"></canvas>
+                    </div>
+                    <div id="uv-legend" class="uv-legend" hidden>
+                        <span class="uv-legend-item"><i style="background:#ff5252"></i>north</span>
+                        <span class="uv-legend-item"><i style="background:#448aff"></i>south</span>
+                        <span class="uv-legend-item"><i style="background:#69f0ae"></i>east</span>
+                        <span class="uv-legend-item"><i style="background:#ffd740"></i>west</span>
+                        <span class="uv-legend-item"><i style="background:#40c4ff"></i>up</span>
+                        <span class="uv-legend-item"><i style="background:#e040fb"></i>down</span>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Display Settings</h3>
+                    <div id="display-settings">
+                        <div class="input-row">
+                            <label>Wireframe</label>
+                            <input type="checkbox" id="chk-wireframe">
+                        </div>
+                        <div class="input-row">
+                            <label>Grid</label>
+                            <input type="checkbox" id="chk-grid" checked>
+                        </div>
+                        <div class="input-row">
+                            <label>Background</label>
+                            <input type="color" id="bg-color" value="#1a1a2e">
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div id="animation-bar">
+            <select id="anim-select" title="Animation" style="display:none"></select>
+            <button id="anim-new" title="Uusi animaatio">＋</button>
+            <button id="anim-dup" title="Kopioi nykyinen animaatio">⧉</button>
+            <button id="anim-rename" title="Nimeä animaatio uudelleen">✏</button>
+            <button id="anim-del" title="Poista animaatio">🗑</button>
+            <button id="anim-pose" title="Pose mode — scrub time by hand without playback">✋ Pose</button>
+            <button id="anim-play" title="Play / Pause (Space)">▶</button>
+            <button id="anim-add-key" title="Add keyframe for selected bone">+ Key</button>
+            <button id="anim-copy" title="Copy pose — tallentaa kaikkien luiden nykyisen asennon">📋 Copy Pose</button>
+            <button id="anim-paste" title="Paste pose — liimaa kopioidun asennon keyframeiksi nykyiseen aikaan">📌 Paste Pose</button>
+            <button id="anim-mirror" title="Mirror pose — peilaa asennon (oikea → vasen) samaan frameen">🪞 Mirror Pose</button>
+            <button id="anim-clear" title="Clear animation">🗑</button>
+            <div class="anim-time-wrap">
+                <div class="anim-track">
+                    <canvas id="anim-keys" title="Keyframes — raahaa pistettä siirtääksesi keyframea"></canvas>
+                    <input type="range" id="anim-time" min="0" max="100" value="0">
+                </div>
+                <span id="anim-time-label">0</span>
+            </div>
+            <label class="anim-length">Length
+                <input type="number" id="anim-length" min="1" max="500" value="40">
+            </label>
+        </div>
+
+        <footer id="statusbar">
+            <span id="status-text">Ready</span>
+            <span id="mouse-coords">X: 0 Y: 0</span>
+        </footer>
+    </div>
+
+    <!-- New mob dialog -->
+    <div id="new-mob-dialog" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <h2>🧱 Luo uusi mobi</h2>
+            <p class="modal-hint">Nimeä mobi ja valitse pohja — export-tiedostot saavat nimen modelId:stä.</p>
+            <div class="modal-field">
+                <label for="new-mob-name">Mobin nimi</label>
+                <input type="text" id="new-mob-name" value="My Mob" placeholder="esim. Frost Wyrm">
+            </div>
+            <div class="modal-field">
+                <label for="new-mob-id">Exportin tiedostonimi (modelId)</label>
+                <div class="modal-id-row">
+                    <input type="text" id="new-mob-id" value="geometry.my_mob" placeholder="geometry.my_mob" spellcheck="false">
+                    <button id="new-mob-id-sync" type="button" title="Generoi nimestä">🔁</button>
+                </div>
+                <span class="modal-field-note">Export: <span id="new-mob-file-preview">my_mob_bedrock.json</span></span>
+            </div>
+            <div class="modal-field">
+                <label>Pohja</label>
+                <div id="new-mob-templates" class="modal-templates"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="new-mob-create" class="primary">🚀 Luo mobi</button>
+                <button id="new-mob-cancel">Peruuta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File inputs (hidden) -->
+    <input type="file" id="file-input-bedrock" accept=".json" style="display:none">
+    <input type="file" id="file-input-bbmodel" accept=".bbmodel,.json" style="display:none">
+    <input type="file" id="file-input-texture" accept="image/*" style="display:none">
+    <input type="file" id="file-input-save" accept=".json" style="display:none">
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

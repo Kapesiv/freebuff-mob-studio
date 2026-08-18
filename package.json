@@ -1,0 +1,17 @@
+{
+  "name": "freebuff-mob-studio",
+  "version": "0.1.0",
+  "description": "Web-based Blockbench-style 3D mob editor for Minecraft (Bedrock geometry + Java Edition export)",
+  "type": "module",
+  "scripts": {
+    "build:preview": "node build-preview.mjs",
+    "verify:uv": "node tools/verify-uv.js",
+    "verify:render": "node tools/verify-render.js",
+    "fetch:vanilla": "node tools/fetch-vanilla.js",
+    "start": "python3 -m http.server 8080"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "three": "^0.163.0"
+  }
+}
