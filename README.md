@@ -81,6 +81,9 @@ luurangot/bones, väritys ja tekstuurit) ja viedä suoraan **Bedrock Edition**
 - 💾 Autosave selaimen localStorageen (ei katoa reloadissa)
 - 📤 Bedrock-export (geometry.json, UV-offsetit + pivot-konversio), Java-export
   (element-malli rotations + display-osiolla)
+- 📸 **Save PNG**: yksi klikkaus → PNG-kuva mobista nykyisestä kamerakulmasta
+  (2× supersamplattu, ruudukko/gizmo/valintakorostus piilotetaan automaattisesti
+  ja palautetaan). Tiedostonimi `modelId_screenshot.png`
 - 📥 Bedrock-import (round-trip testattu)
 - 🔬 **UV-varmentaja** (`npm run verify:uv`): tarkistaa jokaisen kirjaston mobin
   kasvojen UV-asettelun automaattisesti — tekstuurin rajat, päällekkäisyydet,

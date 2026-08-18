@@ -1891,6 +1891,76 @@ function setupFileIO() {
         downloadJson(json, `${state.model.modelId.replace('geometry.', '')}_geckolib.json`);
         setStatus('Exported animations (Java/GeckoLib .animation.json)');
     });
+
+    document.getElementById('btn-screenshot').addEventListener('click', exportScreenshot);
+}
+
+/**
+ * 📸 Save PNG — tallentaa mobista PNG-kuvan nykyisestä kamerakulmasta.
+ * Piilottaa ruudukon, akselit, gizmon, HTML-overlayn ja valintakorostuksen,
+ * renderöi 2× tarkkuudella (supersamplaus) ja palauttaa kaiken ennalleen.
+ */
+function exportScreenshot() {
+    if (!renderer) {
+        setStatus('⚠️ 3D-näkymä ei ole käytössä (WebGL pois) — PNG:tä ei voi ottaa');
+        return;
+    }
+
+    // Piilota apuobjektit — tallennetaan tilat, jotta kaikki palautuu
+    const restores = [];
+    const hideObj = (o) => { restores.push(() => { o.visible = true; }); o.visible = false; };
+    hideObj(gridHelper);
+    hideObj(axesHelper);
+    if (transformControls.object) {
+        restores.push(() => { transformControls.visible = true; });
+        transformControls.visible = false;
+    }
+    const overlay = document.getElementById('viewport-overlay');
+    const overlayDisplay = overlay.style.display;
+    overlay.style.display = 'none';
+
+    // Valintakorostus (emissiivinen) pois kuvasta — vain valittu kuutio
+    let selEmiss = null;
+    if (state.selectedCube !== null && state.cubes[state.selectedCube]) {
+        const mat = state.cubes[state.selectedCube].material;
+        selEmiss = { hex: mat.emissive.getHex(), i: mat.emissiveIntensity };
+        if (state.emissiveTexture) { mat.emissive.set(0xffffff); mat.emissiveIntensity = 1; }
+        else { mat.emissive.set(0x000000); mat.emissiveIntensity = 0; }
+    }
+
+    try {
+        // 2× supersamplaus: isompi piirtoalue, CSS-asettelu pysyy (updateStyle=false)
+        const vp = document.getElementById('viewport');
+        const w = vp.clientWidth, h = vp.clientHeight;
+        renderer.setSize(w * 2, h * 2, false);
+        camera.aspect = (w * 2) / (h * 2);
+        camera.updateProjectionMatrix();
+        renderer.render(scene, camera);
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // Palauta näkymä ja lataa PNG
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.render(scene, camera);
+
+        const filename = `${state.model.modelId.replace('geometry.', '')}_screenshot.png`;
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setStatus(`📸 PNG ladattu (${filename})`);
+    } finally {
+        restores.forEach(f => f());
+        overlay.style.display = overlayDisplay;
+        if (selEmiss) {
+            const mat = state.cubes[state.selectedCube].material;
+            mat.emissive.set(selEmiss.hex);
+            mat.emissiveIntensity = selEmiss.i;
+        }
+    }
 }
 
 /**
