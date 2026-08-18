@@ -45,6 +45,7 @@ const state = {
     projectAnimations: {},     // name -> { length, tracks, posTracks } (editoitavat)
     currentAnimName: null,
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
+    packOptions: { behavior: 'neutral', health: 20, damage: 4 }, // 📦 Pack -dialogin valinnat
     modelVersion: 0
 };
 
@@ -62,6 +63,7 @@ if (saved && saved.model) {
     state.savedAnimation = saved.animation || null;
     state.savedProjectAnimations = saved.projectAnimations || null;
     state.savedCurrentAnimName = saved.currentAnimName || null;
+    state.packOptions = saved.packOptions || { behavior: 'neutral', health: 20, damage: 4 };
 } else {
     // Oletus: Deep Voidin ikoninen Stalker (sama hahmo kuin modin
     // kuvituksessa: pitkä tumma luurankohumanoidi, valkoiset hehkuvat
@@ -1662,6 +1664,7 @@ function loadTemplate(tpl) {
     state.emissiveDataURL = null;
     state.projectAnimations = {};
     state.currentAnimName = null;
+    state.packOptions = { behavior: 'neutral', health: 20, damage: 4 };
     const sel = document.getElementById('anim-select');
     if (sel) { sel.innerHTML = ''; sel.style.display = 'none'; }
     deselectAll();
@@ -1744,7 +1747,8 @@ function scheduleAutosave() {
                     tracks: state.animation.tracks
                 } : null,
                 projectAnimations: state.projectAnimations,
-                currentAnimName: state.currentAnimName
+                currentAnimName: state.currentAnimName,
+                packOptions: state.packOptions
             }));
         } catch (e) {
             console.warn('Autosave failed:', e);
@@ -1907,7 +1911,8 @@ function setupFileIO() {
                 length: state.animation.length,
                 tracks: state.animation.tracks
             } : null,
-            projectAnimations: state.projectAnimations
+            projectAnimations: state.projectAnimations,
+            packOptions: state.packOptions
         };
         downloadJson(data, `${state.model.modelId.replace('geometry.', '')}.mobstudio.json`);
         setStatus('Project saved');
@@ -1931,6 +1936,7 @@ function setupFileIO() {
                     state.textureDataURL = data.textureDataURL || null;
                     state.emissiveTexture = null;
                     state.emissiveDataURL = data.emissiveDataURL || null;
+                    state.packOptions = data.packOptions || { behavior: 'neutral', health: 20, damage: 4 };
                     if (state.animation && data.animation) {
                         state.animation.length = data.animation.length || 40;
                         state.animation.tracks = data.animation.tracks || {};
@@ -2129,6 +2135,13 @@ function setupFileIO() {
 
     function openPackDialog() {
         packNsInput.value = state.model.modelId.replace('geometry.', '');
+        // Palauta tallennetut käytös-/statistiikkavalinnat (projekti/autosave)
+        const po = state.packOptions || { behavior: 'neutral', health: 20, damage: 4 };
+        packBehaviorBtns.forEach((b) => b.classList.toggle('active', b.dataset.behavior === po.behavior));
+        packHealthInput.value = po.health;
+        packDamageInput.value = po.damage;
+        document.getElementById('pack-health-val').textContent = po.health;
+        document.getElementById('pack-damage-val').textContent = po.damage;
         packDialog.style.display = 'flex';
         drawEggPreview();
         updatePackFileList();
@@ -2154,13 +2167,19 @@ function setupFileIO() {
             packDamageInput.value = def.damage;
             document.getElementById('pack-health-val').textContent = def.health;
             document.getElementById('pack-damage-val').textContent = def.damage;
+            state.packOptions = { behavior: btn.dataset.behavior, health: def.health, damage: def.damage };
+            scheduleAutosave();
         });
     });
     packHealthInput.addEventListener('input', () => {
         document.getElementById('pack-health-val').textContent = packHealthInput.value;
+        if (state.packOptions) state.packOptions.health = parseInt(packHealthInput.value) || 20;
+        scheduleAutosave();
     });
     packDamageInput.addEventListener('input', () => {
         document.getElementById('pack-damage-val').textContent = packDamageInput.value;
+        if (state.packOptions) state.packOptions.damage = parseInt(packDamageInput.value) || 4;
+        scheduleAutosave();
     });
     packNsInput.addEventListener('input', updatePackFileList);
 
