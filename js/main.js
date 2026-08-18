@@ -50,6 +50,7 @@ const state = {
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
     symmetryEdit: false,       // symmetria-editointi: muokkaa toista puolta, toinen peilautuu livenä
     gamePreview: false,        // pelin näköinen esikatselu (Minecraft-valaistus + varjot)
+    gamePreviewDefault: true,  // kytke Game Preview automaattisesti mobin latauksen jälkeen
     gamePreviewNight: false,   // yötila: tumma taivas, kuunvalo, glow-boost
     _editorClearColor: 0x343a46, // editorin taustaväri talteen Game Preview -tilaa varten
     packOptions: { ...DEFAULT_PACK_OPTIONS }, // 📦 Pack -dialogin valinnat
@@ -280,6 +281,19 @@ function setGamePreview(on) {
 function setGamePreviewNight(on) {
     state.gamePreviewNight = on;
     applyGamePreviewLights();
+}
+
+/**
+ * Kytke Game Preview automaattisesti päälle mobin latauksen jälkeen
+ * (oletus päällä, kunnes käyttäjä sammuttaa sen). Synkronoi checkboxin
+ * ja shadow-kameran mallin koon mukaan.
+ */
+function applyGamePreviewDefault() {
+    if (!state.gamePreviewDefault) return;
+    const chk = document.getElementById('chk-game-preview');
+    if (chk && !chk.checked) chk.checked = true;
+    setGamePreview(true);
+    updateShadowBounds();
 }
 
 // Grid
@@ -1500,6 +1514,10 @@ function setupToolbar() {
     const gamePreviewChk = document.getElementById('chk-game-preview');
     if (gamePreviewChk) {
         gamePreviewChk.addEventListener('change', (e) => {
+            // Käyttäjän valinta on uusi oletus: kun käyttäjä sammuttaa
+            // Game Previewin, se pysyy pois seuraavillakin mobin latauksilla
+            // (kunnes käyttäjä laittaa sen uudelleen päälle).
+            state.gamePreviewDefault = e.target.checked;
             setGamePreview(e.target.checked);
             updateShadowBounds();
             setStatus(e.target.checked
@@ -2027,6 +2045,7 @@ function loadLibraryMob(mob) {
     applyTextureDataURL();
     rebuildModel();
     fitCameraToMob(mob);
+    applyGamePreviewDefault(); // Game Preview päälle latauksen jälkeen (oletus)
     scheduleAutosave();
     const tierTxt = mob.tier === 'boss' ? '👑 BOSSI' : '⚔️ minioni';
     setStatus(`✅ ${mob.name} (${tierTxt}, ${mob.size} lohkoa, pisteet ${mob.score}) ladattu — malli, tekstuuri ja animaatiot valmiina. Paina ▶ katsoaksesi!`);
@@ -2053,6 +2072,7 @@ function loadTemplate(tpl) {
     fitCameraToMob({
         fit: { center: [0, 8, 0], radius: 12 }
     });
+    applyGamePreviewDefault(); // Game Preview päälle latauksen jälkeen (oletus)
     updateProjectNameLabel();
     scheduleAutosave();
     setStatus(`🧱 ${tpl.name}-pohja luotu — muokkaa kuutioita, väritä UV-editorissa tai maalaa 3D:ssä`);
@@ -2253,6 +2273,7 @@ function setupNewMobDialog() {
         fitCameraToMob({
             fit: { center: [0, 8, 0], radius: 12 }
         });
+        applyGamePreviewDefault(); // Game Preview päälle uuden mobin luonnin jälkeen (oletus)
         updateProjectNameLabel();
         closeNewMobDialog();
         scheduleAutosave();
