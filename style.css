@@ -1085,6 +1085,42 @@ body {
     font-weight: 600;
 }
 
+/* ---- Resurssipaketti-dialogi ---- */
+.seg {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.seg button {
+    background: var(--button-bg);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+}
+.seg button:hover { background: var(--button-hover); }
+.seg button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d1117;
+    font-weight: 600;
+}
+.pack-file-list {
+    margin-top: 6px;
+    max-height: 120px;
+    overflow: auto;
+    padding: 6px 8px;
+    background: rgba(0,0,0,0.25);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    color: #9fb0c3;
+    white-space: pre;
+}
+
 .modal-actions button.primary:hover {
     filter: brightness(1.1);
 }

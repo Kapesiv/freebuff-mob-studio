@@ -20,6 +20,7 @@
                 <button id="btn-export-java" title="Export Java Edition">Export Java</button>
                 <button id="btn-export-anim-bedrock" title="Export animations (.animation.json, Bedrock)">Export Anim Bedrock</button>
                 <button id="btn-export-anim-java" title="Export animations (GeckoLib .animation.json, Java)">Export Anim Java</button>
+                <button id="btn-export-pack" title="📦 Lataa valmis resurssipaketti (.zip) — malli + tekstuurit + animaatiot suoraan peliin">📦 Pack</button>
                 <button id="btn-screenshot" title="📸 Tallenna PNG-kuva mobista nykyisestä kamerakulmasta (2× tarkkuus)">📸 Save PNG</button>
             </div>
         </header>
@@ -276,6 +277,32 @@
             <div class="modal-actions">
                 <button id="new-mob-create" class="primary">🚀 Luo mobi</button>
                 <button id="new-mob-cancel">Peruuta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resurssipaketti-dialogi -->
+    <div id="pack-dialog" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <h2>📦 Lataa resurssipaketti</h2>
+            <p class="modal-hint">Malli, tekstuurit ja animaatiot valmiina kansiorakenteessa — suoraan peliin laitettavaksi.</p>
+            <div class="modal-field">
+                <label>Formaatti</label>
+                <div id="pack-formats" class="seg">
+                    <button type="button" data-fmt="java" class="active">☕ Java (GeckoLib)</button>
+                    <button type="button" data-fmt="bedrock">🎮 Bedrock</button>
+                    <button type="button" data-fmt="both">Molemmat</button>
+                </div>
+            </div>
+            <div class="modal-field">
+                <label for="pack-namespace">Namespace (modin id)</label>
+                <input type="text" id="pack-namespace" value="freebuff" spellcheck="false" placeholder="freebuff">
+                <span class="modal-field-note" id="pack-note">Tiedostot näkyvät latauksessa</span>
+            </div>
+            <div id="pack-file-list" class="pack-file-list"></div>
+            <div class="modal-actions">
+                <button id="pack-download" class="primary">⬇️ Lataa .zip</button>
+                <button id="pack-cancel">Peruuta</button>
             </div>
         </div>
     </div>

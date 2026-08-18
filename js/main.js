@@ -8,6 +8,8 @@ import { createExampleMob } from './formats/example.js';
 import { History } from './utils/history.js';
 import { applyBoxTextureUVs, computeFaceRects } from './utils/boxuv.js';
 import { PALETTE_CATEGORIES, loadCustomColors, saveCustomColors, normalizeHex } from './utils/palette.js';
+import { zipFiles } from './utils/zip.js';
+import { buildResourcePack, previewPackFiles } from './utils/pack-export.js';
 import { initUVEditor } from './uv-editor.js';
 import { initAnimation } from './animation.js';
 import { LIBRARY_MOBS, prepareMob } from './mobs/library.js';
@@ -2080,6 +2082,75 @@ function setupFileIO() {
         const json = exportJavaAnimations(state.model, animations);
         downloadJson(json, `${state.model.modelId.replace('geometry.', '')}_geckolib.json`);
         setStatus('Exported animations (Java/GeckoLib .animation.json)');
+    });
+
+    // ---- 📦 resurssipaketti ---------------------------------------
+    const packDialog = document.getElementById('pack-dialog');
+    const packFmtBtns = document.querySelectorAll('#pack-formats button');
+    const packNsInput = document.getElementById('pack-namespace');
+    const packFileList = document.getElementById('pack-file-list');
+
+    function currentPackFormats() {
+        const active = document.querySelector('#pack-formats button.active');
+        const fmt = active ? active.dataset.fmt : 'java';
+        return fmt === 'both' ? ['java', 'bedrock'] : [fmt];
+    }
+
+    function slugify(value) {
+        return String(value).replace(/\s+/g, '_').replace(/[^a-z0-9_.-]/gi, '').toLowerCase();
+    }
+
+    function updatePackFileList() {
+        const id = state.model.modelId.replace('geometry.', '');
+        const ns = slugify(packNsInput.value || id) || id;
+        const hasAnims = !!(state.projectAnimations && Object.keys(state.projectAnimations).length > 0);
+        const paths = previewPackFiles(currentPackFormats(), id, ns, hasAnims);
+        packFileList.textContent = paths.join('\n');
+        packFileList.title = hasAnims ? '' : 'Ei animaatioita — vain malli + tekstuuri';
+    }
+
+    function openPackDialog() {
+        packNsInput.value = state.model.modelId.replace('geometry.', '');
+        packDialog.style.display = 'flex';
+        updatePackFileList();
+    }
+    function closePackDialog() { packDialog.style.display = 'none'; }
+
+    document.getElementById('btn-export-pack').addEventListener('click', openPackDialog);
+    document.getElementById('pack-cancel').addEventListener('click', closePackDialog);
+    packDialog.addEventListener('click', (e) => { if (e.target === packDialog) closePackDialog(); });
+    packFmtBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            packFmtBtns.forEach((b) => b.classList.remove('active'));
+            btn.classList.add('active');
+            updatePackFileList();
+        });
+    });
+    packNsInput.addEventListener('input', updatePackFileList);
+
+    document.getElementById('pack-download').addEventListener('click', () => {
+        const formats = currentPackFormats();
+        const id = state.model.modelId.replace('geometry.', '');
+        const ns = slugify(packNsInput.value || id) || id;
+        ensureTexture();
+        const animations = currentAnimations(); // palauttaa null jos ei animaatioita
+        const { files } = buildResourcePack(state.model, {
+            formats,
+            namespace: ns,
+            projectName: state.projectName || id,
+            animations,
+            textureCanvas: state.textureCanvas,
+        });
+        const zip = zipFiles(files);
+        const blob = new Blob([zip], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${id}_resource_pack.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+        closePackDialog();
+        setStatus(`📦 ${formats.length === 2 ? 'Java + Bedrock' : formats[0] === 'java' ? 'Java (GeckoLib)' : 'Bedrock'} -paketti ladattu (${files.length} tiedostoa) — ${id}_resource_pack.zip`);
     });
 
     document.getElementById('btn-screenshot').addEventListener('click', exportScreenshot);
