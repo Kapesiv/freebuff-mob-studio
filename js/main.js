@@ -49,6 +49,8 @@ const state = {
     currentAnimName: null,
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
     symmetryEdit: false,       // symmetria-editointi: muokkaa toista puolta, toinen peilautuu livenä
+    gamePreview: false,        // pelin näköinen esikatselu (Minecraft-valaistus + varjot)
+    _editorClearColor: 0x343a46, // editorin taustaväri talteen Game Preview -tilaa varten
     packOptions: { ...DEFAULT_PACK_OPTIONS }, // 📦 Pack -dialogin valinnat
     modelVersion: 0
 };
@@ -99,6 +101,7 @@ try {
     // black-textured mobs (Weaver of Souls is ~86% black) stay visible.
     renderer.setClearColor(0x343a46);
     renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // pehmeät, Minecraft-tyyliset varjot
 } catch (e) {
     console.warn('WebGL unavailable — running without the 3D viewport:', e.message);
 }
@@ -108,13 +111,25 @@ const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
 camera.position.set(20, 15, 20);
 
-// Lighting
+// ---- Valaistus (editori + pelin näköinen esikatselu) -----------------
+// Editorin valot: tasainen, jotta mustat mobit näkyvät.
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.68);
 scene.add(ambientLight);
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.95);
 dirLight.position.set(10, 20, 10);
 dirLight.castShadow = true;
+// Shadow-kamera säädetään mallin koon mukaan (updateShadowBounds) —
+// oletukset riittävät keskikokoisille mobeille.
+dirLight.shadow.mapSize.set(2048, 2048);
+dirLight.shadow.camera.near = 1;
+dirLight.shadow.camera.far = 200;
+dirLight.shadow.camera.left = -40;
+dirLight.shadow.camera.right = 40;
+dirLight.shadow.camera.top = 40;
+dirLight.shadow.camera.bottom = -40;
+dirLight.shadow.bias = -0.0005;
 scene.add(dirLight);
+scene.add(dirLight.target);
 // Front fill light: vanilla mob faces point toward -Z, and the main
 // light comes from +X/+Z — without this the face is always in shadow.
 const fillLight = new THREE.DirectionalLight(0xffffff, 1.0);
@@ -126,6 +141,94 @@ rimLight.position.set(16, 12, -20);
 scene.add(rimLight);
 const ambientBoost = new THREE.AmbientLight(0xffffff, 0.2);
 scene.add(ambientBoost);
+
+// ---- Pelin näköinen esikatselu (Game Preview) --------------------------
+// Minecraftin valaistus: sininen taivas + lämmin aurinko (hemisphere) ja
+// pehmeä varjo maatasolla. Editorivalot himmenevät, jotta pelin tunnelma
+// välittyy; glow-kerros hehkuu valaistuksesta riippumatta (emissive).
+const skyColor = 0x9dc9ff;   // Minecraft-taivas
+const groundColor = 0x6b7f4e; // ruoho/maa
+const hemisphereLight = new THREE.HemisphereLight(skyColor, groundColor, 0.0);
+scene.add(hemisphereLight);
+
+// Maataso johon varjot osuvat — Minecraftin ruohovärinen.
+const groundPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(120, 120),
+    new THREE.MeshStandardMaterial({
+        color: 0x6b7f4e,
+        roughness: 1.0,
+        metalness: 0.0
+    })
+);
+groundPlane.rotation.x = -Math.PI / 2;
+groundPlane.position.y = 0;
+groundPlane.receiveShadow = true;
+groundPlane.visible = false; // näytetään vain Game Preview -tilassa
+scene.add(groundPlane);
+
+const EDITOR_LIGHTS = {
+    ambient: 0.68, dir: 0.95, fill: 1.0, rim: 0.35, boost: 0.2, hemi: 0.0
+};
+const GAME_LIGHTS = {
+    ambient: 0.18, dir: 1.35, fill: 0.15, rim: 0.05, boost: 0.0, hemi: 0.85
+};
+
+/** Päivitä shadow-kameran ja maatason koko mallin bounding-boxin mukaan. */
+function updateShadowBounds() {
+    if (!dirLight) return;
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const bone of state.model.bones) {
+        for (const c of bone.cubes) {
+            const o = c.origin, s = c.size;
+            minX = Math.min(minX, o[0]); maxX = Math.max(maxX, o[0] + s[0]);
+            minY = Math.min(minY, o[1]); maxY = Math.max(maxY, o[1] + s[1]);
+            minZ = Math.min(minZ, o[2]); maxZ = Math.max(maxZ, o[2] + s[2]);
+        }
+    }
+    if (!isFinite(minX)) return;
+    const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
+    const span = Math.max(maxX - minX, maxZ - minZ, 8) / 2 + 6; // marginaali
+    dirLight.target.position.set(cx, 0, cz);
+    dirLight.position.set(cx + 20, 40, cz + 20);
+    const cam = dirLight.shadow.camera;
+    cam.left = -span; cam.right = span; cam.top = span; cam.bottom = -span;
+    cam.updateProjectionMatrix();
+    groundPlane.position.x = cx;
+    groundPlane.position.z = cz;
+    groundPlane.geometry.dispose();
+    groundPlane.geometry = new THREE.PlaneGeometry(span * 6, span * 6);
+    groundPlane.geometry.rotateX(-Math.PI / 2);
+    groundPlane.rotation.x = 0;
+}
+
+/** Aseta pelin näköinen esikatselu päälle/pois. */
+function setGamePreview(on) {
+    state.gamePreview = on;
+    const L = on ? GAME_LIGHTS : EDITOR_LIGHTS;
+    ambientLight.intensity = L.ambient;
+    dirLight.intensity = L.dir;
+    fillLight.intensity = L.fill;
+    rimLight.intensity = L.rim;
+    ambientBoost.intensity = L.boost;
+    hemisphereLight.intensity = L.hemi;
+    groundPlane.visible = on;
+    gridHelper.visible = on ? false : document.getElementById('chk-grid').checked;
+    axesHelper.visible = !on;
+    if (renderer) {
+        if (on) {
+            // Pelin näköinen taivas — säilytetään käyttäjän bg-väri talteen
+            state._editorClearColor = renderer.getClearColor(new THREE.Color()).getHex();
+            renderer.setClearColor(skyColor);
+        } else {
+            renderer.setClearColor(state._editorClearColor);
+        }
+    }
+    // Varjot päälle/pois: castShadow vain pelinäkymässä pitää editorin kevyenä
+    for (const mesh of state.cubes) {
+        mesh.castShadow = on;
+        mesh.receiveShadow = on;
+    }
+}
 
 // Grid
 const gridHelper = new THREE.GridHelper(32, 32, 0x30363d, 0x21262d);
@@ -852,6 +955,11 @@ function rebuildModel() {
     // (aiemmin canvas pysyi vanhassa koossa mallin vaihtuessa)
     if (state.uvEditor) state.uvEditor.resize();
     if (state.animation) state.animation.applyPose();
+    // Shadow-kamera ja maataso mallin koon mukaan + varjot jos pelinäkymä päällä
+    if (state.gamePreview) {
+        updateShadowBounds();
+        for (const mesh of state.cubes) { mesh.castShadow = true; mesh.receiveShadow = true; }
+    }
     checkRenderConsistency();
 }
 
@@ -1327,12 +1435,27 @@ function setupToolbar() {
     });
 
     document.getElementById('chk-grid').addEventListener('change', (e) => {
-        gridHelper.visible = e.target.checked;
+        if (!state.gamePreview) gridHelper.visible = e.target.checked;
     });
 
     document.getElementById('bg-color').addEventListener('input', (e) => {
-        if (renderer) renderer.setClearColor(e.target.value);
+        if (renderer && !state.gamePreview) renderer.setClearColor(e.target.value);
     });
+
+    // 🎮 Game Preview — pelin näköinen esikatselu: Minecraft-valaistus,
+    // pehmeät varjot ja glow-kerros ennen paketin latausta.
+    const gamePreviewChk = document.getElementById('chk-game-preview');
+    if (gamePreviewChk) {
+        gamePreviewChk.addEventListener('change', (e) => {
+            setGamePreview(e.target.checked);
+            updateShadowBounds();
+            setStatus(e.target.checked
+                ? '🎮 Pelin näköinen esikatselu päällä — Minecraft-valaistus, varjot ja glow (editorivalot pois)'
+                : 'Editorinäkymä palautettu');
+        });
+        // Pidä varjot editorissa pois päältä oletuksena — kevyempi
+        setGamePreview(false);
+    }
 }
 
 // ==================== MOB LIBRARY ====================
