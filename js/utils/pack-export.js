@@ -100,6 +100,78 @@ function packMcmeta(name) {
     };
 }
 
+/** Datapakin pack.mcmeta (pack_format 48 = Java 1.21). */
+function datapackMcmeta(name) {
+    return {
+        pack: {
+            pack_format: 48,
+            description: `Freebuff Mob Studio — ${name} (summon + spawn)`,
+        },
+    };
+}
+
+/**
+ * Paper-item override: paper + custom_model_data 1001 → mobin malli.
+ * Toimii Java 1.19.4–1.21.4 (1.21.5+ käyttää components-predikaattia).
+ */
+function paperOverride(id) {
+    return {
+        parent: 'minecraft:item/generated',
+        overrides: [
+            { predicate: { custom_model_data: 1001 }, model: `freebuff:item/${id}` },
+        ],
+    };
+}
+
+/**
+ * Summon-funktio: nimetty armor stand, joka kantaa mallia paperina.
+ * Java ei voi luoda uutta entity-tyyppiä datapaketista, joten tämä on
+ * vanilla-tapa "spawnata mobi komennolla heti". GeckoLib-modissa oikea
+ * mobi olisi /summon <modid>:<id>.
+ */
+function summonFunction(name, id, ns) {
+    const display = JSON.stringify({ text: name, italic: false });
+    return [
+        `# ── Freebuff Mob Studio — ${name} ─────────────────────────`,
+        '# 1) Laita tämä resurssipaketti kansioon .../resourcepacks/',
+        '# 2) Laita datapack-kansio .../saves/<maailma>/datapacks/',
+        '# 3) Pelissä: /reload',
+        `# Spawnaa mobi: /function ${ns}:summon_${id}`,
+        '#',
+        '# Java ei voi luoda uutta entity-tyyppiä datapaketista — tämä luo',
+        '# nimetyn armor standin, joka näyttää mallin (paper + custom_model_data).',
+        `# GeckoLib-modissa käytä /summon <modid>:${id} ja spawn/${id}.json on pohja.`,
+        `summon armor_stand ~ ~1 ~ {CustomName:'${display}',CustomNameVisible:1b,NoGravity:0b,Small:0b,ShowArms:0b,ArmorItems:[{},{},{},{id:"minecraft:paper",Count:1b,tag:{CustomModelData:1001}}]}`,
+        '',
+    ].join('\n');
+}
+
+/**
+ * Spawn-säännöt Java 1.21.2+ -muodossa (data/<ns>/spawn/<id>.json).
+ * Minecraft hyväksyy //-kommentit data-JSONeissa. Tämä on valmis pohja:
+ * Java ei voi luoda uutta entity-tyyppiä datapaketista, joten type on
+ * vaihdettava modin rekisteröityyn entity-tyyppiin (esim. <modid>:<id>).
+ */
+function spawnTemplate(name, id, ns) {
+    return [
+        '{',
+        `  // Freebuff Mob Studio — ${name} — luonnolliset spawn-säännöt (Java 1.21.2+)`,
+        '  // HUOM: Java ei voi luoda uutta entity-tyyppiä datapaketista.',
+        `  // Vaihda "type" modisi entity-tyyppiin (esim. "<modid>:${id}" GeckoLib-modissa),`,
+        '  // niin mobi alkaa spawnata luonnosta. Tämä on valmis pohja.',
+        '  "spawns": [',
+        '    {',
+        '      "type": "minecraft:zombie",',
+        '      "weight": 10,',
+        '      "minCount": 1,',
+        '      "maxCount": 2',
+        '    }',
+        '  ]',
+        '}',
+        '',
+    ].join('\n');
+}
+
 /** Mallin maailmankoordinaattien ulottuvuus → törmäyslaatikko. */
 function modelBounds(model) {
     let min = [Infinity, Infinity, Infinity];
@@ -290,7 +362,14 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
         out.push('pack.mcmeta', `assets/${ns}/geo/${id}.geo.json`, `assets/${ns}/textures/entity/${id}.png`);
         if (hasGlow) out.push(`assets/${ns}/textures/entity/${id}_glow.png`);
         if (hasAnims) out.push(`assets/${ns}/animations/${id}.animation.json`);
-        out.push(`assets/freebuff/models/item/${id}.json`, `assets/freebuff/textures/item/${id}.png`);
+        out.push(
+            `assets/freebuff/models/item/${id}.json`,
+            `assets/freebuff/textures/item/${id}.png`,
+            'assets/minecraft/models/item/paper.json',
+            'datapack/pack.mcmeta',
+            `datapack/data/${ns}/functions/summon_${id}.mcfunction`,
+            `datapack/data/${ns}/spawn/${id}.json`,
+        );
     }
     return out;
 }
@@ -342,6 +421,14 @@ export function buildResourcePack(model, opts = {}) {
         // Vanilla Java-edition item-malli (tekstuuriviittaukset ovat freebuff-namespacessa)
         files.push({ path: `assets/freebuff/models/item/${id}.json`, data: jsonBytes(exportJavaModel(model, id)) });
         if (png) files.push({ path: `assets/freebuff/textures/item/${id}.png`, data: png });
+        // Java ei voi luoda uutta entity-tyyppiä datapaketista — paper-override
+        // (custom_model_data 1001 → mobin malli) + datapakki, jolla mobi
+        // spawnataan komennolla nimettynä armor standina. GeckoLib-modissa
+        // oikea mobi on /summon <modid>:<id> ja spawn.json on valmis pohja.
+        files.push({ path: 'assets/minecraft/models/item/paper.json', data: jsonBytes(paperOverride(id)) });
+        files.push({ path: 'datapack/pack.mcmeta', data: jsonBytes(datapackMcmeta(name)) });
+        files.push({ path: `datapack/data/${ns}/functions/summon_${id}.mcfunction`, data: enc.encode(summonFunction(name, id, ns)) });
+        files.push({ path: `datapack/data/${ns}/spawn/${id}.json`, data: enc.encode(spawnTemplate(name, id, ns)) });
     }
 
     return { files, filePaths: files.map((f) => f.path) };
