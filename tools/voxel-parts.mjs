@@ -52,7 +52,7 @@ export function boxesToCells(boxes) {
     return { cells, cellBox };
 }
 
-function levelComps(cells, y) {
+export function levelComps(cells, y) {
     const seen = new Set();
     const comps = [];
     for (const k of cells) {
@@ -74,7 +74,7 @@ function levelComps(cells, y) {
     return comps;
 }
 
-function bboxOf(keys) {
+export function bboxOf(keys) {
     let mnX = Infinity, mxX = -Infinity, mnY = Infinity, mxY = -Infinity, mnZ = Infinity, mxZ = -Infinity;
     for (const k of keys) {
         const [x, y, z] = parseKey(k);
