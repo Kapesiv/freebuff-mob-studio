@@ -299,6 +299,16 @@
                 <input type="text" id="pack-namespace" value="freebuff" spellcheck="false" placeholder="freebuff">
                 <span class="modal-field-note" id="pack-note">Tiedostot näkyvät latauksessa</span>
             </div>
+            <div class="modal-field pack-egg-row">
+                <canvas id="pack-egg-canvas" width="48" height="60" title="Spawn-eggin värit tekstuurin keskiarvosta"></canvas>
+                <div class="pack-egg-info">
+                    <div class="pack-egg-label">🥚 Spawn-eggin esikatselu</div>
+                    <div class="pack-egg-colors">
+                        <span class="pack-egg-color"><i id="pack-egg-base-swatch"></i><code id="pack-egg-base">#…</code></span>
+                        <span class="pack-egg-color"><i id="pack-egg-overlay-swatch"></i><code id="pack-egg-overlay">#…</code></span>
+                    </div>
+                </div>
+            </div>
             <div id="pack-file-list" class="pack-file-list"></div>
             <div class="modal-actions">
                 <button id="pack-download" class="primary">⬇️ Lataa .zip</button>

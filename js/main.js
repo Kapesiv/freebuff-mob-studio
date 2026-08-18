@@ -2116,6 +2116,7 @@ function setupFileIO() {
     function openPackDialog() {
         packNsInput.value = state.model.modelId.replace('geometry.', '');
         packDialog.style.display = 'flex';
+        drawEggPreview();
         updatePackFileList();
     }
     function closePackDialog() { packDialog.style.display = 'none'; }
@@ -2235,6 +2236,60 @@ function exportScreenshot() {
  * (with the live editor track merged into the selected one), or the
  * single editor animation.
  */
+/**
+ * Piirtää spawn-eggin esikatselun 📦 Pack -dialogiin: munan kuori
+ * tekstuurin keskiarvoväristä + vanilla-tyylinen täpläkuvio overlay-värillä.
+ */
+function drawEggPreview() {
+    const canvas = document.getElementById('pack-egg-canvas');
+    if (!canvas) return;
+    ensureTexture();
+    const colors = averageEggColors(state.textureCanvas) || { base: '#7da06a', overlay: '#4a5f3f' };
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Munan kuori (ellipsi, alhaalta hieman leveämpi)
+    ctx.save();
+    ctx.translate(W / 2, H * 0.55);
+    ctx.scale(1, 1.18);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, W * 0.36, H * 0.36, 0, 0, Math.PI * 2);
+    ctx.fillStyle = colors.base;
+    ctx.fill();
+    // Alavalon varjostus
+    ctx.beginPath();
+    ctx.ellipse(0, H * 0.14, W * 0.34, H * 0.24, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fill();
+    // Ylävalon heijastus
+    ctx.beginPath();
+    ctx.ellipse(-W * 0.1, -H * 0.2, W * 0.16, H * 0.12, -0.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fill();
+    ctx.restore();
+
+    // Vanilla-tyylinen täpläkuvio overlay-värillä (kiinteä asetelma)
+    const spots = [
+        [0.30, 0.26, 0.055], [0.63, 0.20, 0.045], [0.56, 0.36, 0.065],
+        [0.30, 0.44, 0.05],  [0.70, 0.52, 0.06],  [0.26, 0.62, 0.05],
+        [0.52, 0.66, 0.065], [0.71, 0.74, 0.045], [0.40, 0.80, 0.05],
+        [0.61, 0.90, 0.04],  [0.47, 0.34, 0.03],  [0.64, 0.44, 0.035],
+    ];
+    ctx.fillStyle = colors.overlay;
+    for (const [sx, sy, r] of spots) {
+        ctx.beginPath();
+        ctx.arc(W * sx, H * sy, Math.max(1.2, W * r), 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    // Väritiedot
+    document.getElementById('pack-egg-base-swatch').style.background = colors.base;
+    document.getElementById('pack-egg-overlay-swatch').style.background = colors.overlay;
+    document.getElementById('pack-egg-base').textContent = colors.base;
+    document.getElementById('pack-egg-overlay').textContent = colors.overlay;
+}
+
 /** Spawn-eggin värit tekstuurin keskiarvosta (4×4 alasample). */
 function averageEggColors(canvas) {
     try {

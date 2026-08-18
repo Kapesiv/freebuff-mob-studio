@@ -1107,6 +1107,49 @@ body {
     color: #0d1117;
     font-weight: 600;
 }
+.pack-egg-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+#pack-egg-canvas {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: radial-gradient(circle at 50% 35%, #2b313a, #16191e 75%);
+}
+.pack-egg-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.pack-egg-label {
+    font-size: 12px;
+    color: var(--text);
+}
+.pack-egg-colors {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.pack-egg-color {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #9fb0c3;
+}
+.pack-egg-color i {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.4);
+}
+.pack-egg-color code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: #c8d0da;
+}
+
 .pack-file-list {
     margin-top: 6px;
     max-height: 120px;
