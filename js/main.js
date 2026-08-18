@@ -22,6 +22,7 @@ import { parseBBModel } from './formats/bbmodel.js';
 // joten modimobien hehku ei säilyisi) — oletuksena ladataan oikea
 // Deep Void -mobi (Stalker) kirjastosta.
 const AUTOSAVE_KEY = 'freebuff_mobstudio_project_v5';
+const DEFAULT_PACK_OPTIONS = { behavior: 'neutral', health: 20, damage: 4, speed: 0.25, jump: 1, flying: false };
 
 // ==================== STATE ====================
 const state = {
@@ -45,7 +46,7 @@ const state = {
     projectAnimations: {},     // name -> { length, tracks, posTracks } (editoitavat)
     currentAnimName: null,
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
-    packOptions: { behavior: 'neutral', health: 20, damage: 4 }, // 📦 Pack -dialogin valinnat
+    packOptions: { ...DEFAULT_PACK_OPTIONS }, // 📦 Pack -dialogin valinnat
     modelVersion: 0
 };
 
@@ -63,7 +64,7 @@ if (saved && saved.model) {
     state.savedAnimation = saved.animation || null;
     state.savedProjectAnimations = saved.projectAnimations || null;
     state.savedCurrentAnimName = saved.currentAnimName || null;
-    state.packOptions = saved.packOptions || { behavior: 'neutral', health: 20, damage: 4 };
+    state.packOptions = saved.packOptions || { ...DEFAULT_PACK_OPTIONS };
 } else {
     // Oletus: Deep Voidin ikoninen Stalker (sama hahmo kuin modin
     // kuvituksessa: pitkä tumma luurankohumanoidi, valkoiset hehkuvat
@@ -1664,7 +1665,7 @@ function loadTemplate(tpl) {
     state.emissiveDataURL = null;
     state.projectAnimations = {};
     state.currentAnimName = null;
-    state.packOptions = { behavior: 'neutral', health: 20, damage: 4 };
+    state.packOptions = { ...DEFAULT_PACK_OPTIONS };
     const sel = document.getElementById('anim-select');
     if (sel) { sel.innerHTML = ''; sel.style.display = 'none'; }
     deselectAll();
@@ -1936,7 +1937,7 @@ function setupFileIO() {
                     state.textureDataURL = data.textureDataURL || null;
                     state.emissiveTexture = null;
                     state.emissiveDataURL = data.emissiveDataURL || null;
-                    state.packOptions = data.packOptions || { behavior: 'neutral', health: 20, damage: 4 };
+                    state.packOptions = data.packOptions || { ...DEFAULT_PACK_OPTIONS };
                     if (state.animation && data.animation) {
                         state.animation.length = data.animation.length || 40;
                         state.animation.tracks = data.animation.tracks || {};
@@ -2098,7 +2099,14 @@ function setupFileIO() {
     const packBehaviorBtns = document.querySelectorAll('#pack-behavior button');
     const packHealthInput = document.getElementById('pack-health');
     const packDamageInput = document.getElementById('pack-damage');
-    const BEHAVIOR_DEFAULTS = { passive: { health: 10, damage: 0 }, neutral: { health: 20, damage: 4 }, hostile: { health: 30, damage: 6 } };
+    const packSpeedInput = document.getElementById('pack-speed');
+    const packJumpInput = document.getElementById('pack-jump');
+    const packFlyingInput = document.getElementById('pack-flying');
+    const BEHAVIOR_DEFAULTS = {
+        passive: { health: 10, damage: 0, speed: 0.30 },
+        neutral: { health: 20, damage: 4, speed: 0.25 },
+        hostile: { health: 30, damage: 6, speed: 0.35 },
+    };
 
     function currentPackBehavior() {
         const active = document.querySelector('#pack-behavior button.active');
@@ -2136,12 +2144,17 @@ function setupFileIO() {
     function openPackDialog() {
         packNsInput.value = state.model.modelId.replace('geometry.', '');
         // Palauta tallennetut käytös-/statistiikkavalinnat (projekti/autosave)
-        const po = state.packOptions || { behavior: 'neutral', health: 20, damage: 4 };
+        const po = { ...DEFAULT_PACK_OPTIONS, ...(state.packOptions || {}) };
         packBehaviorBtns.forEach((b) => b.classList.toggle('active', b.dataset.behavior === po.behavior));
         packHealthInput.value = po.health;
         packDamageInput.value = po.damage;
         document.getElementById('pack-health-val').textContent = po.health;
         document.getElementById('pack-damage-val').textContent = po.damage;
+        packSpeedInput.value = Math.round(po.speed * 100);
+        document.getElementById('pack-speed-val').textContent = po.speed.toFixed(2);
+        packJumpInput.value = po.jump ? 1 : 0;
+        document.getElementById('pack-jump-val').textContent = po.jump ? 'päällä' : 'pois';
+        packFlyingInput.checked = !!po.flying;
         packDialog.style.display = 'flex';
         drawEggPreview();
         updatePackFileList();
@@ -2167,7 +2180,16 @@ function setupFileIO() {
             packDamageInput.value = def.damage;
             document.getElementById('pack-health-val').textContent = def.health;
             document.getElementById('pack-damage-val').textContent = def.damage;
-            state.packOptions = { behavior: btn.dataset.behavior, health: def.health, damage: def.damage };
+            packSpeedInput.value = Math.round(def.speed * 100);
+            document.getElementById('pack-speed-val').textContent = def.speed.toFixed(2);
+            state.packOptions = {
+                behavior: btn.dataset.behavior,
+                health: def.health,
+                damage: def.damage,
+                speed: def.speed,
+                jump: packJumpInput.value === '1',
+                flying: packFlyingInput.checked,
+            };
             scheduleAutosave();
         });
     });
@@ -2179,6 +2201,22 @@ function setupFileIO() {
     packDamageInput.addEventListener('input', () => {
         document.getElementById('pack-damage-val').textContent = packDamageInput.value;
         if (state.packOptions) state.packOptions.damage = parseInt(packDamageInput.value) || 4;
+        scheduleAutosave();
+    });
+    packSpeedInput.addEventListener('input', () => {
+        const v = (parseInt(packSpeedInput.value) || 25) / 100;
+        document.getElementById('pack-speed-val').textContent = v.toFixed(2);
+        if (state.packOptions) state.packOptions.speed = v;
+        scheduleAutosave();
+    });
+    packJumpInput.addEventListener('input', () => {
+        const on = packJumpInput.value === '1';
+        document.getElementById('pack-jump-val').textContent = on ? 'päällä' : 'pois';
+        if (state.packOptions) state.packOptions.jump = on ? 1 : 0;
+        scheduleAutosave();
+    });
+    packFlyingInput.addEventListener('change', () => {
+        if (state.packOptions) state.packOptions.flying = packFlyingInput.checked;
         scheduleAutosave();
     });
     packNsInput.addEventListener('input', updatePackFileList);
@@ -2201,6 +2239,9 @@ function setupFileIO() {
                 type: currentPackBehavior(),
                 health: parseInt(packHealthInput.value) || 20,
                 damage: parseInt(packDamageInput.value) || 4,
+                speed: (parseInt(packSpeedInput.value) || 25) / 100,
+                jump: packJumpInput.value === '1',
+                flying: packFlyingInput.checked,
             },
         });
         const zip = zipFiles(files);

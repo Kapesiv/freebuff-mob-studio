@@ -231,20 +231,24 @@ function bedrockEntityFile(model, id, ns, animations, eggColors) {
 
 /**
  * BP:n behavior-entity — peruskomponentit, joilla mobi toimii ja taistelee.
- * @param opts { type: 'passive'|'neutral'|'hostile', health: number, damage: number }
+ * @param opts { type, health, damage, speed, jump, flying }
+ *   speed 0.05–1.0 (minecraft:movement), jump true/false (jump.static),
+ *   flying true → can_fly + navigation.fly + movement.fly + random_fly.
+ *   HUOM: Bedrock ei säädä hyppykorkeutta erikseen — se seuraa nopeutta.
  */
 function bedrockEntityBehavior(model, id, ns, opts = {}) {
     const box = modelBounds(model);
     const type = opts.type || 'neutral';
     const health = Math.max(1, Math.round(opts.health ?? 20));
     const damage = Math.max(0, Math.round(opts.damage ?? 4));
+    const speed = Math.min(1, Math.max(0.05, opts.speed ?? 0.25));
+    const canJump = opts.jump !== false;
+    const flying = !!opts.flying;
 
     const components = {
         'minecraft:type_family': { family: ['freebuff', 'mob'] },
         'minecraft:health': { value: health, max: health },
-        'minecraft:movement': { value: 0.25 },
-        'minecraft:movement.basic': {},
-        'minecraft:jump.static': {},
+        'minecraft:movement': { value: Math.round(speed * 100) / 100 },
         'minecraft:collision_box': { width: box.width, height: box.height },
         'minecraft:physics': {},
         'minecraft:pushable': { is_pushable: true, is_pushable_by_piston: true },
@@ -253,13 +257,24 @@ function bedrockEntityBehavior(model, id, ns, opts = {}) {
             despawn_from_distance: { min_distance: 32, max_distance: 128 },
         },
         'minecraft:behavior.float': { priority: 0 },
-        'minecraft:behavior.random_stroll': { priority: 4, speed_multiplier: 1.0 },
         'minecraft:behavior.look_at_player': { priority: 5, probability: 0.02 },
         'minecraft:damage_sensor': {
             triggers: [{ cause: 'fall', deals_damage: false }],
         },
         'minecraft:scale': { value: 1.0 },
     };
+
+    if (flying) {
+        // Lentävä mobi — parrotin resepti: ei kävele eikä hyppää
+        components['minecraft:can_fly'] = {};
+        components['minecraft:navigation.fly'] = { can_path_over_water: true, can_path_from_air: true };
+        components['minecraft:movement.fly'] = {};
+        components['minecraft:behavior.random_fly'] = { priority: 4, speed_multiplier: 1.0 };
+    } else {
+        components['minecraft:movement.basic'] = {};
+        if (canJump) components['minecraft:jump.static'] = {};
+        components['minecraft:behavior.random_stroll'] = { priority: 4, speed_multiplier: 1.0 };
+    }
 
     if (type === 'passive') {
         // Lempeä: pakenee kun sattuu, ei hyökkää
