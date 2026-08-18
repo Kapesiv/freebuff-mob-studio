@@ -294,3 +294,171 @@ muutetaan neliöiksi ja Minecraftin näköisiksi?
 Parrot 99 / 1.0, Stork 246 / 1.8. Kaikki kirjastossa `Voxel-eläimet`
 -suodattimen alla; UV- ja render-varmentajat menevät läpi; varmistettu
 livenä (lohikäärme harmaana kivisenä, kettu oranssina).
+
+## ✅ Vokselimobien automaattinen luujako + animaatiot (18.8.2026)
+
+`tools/voxel-parts.mjs` jakaa vokseliristikon **geometrisesti** luihin ilman
+solmuinformaatiota (lähde-GLB:issä ei ole hyödyllisiä solmunimiä):
+
+- **Pedestali pois**: tasainen taustalevy (dragonin "Cloth Backdrop") leikataan
+  pohjasta ennen luokittelua.
+- **Suuntaus**: ylhäältä alkava BFS-probe löytää pään; jos pää on −Z-puolella,
+  ruudukko flipataan (pää → +Z → maailmassa −Z eli eteen).
+- **Jalat**: maanpinnan kapeat pylväät kasvavat ylöspäin (leveys ≤7 solua);
+  leveät pitkät blobit (lohikäärmeen kyljet, joissa etu+takajalka sulautuvat)
+  jaetaan etu/taka -osiin rungon z-keskipisteestä.
+- **Pää**: BFS alaspäin, pysähtyy kun poikkileikkaus täyttää ≥60 % mallin
+  ulottuvuudesta.
+- **Siivet**: tiheän ydinrungon ulkopuoliset x-pylväät yläalueella; ryhmitelty
+  per puoli. **≥60 solua + molemmat puolet** = oikeat siivet; sirpaleet
+  (lohikäärme 21) sulautetaan vartaloon, ettei irtonainen läppä heilu.
+- **Häntä**: z-probe pysähtyy kun poikkileikkaus täyttää ≥60 % — mutta vain
+  jos probe **oikeasti pysähtyi** (ei kävellyt läpi koko rungon; pienten
+  lintujen kohdalla probe läpäisee → häntää ei eroteta, kaikki jää
+  vartaloon). Tämä korjasi storkin, jonka probe söi koko rungon.
+
+**Animaatiot** (editorin formaatti, 20 fps):
+- `idle` (60 fr): rungon hengitys ±1.5°, pään katselu (nyökkäys + kääntö),
+  hännän heilunta rotation.y ±4°.
+- `walk` (40 fr): ristikkäiset jalkaparit ±22° rotation.x (positiivinen =
+  eteen −Z:aan), rungon keinunta + bob (posTracks), pään vastaliike,
+  hännän sivuhuilaus ±6°.
+- `fly` (40 fr): lentoonlähtö + räpyttely. Siipien alas-isku on
+  synkronoitu jalkojen painonottoon (12/32): x-siivet rullaavat ±26°
+  rotation.z (vasen −, oikea +), taaksepäin laskostetut z-siivet
+  (lohikäärme, haikara) pitchaavat −26°…+26° rotation.x samaan tahtiin.
+  Jalat tekevät lentoonlähtöjuoksun (vuorottaiset askeleet) SAMALLA
+  lattia-kompensoinnilla kuin walkissa (dipAt + nosto) — lentoonlähdössä
+  jalkaterät eivät uppoa maahan. Vartalo nyökkää alas-iskuun ja kohoaa
+  työnnöllä; pää vastanyökkää.
+
+**Z-laskostetut (taaksepäin) siivet** — lohikäärmeen laskostetut siivet
+olivat aiemmin x-pylväsetsinnän ulottumattomissa (2 solua paksuja,
+z-suuntaan pitkiä sivulaattoja, jotka imeytyivät vartaloon). Uusi
+`findZSweptWings` löytää ne: sivulaatta rungon tiheän x-ytimen
+ulkopuolelta, paksuus 2–5 solua, pituus ≥30 % mallin pituudesta, ≤15 %
+leveydestä ja maan yläpuolella. Rungon 1-solun kylkisolut (wolf/lion/
+horse), maassa olevat reisimassat ja dino's T-rex-kyynärvarret (2 solua
+8 leveässä mallissa = 25 %) eivät osu rajoihin — vain oikeat siivet.
+Lisäksi korjattu siipityypin tunnistus: laskostetun siiven vertailu oli
+Set-identiteettivertailu (aina false) — nyt sisältöpohjainen (zSwept ≥ 70 %
+sivun klusterista) → lohikäärmeen siivet pitchaavat pystysuunnassa
+oikean lentoliikkeen sijaan rullauksen.
+
+**Varmistettu livenä**: jokainen 6 mobista latautuu (lohikäärme 7 luuta/710
+kuutiota, hevonen 8/367, kettu 7/150, flamingo 8/180, papukaija 5/126,
+haikara 8/329 + fly), rot-, pos- ja siipitrackit lukevat oikein asteina
+(left_front +22° f0 ↔ −22° f20, siivet −22° ylös ↔ +22° alas), jalkaterät
+liikkuvat vastakkaisissa vaiheissa, pixelitason vertailu f0/f20 näyttää
+12 % pikseleistä muuttuvan (siipien räpyttely), konsoli puhdas, UV-varmentaja
+läpäisee.
+
+## ✅ Oma malli → vokselointi suoraan selaimessa (drag & drop) (18.8.2026)
+
+Kirjaston pohjaan lisättiin pudotusalue (`js/voxelizer.js`): käyttäjä voi
+vetää minkä tahansa GLB/OBJ-mallin ja se vokseloidaan **selaimessa** ilman
+Node-työkaluja.
+
+**Selainportti** (sama putki kuin `tools/voxelize.mjs`, matematiikka
+synkronissa):
+- GLB-parseri + **PNG-dekoodaus `DecompressionStream('deflate')`-putkella**
+  (oma unfilter-looppi, kaikki 5 PNG-filteriä) ja JPEG `createImageBitmap` +
+  canvas → ImageData. Tekstuurit sampletaan UV:stä — värit ovat mallin
+  oikeita värejä.
+- OBJ-parseri: v/vt/f (fan-triangulointi), `usemtl` + mukana pudotettu .mtl
+  (Kd-värit) ja map_Kd-tekstuuri (jos kuva pudotettu mukaan).
+- Luokittelija **jaetaan Node-generaattorin kanssa**: `tools/voxel-parts.mjs`
+  on puhdasta ESM:ää (ei Node-importteja), joten esbuild bundlaa sen
+  suoraan selaimelle. Ainoa rivi joka tarvitsi korjauksen: `process.env`
+  -debug-tarkistus → `typeof process !== 'undefined' && …`.
+
+**Korjattu matkan varrella:**
+- Selainversiosta puuttui korkeusreskaala (targetHeightUnits) → malli jäi
+  alkuperäiskokoonsa; lisätty sama `factor`-lasku kuin CLI:ssä.
+- OBJ-kasvojen indeksit ovat [vi, ti]-pareja — verts-haku käytti taulukkoa
+  indeksinä → 0 kolmiota; korjattu `f.a[0]`-hakuun.
+- `dropPedestal` söi **tasaiset muodot** (esim. pelkkä laatikko): se pudotti
+  kerroksia niin kauan kuin ne olivat leveitä, ja laatikon jokainen kerros
+  on yhtä leveä → koko malli katosi. Uusi sääntö: pohjalevy pudotetaan vain
+  jos jalkajälki **kaventuu jyrkästi** ylempänä (≤3 kerroksen sisällä
+  <70 % leveydestä) — laatikko säilyy, lohikäärmeen "Cloth Backdrop" poistuu.
+
+**Varmistettu livenä** (synteettinen drop-tapahtuma, oikea käyttäjäpolku):
+- GLB (test-quad, 7 laatikkoa): 8 luuta (vartalo + pää + 4 jalkaa + häntä),
+  154 kuutiota, täsmälleen pyydetty korkeus (2 lohkoa), idle+walk, lisätty
+  kirjastoon (139. mobi) oikein metadataan (2 lohkoa, ⚔️ minioni, 🧍 Keskikoko).
+- OBJ (test-box): 648 kuutiota, 2 lohkoa, latautuu editoriin.
+- Pixelitason tarkistus: malli renderöityy (koko canvas valaistu), konsoli
+  puhdas, build + UV-varmentaja menevät läpi.
+
+## 📊 Deep Void -bossi-statit (pelin bytecodesta, versio 1.98.1)
+
+Statit purettiin suoraan modin `.class`-tiedostoista (ei wikitietoa — Deep Voidilla
+ei ole omaa wikiä). Putki:
+
+1. `tools/read-mob-stats.py` — JVM-luokkaparserit ilman JVM:ää (constant pool + opcode-walker).
+2. `tools/scan-attributes.py` — `createAttributes`-metodin arvot slotittain.
+   Slottien tunnistus on empiirinen fakta: MCreator generoi SAMAAN järjestykseen
+   jokaiselle entiteetille [speed, health, armor, toughness, follow, knockback, (damage/fly)].
+   Jakautumat varmistavat tulkinnan: health 7–999 (bossit korkeat), speed 0.17–0.5,
+   knockback 0–999 (999 = bossi), flySpeed vain lentäjillä.
+3. `tools/scan-entity-facts.py` — `registerGoals` → AI-kyvyt, `<init>` → bossbar
+   (ServerBossEvent-konstruktio), animaatiokontrollerien nimet.
+4. `assets/the_deep_void/lang/en_us.json` → oikeat rekisteri-id:t kutsumista varten.
+
+### Varmistetut bossiarvot (bytecode → MAX_HEALTH)
+
+| Mobi | HP | sydämet | bossbar | muuta |
+|---|---|---|---|---|
+| Apostle of Catastrophe | 720 | 360 | ✅ | armor 14, follow 74 |
+| False Hydra | 600 | 300 | ✅ | armor 10, follow 48, knockback 999 |
+| Primordial Bone Crawler | 600 | 300 | ✅ | armor 14, knockback 999 |
+| Weaver of Souls | 500 | 250 | ✅ | armor 8, toughness 12, damage 4 |
+| Stalker | 500 | 250 | ❌ | speed 0.4, follow 100 |
+| Flesh Worm | 500 | 250 | ❌ | armor 15, knockback 999 |
+| Misanthropic Hivemind | 420 | 210 | ✅ | armor 17, damage 6.5 |
+| Hive's Watcher | 440 | 220 | ✅ | knockback 999 |
+| Executioner | 350 | 175 | ❌ | armor 15, knockback 99 |
+| Everhunger | 300 | 150 | ❌ | follow 80 |
+| Saw Thrower | 180 | 90 | ❌ | knockback 999 |
+| Skull Smasher | 160 | 80 | ❌ | knockback 999 |
+
+Huom: False Hydran `<init>`-metodissa näkyvä `sipush 250` EI ole HP — oikea
+maksimielämä on `createAttributes`in 600.0 (bossbar-progress päivittyy
+`m_8024_`:ssä getHealth/getMaxHealth -kutsuilla).
+
+## Vokselimobien korjauskierros (CC0-eläimet + kasassa pysyvä luusto)
+
+**Uudet CC0-lähteet (Poly Pizza, CC0, upotetut PNG-tekstuurit):**
+karhu (BlackBear, 445 tri), susi, leijona, tiikeri, dinosaurus ja uusi
+lohikäärme. Poly Pizza -latauskaava: `static.poly.pizza/<uuid>.glb.br`
+(huom: tiedosto on oikeasti tavallinen GLB, vain päätteessä ".br").
+
+**Löydetyt luokittelubugit ja korjaukset (`tools/voxel-parts.mjs`):**
+
+1. **Nelijalkaisten väärät "siivet"** — karhu/susi/leijona/tiikeri saivat
+   swept-wings-luokittelun: kuono + takamus näyttivät z-probeista siiviltä.
+   Korjaus: swept-wings vain lintumaisille malleille (leveys > 1.6 × korkeus).
+   Nyt z-probe = häntä, kuono jää vartaloon. Varmistettu: susi 4 jalkaa
+   (95–99 solua per jalka) + häntä 38, leijona 4 jalkaa + häntä 64.
+
+2. **Lentävän linnun siivet "jalkoina"** — papukaija (lentävä, siivet
+   levällään) sai siipensä jaloiksi, koska siivet ulottuvat maatasoon.
+   Korjaus: lintumaisten mallien jalkoja ei etsitä maasta; x-pylväät
+   luokitellaan siiviksi. Papukaija: siipi + häntä + pää erottuvat nyt.
+   Haikara säilytti molemmat z-siipensä (fly-animaatio toimii).
+
+3. **Flamingon suunta** — pään tunnistus nappasi hännän (joka yltää
+   ylös), joten flip ei lauennut; jalkojen uusi lintu-ehto korjasi tämän
+   (head -z-päähän, vanilja-konvention mukaisesti).
+
+4. **Lohikäärme**: vanha DragonAttenuation (harmaakivipatsas, "pylväs")
+   korvattu CC0-vihreä/punainen lohikäärmeellä — pää, 4 jalkaa ja iso
+   takakäyrä (häntä). 1427 kuutiota, 10 luuta.
+
+**Kasassa pysyminen varmistettu numerisesti:**
+`tools/check-anim-detach.mjs` simuloi editorin matriisiketjun (hierarkia +
+ZYX-rotaatiot + animaatiot) jokaiselle keyframelle ja varmistaa, ettei
+yksikään luu irtoa rungosta (kaikki 11 mobia × idle/walk/fly läpäisevät).
+Myös render- ja UV-varmentajat vihreät; selaimen drag & drop -vokselointi
+toimii edelleen (testi-GLB: 8 luuta, 154 kuutiota, 2 lohkoa).

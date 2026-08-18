@@ -139,14 +139,14 @@ function mobHeightBlocks(model, category) {
     return Math.round((maxY - minY) * scale * 100) / 100;
 }
 
-// Pre-pack UVs once so every library mob is colored correctly on load
-for (const mob of LIBRARY_MOBS) {
+/**
+ * Täydennä yksi mobi kirjastovalmiiksi: UV-pakkaus + korkeus lohkoina +
+ * bossi/minioni-tier + kokoluokka. Käytetään sekä moduulin latauksessa
+ * että selaimessa vokseloiduille omille malleille (drag & drop).
+ */
+export function prepareMob(mob) {
     autoLayoutUVs(mob.model);
-    mob.size = mobHeightBlocks(mob.model, mob.category);
-    // Bossi/minioni-ryhmittely: yhdistetty pisteytys korkeudesta (lohkoina),
-    // luumäärästä ja kuutiomäärästä. Raja ≥ 16 erottaa Deep Void -datassa
-    // luonnollisen boss-kerroksen (False Hydra, Weaver, Bringer, Apostle,
-    // Eye Centipede…) pienemmistä otuksista — varmistettu aineistosta.
+    mob.size = mobHeightBlocks(mob.model, mob.category || 'voxel');
     const bones = mob.model.bones.length;
     const cubes = mob.model.bones.reduce((n, b) => n + b.cubes.length, 0);
     if (mob.category === 'voxel') {
@@ -163,4 +163,8 @@ for (const mob of LIBRARY_MOBS) {
     else if (mob.size < 4) mob.sizeClass = 'keski';
     else if (mob.size < 8.5) mob.sizeClass = 'iso';
     else mob.sizeClass = 'jatti';
+    return mob;
 }
+
+// Pre-pack UVs once so every library mob is colored correctly on load
+for (const mob of LIBRARY_MOBS) prepareMob(mob);

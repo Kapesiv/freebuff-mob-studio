@@ -68,16 +68,21 @@ function mat4Translate(tx, ty, tz) {
     m[12] = tx; m[13] = ty; m[14] = tz;
     return m;
 }
-/** THREE Euler 'ZYX' rotation matrix (R = Rz·Ry·Rx), degrees in, column-major. */
+/** THREE Euler 'ZYX' rotation matrix, degrees in, column-major.
+ *  Sama kaava kuin THREE.Matrix4.makeRotationFromEuler('ZYX') — tarkistettu
+ *  numerisesti kolmessa tapauksessa (aikaisempi transpoosi pyöritti vääriä
+ *  akseleita). a=cos(x) b=sin(x) c=cos(y) d=sin(y) e=cos(z) f=sin(z):
+ *    te[0]=c*e  te[4]=be*d-af  te[8]=ae*d+bf
+ *    te[1]=c*f  te[5]=bf*d+ae  te[9]=af*d-be
+ *    te[2]=-d   te[6]=b*c      te[10]=a*c */
 function mat4RotZYX(x, y, z) {
-    const a = x * Math.PI / 180, b = y * Math.PI / 180, c = z * Math.PI / 180;
-    const s1 = Math.sin(a), c1 = Math.cos(a);
-    const s2 = Math.sin(b), c2 = Math.cos(b);
-    const s3 = Math.sin(c), c3 = Math.cos(c);
+    const a = Math.cos(x * Math.PI / 180), b = Math.sin(x * Math.PI / 180);
+    const c = Math.cos(y * Math.PI / 180), d = Math.sin(y * Math.PI / 180);
+    const e = Math.cos(z * Math.PI / 180), f = Math.sin(z * Math.PI / 180);
     return [
-        c1 * c2, s2, -s1 * c2, 0,
-        s1 * s3 - c1 * c3 * s2, c2 * c3, s1 * c3 * s2 + c1 * s3, 0,
-        c3 * s1 + c1 * s2 * s3, -c2 * s3, c1 * c3 - s1 * s2 * s3, 0,
+        c * e, c * f, -d, 0,
+        b * e * d - a * f, b * f * d + a * e, b * c, 0,
+        a * e * d + b * f, a * f * d - b * e, a * c, 0,
         0, 0, 0, 1
     ];
 }

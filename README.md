@@ -24,6 +24,12 @@ luurangot/bones, väritys ja tekstuurit) ja viedä suoraan **Bedrock Edition**
 - 🖌 **UV-editori**: 2D-tekstuurinäkymä, jossa kuutioiden kasvot näkyvät rajauksina.
   Valitse kasvo klikkaamalla, vedä kasvoa siirtääksesi sen UV:tä, **🪣 täytä**
   kasvo valitulla värillä tai maalaa pensselillä (väri + koko säädettävissä)
+- 🎨 **Väripaletti** (UV-työkalupalkin 🎨-nappi): esiasetetut Minecraft-paletit
+  — **Ihonsävyt** (10 sävyä), **Villa** (kaikki 16 virallista villaväriä),
+  **Luonto** (ruoho, puu, kivi, vesi, hiekka…) — ja **omat värit**: valitse
+  väri yhdellä klikkauksella, **＋** tallentaa nykyisen maalausvärisi palettiin
+  (säilyy selaimen muistissa), oikea klikkaus poistaa yksittäisen värin ja
+  🗑 tyhjentää kaikki
 - 🎬 **Animaatio-timeline**: keyframe-kohtainen luurankojen poseeraus,
   interpolaatio, play/pause (välilyönti), tallentuu autosaveen.
   Mobit voivat tarjota **useita animaatioita** (esim. idle / walk / attack) —
@@ -31,6 +37,12 @@ luurangot/bones, väritys ja tekstuurit) ja viedä suoraan **Bedrock Edition**
 - 🎞️ **Animaatiomanageri**: luo (＋), kopioi (⧉), nimeä (✏) ja poista (🗑)
   animaatioita — kaikki viedään exporttiin. Keyframe-pisteet aikajanalla,
   raahaa piste siirtääksesi keyframet, 📋 Copy/📌 Paste/🪞 Mirror Pose
+- 🕺 **Auto-animaatiot** (`🕺 Auto` -nappi animaatiopalkissa): Spore-tyylinen
+  generointi — analysoi luurangon (jalat, kädet, siivet, häntä, pää, vartalo
+  nimistä + geometriasta) ja luo **idle/walk/attack** (ja **fly** jos siivet,
+  **swim** jos kala). Walk on aito askellus: jalka maassa 60 % kierrosta,
+  jalkaterän nosto kompensoi kallistuksen (sama logiikka kuin
+  vokseligeneraattorissa), vartalo kohoaa tuessa ja pää vastanyökkää
 - 🧱 **Uuden mobin dialogi** (`New` tai pohja-nappi): nimeä mobi ja valitse
   **exportin tiedostonimi (modelId)** ennen aloitusta — modelId generoituu
   automaattisesti nimestä (🔁 synkronoi uudelleen), export-esikatselu
@@ -56,14 +68,108 @@ luurangot/bones, väritys ja tekstuurit) ja viedä suoraan **Bedrock Edition**
   haun ja Deep Void -rajauksen kanssa; jokaisella mob-kortilla on
   kokoluokkamerkki
 - 🦊 **Voxel-eläimet — oikeat eläimet neliöiksi**: `tools/voxelize.mjs`
-  vokseloi oikeita 3D-eläinmalleja (three.js / Khronos glTF -näytteet,
-  CC-BY 4.0) Minecraft-tyylisiksi mobeiksi: lohikäärme (4.5 lohkoa,
-  👑 BOSSI), hevonen, kettu, flamingo, papukaija ja haikara (kaikki
-  oikeista tekstuureista/väristä, ei keksittyjä). Oma **Voxel-eläimet**
-  -suodatin kirjastossa; jokainen kuutio kantaa oikean värin ja editori
-  luo tekstuurin (varjostetut sivut + rakeisuus) automaattisesti
+  vokseloi oikeita 3D-eläinmalleja Minecraft-tyylisiksi mobeiksi:
+  lohikäärme (🐉 3.5 lohkoa, 👑 BOSSI, vihreä/punainen CC0-lohikäärme
+  Poly Pizza -palvelusta), hevonen, kettu, flamingo, papukaija, haikara
+  (three.js / Khronos glTF -näytteet, CC-BY 4.0) ja **CC0-mallit**: karhu,
+  susi, leijona, tiikeri ja dinosaurus (Poly Pizza, upotetut PNG-tekstuurit).
+  Värit tulevat oikeista tekstuureista; jos lähdemallin tekstuuri on
+  väärä (Poly Pizza -leijona musta, tiikeri valko-sininen), lajikohtainen
+  paletti korjaa ne: leijona kullankeltainen (#C79A3B) ja tiikeri oranssi
+  (#E8862E) — muodot pysyvät 100% oikeasta mallista. Tiikerin raidat
+  ovat **pystysuuntaisia renkaita rungon pituusakselin (z) ympäri**:
+  jokainen raita peittää koko x-poikkileikkauksen (aiempi +b.x-faasi
+  teki diagonaaliraitoja), ja vatsa on **valkoinen** (pylväät jaetaan
+  vatsarajasta kahteen kuutioon — alaosa valkoinen, kylki raidallinen),
+  kuono **valkoinen** (pään etu-alaosa) ja **häntä raidallinen**:
+  tiheämmät renkaat (tailStripeFreq 2.6 vs rungon 1.0) ja **valkoinen
+  kärki** (viimeiset ~25 % hännästä, maailma +z = grid min z). Leijonalla on **tumma harja**
+  (#5A3A1E): rengas pään ympäri (sivut + takaraivo + päälaki, pään
+  pylväät jaetaan harjarajasta — yläosa aina harjaa) mutta kasvot
+  (nenä, keski-x) säilyvät kullankeltaisina.
+  Paletti tukee myös **vaaleaa vatsaa** (`shade: 'belly'`): susi
+  harmaa + vaalea vatsa ja tummempi selkä, karhu ruskea + vaaleampi
+  vatsa, dinosaurus vihreä + vaaleanvihreä vatsa. Oma
+  **Voxel-eläimet**-suodatin kirjastossa; jokainen kuutio kantaa
+  oikean värin ja editori luo tekstuurin (varjostetut sivut + rakeisuus)
+  automaattisesti
+- 🦴 **Automaattinen luujako + animaatiot vokselimobeille**:
+  `tools/voxel-parts.mjs` jakaa vokseliristikon geometrisesti luihin
+  (vartalo, pää, jalat, siivet, häntä) — jalat tunnistetaan maasta
+  nousevista pylväistä, pää ylhäältä alkavasta BFS-ulokkeesta, siivet
+  tiheän rungon ulkopuolisista x-pylväistä (yli 60 solua, muuten
+  sulautetaan vartaloon) ja häntä pysähtyvästä z-probeista; vasen/oikea
+  peilataan maailmankoordinaatteihin. **Lintumaisten mallien** (leveys >
+  1.6 × korkeus, siivet levällään kuten papukaija/haikara) jalkoja ei
+  etsitä maasta — muuten levitetyt siivet näyttäisivät jaloilta ja
+  nelijalkaisten kuono+takamus siiviltä (korjasi karhun/leijonan/tiikerin
+  väärät "siivet" ja papukaijan siivet-jalkoina). **Pään tunnistus**
+  nelijalkaisille käyttää kaula-dippiä + pitkää akselia (vanha "0.6×
+  leveys"-sääntö katkaisi pään 1–2 kerrokseen, koska nelijalkaisen kaula
+  on yhtä leveä kuin runko — susi sai 2→7 kerroksen pään, leijona ja
+  tiikeri selvän kallon). **Jalkojen raja** on nyt syvyysperustainen
+  (10×7 solua 7×7:n sijaan): karhun paksut etujalat kasvoivat 1→4
+  kerroksen korkuisiksi. Jokainen mobi saa
+  **idle** (hengitys + pään katselu + hännän heilunta), **walk** ja
+  siivelliset myös **fly** (lentoonlähtö + räpyttely, 40 fr): siipien
+  alas-isku on synkronoitu jalkojen painonottoon (12/32) ja jalat tekevät
+  lentoonlähtöjuoksun SAMALLA lattia-kompensoinnilla kuin walkissa —
+  lentoonlähdössä jalkaterät eivät uppoa maahan. Taaksepäin laskostetut
+  siivet (esim. lohikäärme) löytyvät nyt omana siipityyppinä
+  (z-swept sivulaatta: 2–5 solua paksu, ≥30 % mallin pituudesta, ≤15 %
+  leveydestä, maan yläpuolella — rungon kylkisolut, reisimassat ja
+  T-rex-kyynärvarret eivät osu tähän) ja räpyttelevät pystysuunnassa
+  (pitch) kuten oikea lentävä otus.
+  **Walk on aito
+  askellus**: jalka on maassa 60 % kierrosta (tuki) ja nostaa jalkaterän
+  ilmaan 40 % (heilunta eteenpäin); kallistuksen aiheuttama lattiaan
+  uppoaminen kompensoidaan jalkakohtaisella nostolla jalan oikeasta
+  geometriasta (L, zExt — ennen jalat upposivat jopa 1.9 yksikköä
+  lattiaan),  vartalo kohoaa tuessa ja nyökkää etujalan ottaessa painon,
+  pää vastanyökkää. Lisäksi jokaisella on **turn** (kevyt käännös,
+  60 fr): kääntyy 75° ja takaisin — ulkokaarteen jalat astuvat
+  pidemmälle (20° vs 11°), vartalo kallistuu mutkaan (4°) ja pää
+  katsoo kulkusuuntaan; kaksijalkaiset (lintu) askeltavat vuorotellen.
+  Haarukka:
+  lohikäärme 11 luuta (pää + 4 jalkaa + 2 siipeä), hevonen 8 (4 jalkaa +
+  häntä), haikara 5 (2 isoa siipeä + fly), karhu/susi/leijona/tiikeri 8
+  (4 jalkaa + häntä)
+- 🔒 **Animaatio-varmentajat**: `tools/check-anim-detach.mjs` simuloi
+  jokaisen animaation jokaisen keyframen (sama THREE.js-matriisiketju kuin
+  editorissa — ZYX-Euler tarkistettu numerisesti) ja varmistaa, ettei
+  mikään luu irtoa rungosta; `tools/measure-walk.mjs` (`verify:walk`)
+  mittaa  jalkaterien korkeuden kaikilla keyframeilla ja epäonnistuu jos
+  jalka uppoaa yli puoli yksikköä lattiaan (16 yksikköä = 1 lohko).
+  Matkan varrella korjattiin varmentajien vanha transpoosi-matriisi,
+  joka pyöritti vääriä akseleita — sen kanssa "lattiaan uppoamista"
+  ei olisi koskaan löytynyt
+- 📦 **Vokseloi oma malli selaimessa**: kirjaston pohjassa on pudotusalue —
+  vedä mikä tahansa **.glb** (tekstuurit upotettuina PNG/JPEG) tai **.obj**
+  (+ .mtl-värit ja map_Kd-tekstuuri mukaan) ja se vokseloidaan suoraan
+  selaimessa (`js/voxelizer.js`, sama putki kuin CLI-generaattori:
+  GLB/OBJ-parseri + oma PNG/JPEG-dekooderi + luokittelija + luurakenne +
+  idle/walk/fly). Valitse korkeus lohkoina ja vokselikoko; valmis mobi
+  lisätään kirjastoon ja latautuu editoriin
 - 🪞 **Mirror Copy**: kopioi valittu kuutio tai koko luu peilikuvana
   vastakkaiselle puolelle (x-akselin yli, UV:t peilattu) yhdellä napsulla
+- 🪞 **Symmetry edit**: kytke 🪞 Symmetry päälle ja muokkaa toista puolta
+  (siirto/kierto/koko) — peilikuva seuraa **livenä** vastakkaisella puolella
+  ilman koko mallin rebuildia. Toimii sekä kuutio- että luutasolla
+  (pivot + rotaatio + kuutiot), myös asentotilassa (peilattu keyframe
+  kirjataan). Nimeäminen: right/left-, R/L- ja numeroparit (rightArm_0 ↔
+  leftArm_0) tunnistetaan
+- 🎮 **Game Preview**: **päällä automaattisesti mobin latauksen jälkeen** —
+  näet mobin heti **pelin näköisenä**: Minecraftin valaistus (sininen taivas +
+  hemisphere-valo), pehmeät PCF-varjot ruohovihreällä maatasolla (shadow-
+  kamera skaalautuu mallin koon mukaan), grid/akselit piilotetaan ja
+  **glow-kerros hehkuu** valaistuksesta riippumatta. Editorivalot
+  palautuvat kun rasti poistetaan — täydellinen tarkistus ennen 📦 Packia.
+  **🌙 Night** -rastilla vaihdat yöhön: tumma taivas, kylmä kuunvalo
+  (sinertävä aurinko) ja **glow loistaa 2.2× voimakkaammin** — näet
+  tarkalleen miltä mobin hehku näyttää pimeässä. Yö kytkee Game
+  Previewin automaattisesti päälle. **Asetukset tallentuvat
+  projektitiedostoon ja autosaveen** (päivä/yö, taustaväri,
+  Game Preview -oletus) ja palautuvat mobia avattaessa.
 - 🖌 **3D-maalaus**: valitse 🖌-työkalu ja maalaa suoraan mallin pintaan —
   tekstuuri (ja UV-editori) päivittyvät reaaliajassa samalla värillä ja
   sivellinkoolla kuin UV-editorissa. Maalaus-tilassa **näkymä on lukittu**
@@ -84,6 +190,53 @@ luurangot/bones, väritys ja tekstuurit) ja viedä suoraan **Bedrock Edition**
 - 📸 **Save PNG**: yksi klikkaus → PNG-kuva mobista nykyisestä kamerakulmasta
   (2× supersamplattu, ruudukko/gizmo/valintakorostus piilotetaan automaattisesti
   ja palautetaan). Tiedostonimi `modelId_screenshot.png`
+- 📦 **Resurssipaketti-export** (`📦 Pack`): yksi klikkaus → valmis .zip, jossa
+  malli + tekstuurit + animaatiot **oikeassa kansiorakenteessa suoraan peliin**.
+  ☕ Java (GeckoLib): `pack.mcmeta` + `assets/<ns>/geo|animations|textures`
+  (+ vanilla item-malli `assets/freebuff/`). 🎮 Bedrock: `manifest.json` +
+  `models/entity`, `textures/entity`, `animations`. Valitse formaatti ja
+  namespace (modin id) dialogista — tiedostolista esikatsellaan livenä.
+  **Mobin glow-kerros** (emissiivinen tekstuuri, jos sellainen on) menee
+  mukaan omana `<id>_glow.png`:nä molempiin kansioihin — hehkuvat silmät
+  ja osat hohtavat pelissä paketin asennuksen jälkeen.
+  **🎮 Bedrock on valmis addon**: `resource_pack/` (client-entity,
+  render-controller, malli, tekstuurit, animaatiot) + `behavior_pack/`
+  (behavior-entity, **spawn-rules**) — zip tuodaan suoraan Minecraftiin
+  ja mobi spawnaa heti. Spawn-eggin värit lasketaan tekstuurin
+  keskiarvosta, törmäyslaatikko mallin mitoista. **🥚 Spawn-eggin
+  esikatselu** näkyy 📦 Pack -dialogissa livenä: munan kuori
+  tekstuurin keskiarvoväristä + vanilla-tyylinen täpläkuvio
+  overlay-värillä, hex-koodit vieressä.
+  **🎭 Mobin käytös**: 🐑 Lempeä (pakenee kun sattuu), 🐺 Neutraali
+  (hyökkää vain jos ärsytetään) tai 😈 Vihamielinen (hyökkää heti
+  nähdessään) + **HP- ja vahinko-liukusäätimet** — kaikki menevät
+  behavior_packin entity-tiedostoon.
+  **☕ Java + datapakki**: Java ei voi luoda uutta entity-tyyppiä
+  datapaketista (toisin kuin Bedrock), joten paketti sisältää
+  paper-overriden (custom_model_data 1001 → mobin malli) ja datapakin,
+  jolla mobi spawnataan **komennolla nimettynä**:
+  `/function <ns>:summon_<id>` luo armor standin, joka näyttää mallin.
+  `data/<ns>/spawn/<id>.json` on valmis spawn-pohja Java 1.21.2+
+  (type vaihdetaan modin entity-tyyppiin, esim. GeckoLib `<modid>:<id>`).
+  Kun valittuna on pelkkä 🎮 Bedrock, lataus on **.mcaddon**-tiedosto
+  (sama rakenne zipinä) — Minecraft avaa sen suoraan ja asentaa
+  molemmat pakit (resource_pack + behavior_pack).
+  **Käytös + statistiikat tallentuvat projektitiedostoon ja autosaveen**
+  — valinnat palautuvat mobia avattaessa (uusi mobi aloittaa oletuksista).
+  **🚀 Nopeus-liukusäädin** (0.05–1.0, oletus käytöksen mukaan),
+  **Hyppy päälle/pois** ja **🪽 Lentävä mobi** (can_fly + navigation.fly +
+  movement.fly + random_fly — ei kävele eikä hyppää). HUOM: Bedrock ei
+  säädä hyppykorkeutta erikseen — korkeus seuraa nopeutta.
+  **🖼 pack-ikoni** generoidaan mobista isometrisenä kuvakkeena
+  (2D-canvas, tekstuurin värit — ei vaadi WebGL:ää): `pack_icon.png`
+  Bedrockin molempiin pakkeihin ja `pack.png` Java-pakettiin — näkyy
+  Minecraftin pakettilistassa.
+  **📖 GECKOLIB-OHJE.md** Java-paketin juuressa: suomenkielinen
+  vaiheittainen ohje — tiedostojen kopiointi modiin, entity-luokka,
+  GeoModel/GeoEntityRenderer, rekisteröinti Forge+Fabric, attribuutit,
+  spawn-komento ja luonnollinen spawn (BiomeModifications).
+  **🖼 Pakki-ikoni näkyy myös 📦 Pack -dialogissa livenä** munanesikatselun
+  vieressä — näet kuvakkeen ennen latausta
 - 📥 Bedrock-import (round-trip testattu)
 - 🔬 **UV-varmentaja** (`npm run verify:uv`): tarkistaa jokaisen kirjaston mobin
   kasvojen UV-asettelun automaattisesti — tekstuurin rajat, päällekkäisyydet,
@@ -124,6 +277,20 @@ npm run build:preview   # tekee itsenäisen preview.html:n
 > sisään) — sen voi avata suoraan kaksoisklikkauksella (file://) ilman
 > palvelinta. Tavalliset ES-moduulit eivät toimi file://-protokollalla
 > (CORS), joten siksi kaikki on yhdessä tiedostossa.
+
+> 📊 **Bossi-statit pelin bytecodesta:** jokaisella Deep Void -kortilla on
+> **📊-nappi**, joka avaa HP/kyvyt/kutsuminen-näkymän. Kaikki arvot on purettu
+> itse Deep Void 1.98.1 -JARin `.class`-tiedostoista (ei arvauksia):
+> `createAttributes` → HP/panssari/nopeus/seuraamisetäisyys/rekyyttömyys,
+> `registerGoals` → AI-kyvyt, `<init>` → bossbar-liput, ja
+> `assets/the_deep_void/lang/en_us.json` → oikeat rekisteri-id:t
+> (`/summon the_deep_void:<id>`). Parserit: `tools/read-mob-stats.py`,
+> `tools/scan-attributes.py`, `tools/scan-entity-facts.py`;
+> generoitu data: `js/mobs/stats.js` (`node tools/generate-stats.mjs`).
+> Tarkistettuja arvoja: **False Hydra 600 HP** (300 ❤), **Weaver of Souls 500 HP**,
+> **Apostle of Catastrophe 720 HP**, **Primordial Bone Crawler 600 HP**,
+> **Stalker 500 HP** — 71/72 mobilla HP löytyi (vain Bringer of Despair on
+> ilman entity-luokkaa tässä JAR-versiossa).
 
 ## 🔍 Tutkimus & referenssit
 

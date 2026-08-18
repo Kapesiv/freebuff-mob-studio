@@ -7,6 +7,8 @@
     "build:preview": "node build-preview.mjs",
     "verify:uv": "node tools/verify-uv.js",
     "verify:render": "node tools/verify-render.js",
+    "verify:anim": "node tools/check-anim-detach.mjs",
+    "verify:walk": "node tools/measure-walk.mjs",
     "fetch:vanilla": "node tools/fetch-vanilla.js",
     "start": "python3 -m http.server 8080"
   },
