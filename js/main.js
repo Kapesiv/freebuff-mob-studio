@@ -2120,6 +2120,11 @@ function setupFileIO() {
         if (!hasAnims) notes.push('ei animaatioita');
         if (!hasGlow) notes.push('ei glow-kerrosta');
         packFileList.title = notes.length ? notes.join(', ') : '';
+        // .mcaddon vain kun valittuna pelkkä Bedrock (Minecraft avaa sen suoraan)
+        const isMcaddon = currentPackFormats().length === 1 && currentPackFormats()[0] === 'bedrock';
+        const dlBtn = document.getElementById('pack-download');
+        dlBtn.textContent = isMcaddon ? '⬇️ Lataa .mcaddon' : '⬇️ Lataa .zip';
+        dlBtn.title = isMcaddon ? 'Minecraft avaa .mcaddonin suoraan asennukseen' : '';
     }
 
     function openPackDialog() {
@@ -2184,11 +2189,13 @@ function setupFileIO() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${id}_resource_pack.zip`;
+        const isMcaddon = formats.length === 1 && formats[0] === 'bedrock';
+        const filename = isMcaddon ? `${id}.mcaddon` : `${id}_resource_pack.zip`;
+        a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
         closePackDialog();
-        setStatus(`📦 ${formats.length === 2 ? 'Java + Bedrock' : formats[0] === 'java' ? 'Java (GeckoLib)' : 'Bedrock'} -paketti ladattu (${files.length} tiedostoa) — ${id}_resource_pack.zip`);
+        setStatus(`📦 ${formats.length === 2 ? 'Java + Bedrock' : formats[0] === 'java' ? 'Java (GeckoLib)' : 'Bedrock'} -paketti ladattu (${files.length} tiedostoa) — ${filename}${isMcaddon ? ' — avaa Minecraftilla asentaaksesi' : ''}`);
     });
 
     document.getElementById('btn-screenshot').addEventListener('click', exportScreenshot);
