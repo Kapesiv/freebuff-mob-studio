@@ -146,6 +146,134 @@ function summonFunction(name, id, ns) {
     ].join('\n');
 }
 
+/** GeckoLib-modiohje Java-pakettiin (juuressa GECKOLIB-OHJE.md). */
+function geckoLibReadme(name, id, ns) {
+    const upper = name.charAt(0).toUpperCase() + name.slice(1);
+    const ClassName = (id.split('_').map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(''));
+    return `# ☕ GeckoLib-ohje — ${name} (${id})
+
+Tässä paketissa on GeckoLib-malli valmiina Java-modiasi varten.
+Kopioi tiedostot omaan modiisi näin:
+
+\`\`\`
+assets/${ns}/geo/${id}.geo.json                     → src/main/resources/assets/<modid>/geo/
+assets/${ns}/animations/${id}.animation.json       → src/main/resources/assets/<modid>/animations/
+assets/${ns}/textures/entity/${id}.png             → src/main/resources/assets/<modid>/textures/entity/
+\`\`\`
+
+> HUOM: \`assets/freebuff/...\` on vanilla-resurssipaketin item-malli
+> (ei GeckoLib) — voit jättää sen huomiotta modissa.
+
+## 1) Riippuvuus
+
+GeckoLib 4 (CurseForge / Modrinth). Esim. Forge 1.20.1:
+\`\`\`gradle
+implementation fg.deobf("software.bernie.geckolib:geckolib-forge-1.20.1:4.4.9")
+\`\`\`
+
+## 2) Entity-luokka
+
+\`\`\`java
+public class ${ClassName}Entity extends PathfinderMob {
+    public ${ClassName}Entity(EntityType<? extends PathfinderMob> type, Level level) {
+        super(type, level);
+    }
+    public static AttributeSupplier.Builder createAttributes() {
+        return PathfinderMob.createMobAttributes()
+            .add(Attributes.MAX_HEALTH, 20.0D)
+            .add(Attributes.MOVEMENT_SPEED, 0.25D)
+            .add(Attributes.ATTACK_DAMAGE, 4.0D);
+    }
+}
+\`\`\`
+
+## 3) Malli + renderöijä
+
+\`\`\`java
+// ${ClassName}Model.java
+public class ${ClassName}Model extends GeoModel<${ClassName}Entity> {
+    @Override
+    public ResourceLocation getModelResource(${ClassName}Entity obj) {
+        return new ResourceLocation("${ns}", "geo/${id}.geo.json");
+    }
+    @Override
+    public ResourceLocation getTextureResource(${ClassName}Entity obj) {
+        return new ResourceLocation("${ns}", "textures/entity/${id}.png");
+    }
+    @Override
+    public ResourceLocation getAnimationResource(${ClassName}Entity obj) {
+        return new ResourceLocation("${ns}", "animations/${id}.animation.json");
+    }
+}
+\`\`\`
+
+\`\`\`java
+// ${ClassName}Renderer.java
+public class ${ClassName}Renderer extends GeoEntityRenderer<${ClassName}Entity> {
+    public ${ClassName}Renderer(EntityRendererProvider.Context ctx) {
+        super(ctx, new ${ClassName}Model());
+    }
+}
+\`\`\`
+
+## 4) Rekisteröinti
+
+**Forge:**
+\`\`\`java
+public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
+    DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, "${ns}");
+
+public static final RegistryObject<EntityType<${ClassName}Entity>> ${ClassName.toUpperCase()} =
+    ENTITY_TYPES.register("${id}", () -> EntityType.Builder
+        .of(${ClassName}Entity::new, MobCategory.CREATURE)
+        .sized(1.0f, 1.0f).build("${id}"));
+
+// Attribuutit (EntityAttributeCreationEvent):
+// event.put(ModEntities.${ClassName.toUpperCase()}.get(), ${ClassName}Entity.createAttributes().build());
+// Renderöijä (EntityRenderersEvent.RegisterRenderers):
+// event.registerEntityRenderer(ModEntities.${ClassName.toUpperCase()}.get(), ${ClassName}Renderer::new);
+\`\`\`
+
+**Fabric:**
+\`\`\`java
+public static final EntityType<${ClassName}Entity> ${ClassName.toUpperCase()} = Registry.register(
+    Registries.ENTITY_TYPE, new Identifier("${ns}", "${id}"),
+    FabricEntityTypeBuilder.create(MobCategory.CREATURE, ${ClassName}Entity::new)
+        .dimensions(EntityDimensions.fixed(1.0f, 1.0f)).build());
+
+// Alustus: FabricDefaultAttributeRegistry.register(${ClassName.toUpperCase()},
+//     ${ClassName}Entity.createAttributes());
+// Client (ClientModInitializer):
+//     EntityRendererRegistry.register(ModEntities.${ClassName.toUpperCase()}, ${ClassName}Renderer::new);
+\`\`\`
+
+## 5) Spawnaus
+
+Komennolla heti kun entity on rekisteröity:
+\`\`\`
+/summon ${ns}:${id} ~ ~ ~
+\`\`\`
+
+Luonnollinen spawn (Fabric-esimerkki):
+\`\`\`java
+BiomeModifications.addSpawn(BiomeSelectors.spawnsOneOf(RegistryKey.of(
+        RegistryKeys.BIOME, new Identifier("minecraft", "plains"))),
+    MobCategory.CREATURE, ${ClassName}Entity.class, 10, 1, 2);
+\`\`\`
+
+## 6) Vinkkejä
+
+- \`geo/${id}.geo.json\` sisältää jo oikean geometrianimen \`geometry.${id}\`.
+- Animaatiot ovat muodossa \`animation.${id}.<nimi>\` — GeckoLib lukee ne suoraan.
+- Jos animaatio ei pyöri: varmista että \`getAnimationResource\` palauttaa
+  oikean tiedoston ja että animaatio on ajossa (\`triggerAnim\` tai \`setAnimation\`).
+- Glow-tekstuuri (\`${id}_glow.png\`): käytä sitä emissiivisenä karttana
+  tai lisää oma render-kerros, jos haluat hehkuvat osat.
+
+Generoi: Freebuff Mob Studio — ${new Date().toISOString()}
+`;
+}
+
 /**
  * Spawn-säännöt Java 1.21.2+ -muodossa (data/<ns>/spawn/<id>.json).
  * Minecraft hyväksyy //-kommentit data-JSONeissa. Tämä on valmis pohja:
@@ -383,6 +511,7 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
             `assets/freebuff/models/item/${id}.json`,
             `assets/freebuff/textures/item/${id}.png`,
             'assets/minecraft/models/item/paper.json',
+            'GECKOLIB-OHJE.md',
             'datapack/pack.mcmeta',
             `datapack/data/${ns}/functions/summon_${id}.mcfunction`,
             `datapack/data/${ns}/spawn/${id}.json`,
@@ -448,6 +577,7 @@ export function buildResourcePack(model, opts = {}) {
         // spawnataan komennolla nimettynä armor standina. GeckoLib-modissa
         // oikea mobi on /summon <modid>:<id> ja spawn.json on valmis pohja.
         files.push({ path: 'assets/minecraft/models/item/paper.json', data: jsonBytes(paperOverride(id)) });
+        files.push({ path: 'GECKOLIB-OHJE.md', data: enc.encode(geckoLibReadme(name, id, ns)) });
         files.push({ path: 'datapack/pack.mcmeta', data: jsonBytes(datapackMcmeta(name)) });
         files.push({ path: `datapack/data/${ns}/functions/summon_${id}.mcfunction`, data: enc.encode(summonFunction(name, id, ns)) });
         files.push({ path: `datapack/data/${ns}/spawn/${id}.json`, data: enc.encode(spawnTemplate(name, id, ns)) });
