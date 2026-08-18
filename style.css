@@ -74,6 +74,13 @@ body {
     background: var(--button-hover);
 }
 
+.action-btn.active {
+    background: var(--tool-active);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
 /* Workspace */
 #workspace {
     display: flex;

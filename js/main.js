@@ -48,6 +48,7 @@ const state = {
     projectAnimations: {},     // name -> { length, tracks, posTracks } (editoitavat)
     currentAnimName: null,
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
+    symmetryEdit: false,       // symmetria-editointi: muokkaa toista puolta, toinen peilautuu livenä
     packOptions: { ...DEFAULT_PACK_OPTIONS }, // 📦 Pack -dialogin valinnat
     modelVersion: 0
 };
@@ -169,6 +170,8 @@ transformControls.addEventListener('objectChange', () => {
     } else {
         updatePropertiesFromObject(obj);
     }
+    // Symmetria-editointi: peilaa muokkaus vastakkaiselle puolelle livenä
+    if (state.symmetryEdit) applySymmetryEdit();
     if (!state._dragActive) checkRenderConsistency();
 });
 
@@ -249,7 +252,10 @@ function mirrorCubeName(name) {
         [/^(.+)_r$/, '$1_l'],
         [/^(.+)_l$/, '$1_r'],
         [/^(.+)R$/, '$1L'],
-        [/^(.+)L$/, '$1R']
+        [/^(.+)L$/, '$1R'],
+        // camelCase-parit: rightArm_0 ↔ leftArm_0, LeftLeg ↔ RightLeg
+        [/^right/i, 'left'],
+        [/^left/i, 'right']
     ];
     for (const [re, rep] of swaps) {
         if (re.test(name)) return name.replace(re, rep);
@@ -263,6 +269,137 @@ function mirrorCubeName(name) {
 }
 
 const MIRROR_FACE = { east: 'west', west: 'east', north: 'north', south: 'south', up: 'up', down: 'down' };
+
+// ---- symmetria-editointi -------------------------------------------
+// Kun symmetryEdit on päällä, valitun kuution/luun muokkaus (siirto/kierto/
+// koko) peilataan automaattisesti vastakkaiselle puolelle livenä: jokaisessa
+// objectChange-tapahtumassa haetaan nimen perusteella peilikuutio/-luu ja
+// asetetaan sille peilattu transformi suoraan dataan + THREE-objektiin
+// (ilman koko mallin rebuildia).
+const SYM_MIRROR_MATRIX = new THREE.Matrix4().set(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+/** Peilaa rotaation x-tason yli (oikea ↔ vasen) — sama matriisitapa kuin Mirror Pose. */
+function mirrorRotationDeg(rot) {
+    const e = new THREE.Euler(
+        THREE.MathUtils.degToRad(rot[0] || 0),
+        THREE.MathUtils.degToRad(rot[1] || 0),
+        THREE.MathUtils.degToRad(rot[2] || 0),
+        'XYZ'
+    );
+    const m = new THREE.Matrix4().makeRotationFromEuler(e);
+    const mirrored = new THREE.Matrix4().multiplyMatrices(SYM_MIRROR_MATRIX, m).multiply(SYM_MIRROR_MATRIX);
+    const eu = new THREE.Euler().setFromRotationMatrix(mirrored, 'XYZ');
+    return [
+        Math.round(THREE.MathUtils.radToDeg(eu.x)),
+        Math.round(THREE.MathUtils.radToDeg(eu.y)),
+        Math.round(THREE.MathUtils.radToDeg(eu.z))
+    ];
+}
+
+/** Päivitä yhden kuution mesh dataan (koko/positio/rotaatio) ilman rebuildia. */
+function updateCubeMeshInPlace(ci) {
+    const mesh = state.cubes[ci];
+    const cubeData = findCubeData(ci);
+    const boneData = findBoneForCube(ci);
+    if (!mesh || !cubeData || !boneData) return;
+    const g = mesh.geometry;
+    const sz = g && g.parameters ? [g.parameters.width, g.parameters.height, g.parameters.depth] : null;
+    if (!sz || Math.abs(sz[0] - cubeData.size[0]) > 1e-4 || Math.abs(sz[1] - cubeData.size[1]) > 1e-4 || Math.abs(sz[2] - cubeData.size[2]) > 1e-4) {
+        const geo = new THREE.BoxGeometry(cubeData.size[0], cubeData.size[1], cubeData.size[2]);
+        applyBoxTextureUVs(geo, cubeData, state.model.textureWidth, state.model.textureHeight);
+        mesh.geometry.dispose();
+        mesh.geometry = geo;
+    }
+    mesh.position.set(
+        cubeData.origin[0] + cubeData.size[0] / 2 - boneData.pivot[0],
+        cubeData.origin[1] + cubeData.size[1] / 2 - boneData.pivot[1],
+        cubeData.origin[2] + cubeData.size[2] / 2 - boneData.pivot[2]
+    );
+    mesh.rotation.order = 'ZYX';
+    mesh.rotation.set(
+        THREE.MathUtils.degToRad(cubeData.rotation[0]),
+        THREE.MathUtils.degToRad(cubeData.rotation[1]),
+        THREE.MathUtils.degToRad(cubeData.rotation[2])
+    );
+}
+
+/** Päivitä yhden luun ryhmä + sen kuutiot dataan ilman rebuildia. */
+function updateBoneGroupInPlace(bi) {
+    const boneData = state.model.bones[bi];
+    const group = state.bones[bi];
+    if (!boneData || !group) return;
+    const parentIdx = boneData.parent ? state.model.bones.findIndex(b => b.name === boneData.parent) : -1;
+    const base = boneData.pivot.slice();
+    if (parentIdx >= 0 && state.bones[parentIdx]) {
+        const pp = state.model.bones[parentIdx].pivot;
+        base[0] -= pp[0]; base[1] -= pp[1]; base[2] -= pp[2];
+    }
+    group.userData.basePosition = base;
+    group.position.set(base[0], base[1], base[2]);
+    group.rotation.order = 'ZYX';
+    group.rotation.set(
+        THREE.MathUtils.degToRad(boneData.rotation[0]),
+        THREE.MathUtils.degToRad(boneData.rotation[1]),
+        THREE.MathUtils.degToRad(boneData.rotation[2])
+    );
+    for (let ci = 0; ci < state.cubes.length; ci++) {
+        if (state.cubes[ci].userData.boneIndex === bi) updateCubeMeshInPlace(ci);
+    }
+}
+
+/** Peilaa valitun kuution transformin sen peilikuutiolle. */
+function mirrorCubeTransform(ci) {
+    const map = getCubeMirrorMap();
+    const mi = map[ci];
+    if (mi === null || mi === undefined || mi === ci) return;
+    const src = findCubeData(ci);
+    const dst = findCubeData(mi);
+    if (!src || !dst) return;
+    dst.size = src.size.slice();
+    dst.origin = [-(src.origin[0] + src.size[0]), src.origin[1], src.origin[2]];
+    dst.rotation = mirrorRotationDeg(src.rotation);
+    updateCubeMeshInPlace(mi);
+    if (state.uvEditor) state.uvEditor.draw();
+}
+
+/** Peilaa valitun luun transformin (pivot + rotaatio + kuutiot) peililuulle. */
+function mirrorBoneTransform(bi) {
+    const src = state.model.bones[bi];
+    if (!src) return;
+    const mName = mirrorCubeName(src.name);
+    if (!mName) return;
+    const mi = state.model.bones.findIndex(b => b.name === mName);
+    if (mi === -1 || mi === bi) return;
+    const dst = state.model.bones[mi];
+    dst.pivot = [-src.pivot[0], src.pivot[1], src.pivot[2]];
+    dst.rotation = mirrorRotationDeg(src.rotation);
+    for (let i = 0; i < Math.min(src.cubes.length, dst.cubes.length); i++) {
+        const s = src.cubes[i];
+        const d = dst.cubes[i];
+        d.origin = [-(s.origin[0] + s.size[0]), s.origin[1], s.origin[2]];
+        d.size = s.size.slice();
+        d.rotation = mirrorRotationDeg(s.rotation);
+    }
+    updateBoneGroupInPlace(mi);
+    // Asentotila: kirjaa myös peililuun keyframe (peilattu rotaatio)
+    if (state.animation && state.animation.poseMode && state.animation.tracks) {
+        const frame = Math.round(state.animation.time);
+        state.animation.tracks[mName] = state.animation.tracks[mName] || {};
+        state.animation.tracks[mName][frame] = dst.rotation.slice();
+        if (state.animation.redrawKeys) state.animation.redrawKeys();
+    }
+    if (state.uvEditor) state.uvEditor.draw();
+}
+
+/** objectChange-kuuntelijan kutsu: peilaa muokkaus vastakkaiselle puolelle. */
+function applySymmetryEdit() {
+    if (!state.symmetryEdit) return;
+    if (state.selectedCube !== null) {
+        mirrorCubeTransform(state.selectedCube);
+    } else if (state.selectedBone !== null) {
+        mirrorBoneTransform(state.selectedBone);
+    }
+}
 
 function getCubeMirrorMap() {
     if (state.cubeMirrorMapVersion === state.modelVersion) return state.cubeMirrorMap;
@@ -1155,6 +1292,21 @@ function setupToolbar() {
     document.getElementById('btn-add-group').addEventListener('click', addBone);
     const mirrorBtn = document.getElementById('btn-mirror-copy');
     if (mirrorBtn) mirrorBtn.addEventListener('click', mirrorCopy);
+
+    // Symmetria-editointi: muokkaa toista puolta, toinen peilautuu livenä
+    const symBtn = document.getElementById('btn-symmetry');
+    if (symBtn) {
+        symBtn.addEventListener('click', () => {
+            state.symmetryEdit = !state.symmetryEdit;
+            symBtn.classList.toggle('active', state.symmetryEdit);
+            symBtn.title = state.symmetryEdit
+                ? 'Symmetry päällä — muokkaa toista puolta, toinen peilautuu livenä (klikkaa sammuuttaaksesi)'
+                : 'Symmetry edit — muokkaa toista puolta (siirto/kierto/koko), toinen peilautuu livenä';
+            setStatus(state.symmetryEdit
+                ? '🪞 Symmetry päällä — valitse oikea/vasen kuutio tai luu ja muokkaa, peilikuva seuraa livenä'
+                : 'Symmetry pois');
+        });
+    }
 
     // Peilattu maalaus -kytkin (🪞 UV-työkalupalkissa)
     const mirrorPaintBtn = document.getElementById('btn-mirror-paint');
@@ -2955,4 +3107,15 @@ if (!state.webgl) {
 window.__MOB_STUDIO = state;  // dev/debug handle
 window.__MOB_STUDIO.renderer = renderer;
 window.__MOB_STUDIO.checkRenderConsistency = checkRenderConsistency;
+window.__MOB_STUDIO.applySymmetryEdit = applySymmetryEdit;
+window.__MOB_STUDIO.selectCube = selectCube;
+window.__MOB_STUDIO.selectBone = selectBone;
+window.__MOB_STUDIO.updatePropertiesFromObject = updatePropertiesFromObject;
+window.__MOB_STUDIO.updateBoneFromObject = updateBoneFromObject;
+window.__MOB_STUDIO.updateCubeMeshInPlace = updateCubeMeshInPlace;
+window.__MOB_STUDIO.updateBoneGroupInPlace = updateBoneGroupInPlace;
+window.__MOB_STUDIO.mirrorCubeTransform = mirrorCubeTransform;
+window.__MOB_STUDIO.mirrorBoneTransform = mirrorBoneTransform;
+window.__MOB_STUDIO.findCubeData = findCubeData;
+window.__MOB_STUDIO.getCubeMirrorMap = getCubeMirrorMap;
 console.log('🧊 Freebuff Mob Studio initialized' + (state.webgl ? '' : ' (no WebGL — 3D viewport disabled)'));

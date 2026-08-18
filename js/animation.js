@@ -375,7 +375,10 @@ export function initAnimation(state, callbacks) {
             [/^(.+)_r$/, '$1_l'],
             [/^(.+)_l$/, '$1_r'],
             [/^(.+)R$/, '$1L'],
-            [/^(.+)L$/, '$1R']
+            [/^(.+)L$/, '$1R'],
+            // camelCase-parit: rightArm ↔ leftArm, LeftLeg ↔ RightLeg
+            [/^right/i, 'left'],
+            [/^left/i, 'right']
         ];
         for (const [re, rep] of swaps) {
             if (re.test(name)) return name.replace(re, rep);
