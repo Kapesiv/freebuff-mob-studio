@@ -2104,9 +2104,13 @@ function setupFileIO() {
         const id = state.model.modelId.replace('geometry.', '');
         const ns = slugify(packNsInput.value || id) || id;
         const hasAnims = !!(state.projectAnimations && Object.keys(state.projectAnimations).length > 0);
-        const paths = previewPackFiles(currentPackFormats(), id, ns, hasAnims);
+        const hasGlow = !!state.emissiveDataURL;
+        const paths = previewPackFiles(currentPackFormats(), id, ns, hasAnims, hasGlow);
         packFileList.textContent = paths.join('\n');
-        packFileList.title = hasAnims ? '' : 'Ei animaatioita — vain malli + tekstuuri';
+        const notes = [];
+        if (!hasAnims) notes.push('ei animaatioita');
+        if (!hasGlow) notes.push('ei glow-kerrosta');
+        packFileList.title = notes.length ? notes.join(', ') : '';
     }
 
     function openPackDialog() {
@@ -2140,6 +2144,7 @@ function setupFileIO() {
             projectName: state.projectName || id,
             animations,
             textureCanvas: state.textureCanvas,
+            emissiveDataURL: state.emissiveDataURL || null,
         });
         const zip = zipFiles(files);
         const blob = new Blob([zip], { type: 'application/zip' });

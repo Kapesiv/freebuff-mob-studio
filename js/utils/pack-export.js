@@ -74,14 +74,16 @@ function packMcmeta(name) {
 }
 
 /** Kevyt tiedostolista esikatseluun (ei generoi PNG:tä). */
-export function previewPackFiles(formats, id, ns, hasAnims) {
+export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
     const out = [];
     if (formats.includes('bedrock')) {
         out.push('manifest.json', `models/entity/${id}.geo.json`, `textures/entity/${id}.png`);
+        if (hasGlow) out.push(`textures/entity/${id}_glow.png`);
         if (hasAnims) out.push(`animations/${id}.animation.json`);
     }
     if (formats.includes('java')) {
         out.push('pack.mcmeta', `assets/${ns}/geo/${id}.geo.json`, `assets/${ns}/textures/entity/${id}.png`);
+        if (hasGlow) out.push(`assets/${ns}/textures/entity/${id}_glow.png`);
         if (hasAnims) out.push(`assets/${ns}/animations/${id}.animation.json`);
         out.push(`assets/freebuff/models/item/${id}.json`, `assets/freebuff/textures/item/${id}.png`);
     }
@@ -93,8 +95,9 @@ export function previewPackFiles(formats, id, ns, hasAnims) {
  * @param opts.formats      ['java'] | ['bedrock'] | ['java','bedrock']
  * @param opts.namespace    modin namespace (oletus: modelId:n perusosa)
  * @param opts.projectName  paketin nimi (manifest/pack.mcmeta)
- * @param opts.animations   exportBedrockAnimations-objekti tai null (ei animaatioita)
- * @param opts.textureCanvas 2D-canvas (tai dataURL-merkkijono) tekstuurista
+ * @param opts.animations        exportBedrockAnimations-objekti tai null (ei animaatioita)
+ * @param opts.textureCanvas     2D-canvas (tai dataURL-merkkijono) tekstuurista
+ * @param opts.emissiveDataURL   glow-kerroksen PNG dataURL-merkkijono (tai null)
  * @returns { files: [{path, data}], filePaths: [string] }
  */
 export function buildResourcePack(model, opts = {}) {
@@ -105,12 +108,14 @@ export function buildResourcePack(model, opts = {}) {
 
     const files = [];
     const png = pngBytesFromTexture(opts.textureCanvas);
+    const glow = opts.emissiveDataURL ? pngBytesFromTexture(opts.emissiveDataURL) : null;
     const hasAnims = opts.animations && Object.keys(opts.animations).length > 0;
 
     if (formats.includes('bedrock')) {
         files.push({ path: 'manifest.json', data: jsonBytes(bedrockManifest(name)) });
         files.push({ path: `models/entity/${id}.geo.json`, data: jsonBytes(exportBedrockGeometry(model)) });
         if (png) files.push({ path: `textures/entity/${id}.png`, data: png });
+        if (glow) files.push({ path: `textures/entity/${id}_glow.png`, data: glow });
         if (hasAnims) files.push({ path: `animations/${id}.animation.json`, data: jsonBytes(exportJavaAnimations(model, opts.animations)) });
     }
 
@@ -118,6 +123,7 @@ export function buildResourcePack(model, opts = {}) {
         files.push({ path: 'pack.mcmeta', data: jsonBytes(packMcmeta(name)) });
         files.push({ path: `assets/${ns}/geo/${id}.geo.json`, data: jsonBytes(exportBedrockGeometry(model)) });
         if (png) files.push({ path: `assets/${ns}/textures/entity/${id}.png`, data: png });
+        if (glow) files.push({ path: `assets/${ns}/textures/entity/${id}_glow.png`, data: glow });
         if (hasAnims) files.push({ path: `assets/${ns}/animations/${id}.animation.json`, data: jsonBytes(exportJavaAnimations(model, opts.animations)) });
         // Vanilla Java-edition item-malli (tekstuuriviittaukset ovat freebuff-namespacessa)
         files.push({ path: `assets/freebuff/models/item/${id}.json`, data: jsonBytes(exportJavaModel(model, id)) });
