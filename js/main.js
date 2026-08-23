@@ -1141,63 +1141,107 @@ function clampPartAxis(v, fallback) {
 
 function round2(v) { return Math.round(v * 100) / 100; }
 
+/**
+ * Osan kaikki sivut: instanssin omat luut + peilisisarus (jos symmetrinen).
+ * Peilisisar etsitään ensisijaisesti kiinnityksen kirjaamasta partPair-merkinnästä,
+ * muuten geometrisesta vastineesta (sama osa, viereinen laskuri, pivot peilattu
+ * x:n yli) — sama logiikka kuin deleteSelectedissä. Jokaisella sivulla on oma
+ * juuriluunsa, jonka pivot toimii kyseisen sivun kiinnityspisteenä.
+ */
+function partSides(inst) {
+    const sides = [{ bones: inst.bones, root: inst.root }];
+    let pairBones = null;
+    if (inst.root && inst.root.partPair) {
+        const p = inst.root.partPair;
+        pairBones = state.model.bones.filter(b => b.name === p || (b.name.length > p.length + 1 && b.name.startsWith(p + '_')));
+    } else {
+        const names = new Set(inst.bones.map(b => b.name));
+        const myCounter = parseInt(inst.key.split('_').pop().replace(/m$/, ''), 10);
+        for (const b of state.model.bones) {
+            if (names.has(b.name)) continue;
+            const oi = getPartInstanceForBone(b);
+            if (!oi || oi.id !== inst.id || oi.key === inst.key) continue;
+            const oc = parseInt(oi.key.split('_').pop().replace(/m$/, ''), 10);
+            if (Math.abs(oc - myCounter) !== 1) continue;
+            const rp = inst.root.pivot, op = oi.root.pivot;
+            if (Math.abs(op[0] + rp[0]) < 0.6 && Math.abs(op[1] - rp[1]) < 0.6 && Math.abs(op[2] - rp[2]) < 0.6) {
+                pairBones = oi.bones;
+                break;
+            }
+        }
+    }
+    if (pairBones && pairBones.length) {
+        const pairRoot = pairBones.find(b => !pairBones.some(o => o.name === b.parent)) || pairBones[0];
+        sides.push({ bones: pairBones, root: pairRoot });
+    }
+    return sides;
+}
+
 function roundPartData(inst) {
-    for (const b of inst.bones) {
-        b.pivot = b.pivot.map(v => round2(v));
-        for (const c of b.cubes) {
-            c.origin = c.origin.map(v => round2(v));
-            c.size = c.size.map(v => round2(v));
+    for (const side of partSides(inst)) {
+        for (const b of side.bones) {
+            b.pivot = b.pivot.map(v => round2(v));
+            for (const c of b.cubes) {
+                c.origin = c.origin.map(v => round2(v));
+                c.size = c.size.map(v => round2(v));
+            }
         }
     }
 }
 
-/** Skaalaa koko osa kiinnityspisteen (juuriluun pivotin) ympäri — Spore-tyyli. */
+/** Skaalaa koko osa (molemmat peilisivut) kunkin sivun kiinnityspisteen ympäri — Spore-tyyli. */
 function scalePartData(inst, sx, sy, sz) {
-    const p = inst.root.pivot;
     const S = [clampPartAxis(sx, 1), clampPartAxis(sy, 1), clampPartAxis(sz, 1)];
-    for (const b of inst.bones) {
-        for (let i = 0; i < 3; i++) {
-            b.pivot[i] = p[i] + (b.pivot[i] - p[i]) * S[i];
-        }
-        for (const c of b.cubes) {
-            const cx = c.origin[0] + c.size[0] / 2;
-            const cy = c.origin[1] + c.size[1] / 2;
-            const cz = c.origin[2] + c.size[2] / 2;
-            c.size[0] *= S[0]; c.size[1] *= S[1]; c.size[2] *= S[2];
-            c.origin[0] = p[0] + (cx - p[0]) * S[0] - c.size[0] / 2;
-            c.origin[1] = p[1] + (cy - p[1]) * S[1] - c.size[1] / 2;
-            c.origin[2] = p[2] + (cz - p[2]) * S[2] - c.size[2] / 2;
+    for (const side of partSides(inst)) {
+        const p = side.root.pivot;
+        for (const b of side.bones) {
+            for (let i = 0; i < 3; i++) {
+                b.pivot[i] = p[i] + (b.pivot[i] - p[i]) * S[i];
+            }
+            for (const c of b.cubes) {
+                const cx = c.origin[0] + c.size[0] / 2;
+                const cy = c.origin[1] + c.size[1] / 2;
+                const cz = c.origin[2] + c.size[2] / 2;
+                c.size[0] *= S[0]; c.size[1] *= S[1]; c.size[2] *= S[2];
+                c.origin[0] = p[0] + (cx - p[0]) * S[0] - c.size[0] / 2;
+                c.origin[1] = p[1] + (cy - p[1]) * S[1] - c.size[1] / 2;
+                c.origin[2] = p[2] + (cz - p[2]) * S[2] - c.size[2] / 2;
+            }
         }
     }
     roundPartData(inst);
 }
 
-/** Lisää rotaatio (delta asteina) koko osaan kiinnityspisteen ympäri. */
+/** Lisää rotaatio (delta asteina) koko osaan (molemmat peilisivut) kunkin sivun kiinnityspisteen ympäri. */
 function rotatePartData(inst, dx, dy, dz) {
     const R = new THREE.Matrix4().makeRotationFromEuler(
         new THREE.Euler(THREE.MathUtils.degToRad(dx), THREE.MathUtils.degToRad(dy), THREE.MathUtils.degToRad(dz), 'ZYX')
     );
-    const p = inst.root.pivot;
     const v = new THREE.Vector3();
-    for (const b of inst.bones) {
-        v.set(b.pivot[0] - p[0], b.pivot[1] - p[1], b.pivot[2] - p[2]).applyMatrix4(R);
-        b.pivot = [p[0] + v.x, p[1] + v.y, p[2] + v.z];
-        b.rotation = composeRotationDeg(b.rotation, [dx, dy, dz]);
-        for (const c of b.cubes) {
-            v.set(c.origin[0] + c.size[0] / 2 - p[0], c.origin[1] + c.size[1] / 2 - p[1], c.origin[2] + c.size[2] / 2 - p[2]).applyMatrix4(R);
-            c.origin = [p[0] + v.x - c.size[0] / 2, p[1] + v.y - c.size[1] / 2, p[2] + v.z - c.size[2] / 2];
-            c.rotation = composeRotationDeg(c.rotation, [dx, dy, dz]);
+    for (const side of partSides(inst)) {
+        const p = side.root.pivot;
+        for (const b of side.bones) {
+            v.set(b.pivot[0] - p[0], b.pivot[1] - p[1], b.pivot[2] - p[2]).applyMatrix4(R);
+            b.pivot = [p[0] + v.x, p[1] + v.y, p[2] + v.z];
+            b.rotation = composeRotationDeg(b.rotation, [dx, dy, dz]);
+            for (const c of b.cubes) {
+                v.set(c.origin[0] + c.size[0] / 2 - p[0], c.origin[1] + c.size[1] / 2 - p[1], c.origin[2] + c.size[2] / 2 - p[2]).applyMatrix4(R);
+                c.origin = [p[0] + v.x - c.size[0] / 2, p[1] + v.y - c.size[1] / 2, p[2] + v.z - c.size[2] / 2];
+                c.rotation = composeRotationDeg(c.rotation, [dx, dy, dz]);
+            }
         }
     }
     roundPartData(inst);
 }
 
-/** Siirrä koko osa (kaikki pivotit + originit) annetulla vektorilla. */
+/** Siirrä koko osa (molemmat peilisivut) annetulla vektorilla. */
 function translatePartData(inst, dx, dy, dz) {
-    for (const b of inst.bones) {
-        b.pivot[0] += dx; b.pivot[1] += dy; b.pivot[2] += dz;
-        for (const c of b.cubes) {
-            c.origin[0] += dx; c.origin[1] += dy; c.origin[2] += dz;
+    for (const side of partSides(inst)) {
+        for (const b of side.bones) {
+            b.pivot[0] += dx; b.pivot[1] += dy; b.pivot[2] += dz;
+            for (const c of b.cubes) {
+                c.origin[0] += dx; c.origin[1] += dy; c.origin[2] += dz;
+            }
         }
     }
     roundPartData(inst);
@@ -1228,9 +1272,11 @@ function composeRotationDeg(baseDeg, deltaDeg) {
 
 /** Päivitä osan luuryhmät + kuutioiden geometriat dataan (ilman rebuildia). */
 function syncPartToScene(inst) {
-    for (const b of inst.bones) {
-        const bi = state.model.bones.indexOf(b);
-        if (bi >= 0) updateBoneGroupInPlace(bi);
+    for (const side of partSides(inst)) {
+        for (const b of side.bones) {
+            const bi = state.model.bones.indexOf(b);
+            if (bi >= 0) updateBoneGroupInPlace(bi);
+        }
     }
     if (state.uvEditor) state.uvEditor.draw();
 }
@@ -1329,14 +1375,16 @@ function setPartRot(inst, value, axis) {
     syncPartToScene(inst);
 }
 
-/** Maalaa koko osan kuutiot yhdellä värillä (kaikki kasvot tekstuuriin). */
+/** Maalaa koko osan kuutiot (molemmat peilisivut) yhdellä värillä (kaikki kasvot tekstuuriin). */
 function paintPartColor(inst, color) {
     ensureTexture();
     const tctx = state.textureCanvas.getContext('2d');
-    for (const b of inst.bones) {
-        for (const c of b.cubes) {
-            c.color = color;
-            fillCubeFaces(tctx, c, color);
+    for (const side of partSides(inst)) {
+        for (const b of side.bones) {
+            for (const c of b.cubes) {
+                c.color = color;
+                fillCubeFaces(tctx, c, color);
+            }
         }
     }
     state.texture.needsUpdate = true;
@@ -1879,20 +1927,15 @@ const RANDOM_CREATURE_NAMES = [
     'Marsh Wader', 'Thornheart', 'Shadow Belly', 'Fluffy Ear'
 ];
 
-const RANDOM_SURFACES = ['bottom', 'top', 'front', 'back', 'side'];
-
-/** Satunnainen olentoväri (sävy 0–360, kylläisyys 0.40–0.75, valoisuus 0.32–0.64). */
-function randomCreatureColor() {
-    return hslToHex(Math.random() * 360, 0.40 + Math.random() * 0.35, 0.32 + Math.random() * 0.32);
-}
-
 /**
  * 🎲 Randomize — rakentaa satunnaisen olennon: 6-luinen humanoidipohja
- * yhtenäisellä väripaletilla + 5–9 satunnaista Spore-osaa. Jokaiselle
- * osalle arvotaan luu (70 % oma luontainen, 30 % mikä tahansa), pinta
- * (60 % oma oletus, 40 % satunnainen), peilaus (symmetrisille 75 %) ja
- * väri (koko osa yhdellä satunnaisvärillä). Yksi undo palauttaa
- * edellisen mallin (osat lisätään noHistory-optiolla).
+ * yhtenäisellä väripaletilla + suunniteltu osakokonaisuus (jalkapari,
+ * häntä, pää ja valinnaisesti siivet/kädet/koristeet). Jokainen osa
+ * kiinnittyy omaan luonnolliseen luuhunsa ja oletuspintaansa (ei
+ * satunnaisia pintoja/luita — ne tekivät olennoista sekavia), peilaus
+ * symmetrisille 90 % ajasta ja väri otetaan vartalon paletista (ei
+ * satunnaisia sävyjä). Yksi undo palauttaa edellisen mallin (osat
+ * lisätään noHistory-optiolla).
  */
 function randomizeCreature() {
     // Pohja: 6-luinen Humanoid (body, head, arms, legs — oikeat luut
@@ -1929,21 +1972,46 @@ function randomizeCreature() {
         }
     }
 
-    // Valitse 5–9 satunnaista osaa sekoitetusta pakasta
-    const shuffled = MOB_PARTS.slice().sort(() => Math.random() - 0.5);
-    const count = 5 + Math.floor(Math.random() * 5); // 5–9
-    const chosen = shuffled.slice(0, count);
+    // Kategoriasuunnitelma: jalkapari + häntä aina, pää (top-koriste + etunaama)
+    // usein, ja valinnaisesti siivet, kädet ja selkäkoristeet. Osat kiinnittyvät
+    // omaan luuhunsa ja oletuspintaansa — satunnaiset pinnat/luut tekivät
+    // olennoista epäluonnollisia (sarvet alaspäin, häntä päästä jne.).
+    const byCat = (cat) => MOB_PARTS.filter(p => p.category === cat);
+    const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+    const heads = byCat('päät');
+    const topHeads = heads.filter(p => p.attach.at === 'top');
+    const frontHeads = heads.filter(p => p.attach.at === 'front');
+    const plan = [pick(byCat('jalat')), pick(byCat('hännät'))];
+    if (topHeads.length && Math.random() < 0.7) plan.push(pick(topHeads));
+    if (frontHeads.length && Math.random() < 0.6) plan.push(pick(frontHeads));
+    if (Math.random() < 0.5) plan.push(pick(byCat('siivet')));
+    if (Math.random() < 0.4) plan.push(pick(byCat('kädet')));
+    if (Math.random() < 0.35) plan.push(pick(byCat('muut')));
+
+    // Väri osan kategorian mukaan — vartalon paletista, ei satunnaisesta sävystä
+    const partColor = (cat) => {
+        if (cat === 'jalat') return legColor;
+        if (cat === 'päät') return headColor;
+        if (cat === 'hännät') return col(-6);
+        if (cat === 'siivet') return col(-4);
+        if (cat === 'kädet') return armColor;
+        return col(-2);
+    };
+
     let attached = 0;
-    for (const part of chosen) {
+    for (const part of plan) {
         const natural = findPartAttachBone(part, {});
-        const useNatural = natural && Math.random() < 0.7;
-        const boneName = useNatural
-            ? natural.name
-            : state.model.bones[Math.floor(Math.random() * state.model.bones.length)].name;
-        const useDefaultAt = Math.random() < 0.6;
-        const at = useDefaultAt ? part.attach.at : RANDOM_SURFACES[Math.floor(Math.random() * RANDOM_SURFACES.length)];
-        const mirror = part.symmetric && Math.random() < 0.75;
-        addPartToModel(part.id, { boneName, at, mirror, color: randomCreatureColor(), noHistory: true });
+        if (!natural) continue;
+        // Jalat ja siivet peilataan aina (yksipuolinen jalka näyttää rumalta),
+        // koristeet (sarvet, korvat) usein mutta eivät aina.
+        const alwaysPair = part.category === 'jalat' || part.category === 'siivet';
+        addPartToModel(part.id, {
+            boneName: natural.name,
+            at: part.attach.at,
+            mirror: part.symmetric && (alwaysPair || Math.random() < 0.9),
+            color: partColor(part.category),
+            noHistory: true
+        });
         attached++;
     }
 
