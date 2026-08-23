@@ -2010,20 +2010,32 @@ function randomizeCreature() {
         }
     }
 
-    // Kategoriasuunnitelma: jalkapari + häntä aina, pää (top-koriste + etunaama)
-    // usein, ja valinnaisesti siivet, kädet ja selkäkoristeet. Osat kiinnittyvät
-    // omaan luuhunsa ja oletuspintaansa — satunnaiset pinnat/luut tekivät
-    // olennoista epäluonnollisia (sarvet alaspäin, häntä päästä jne.).
+    // Kategoriasuunnitelma pohjan mukaan. Humanoid/Quadruped/Bird saavat
+    // jalkaparin + hännän; Fish ei saa jalkoja (uintianimaatio vaatii että
+    // jalkoja ei ole, ja kalaan jalat näyttävät rumilta) vaan evät + pään;
+    // Spider ei saa jalkoja (8 jo olemassa) vaan pään + selkäkoristeet.
+    // Pääosat kiinnittyvät omaan luuhunsa ja oletuspintaansa — satunnaiset
+    // pinnat/luut tekivät olennoista epäluonnollisia (sarvet alaspäin jne.).
     const byCat = (cat) => MOB_PARTS.filter(p => p.category === cat);
     const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
     const heads = byCat('päät');
     const topHeads = heads.filter(p => p.attach.at === 'top');
     const frontHeads = heads.filter(p => p.attach.at === 'front');
-    const plan = [pick(byCat('jalat')), pick(byCat('hännät'))];
+    const fishBase = tpl.id === 'fish';
+    const spiderBase = tpl.id === 'spider';
+    const plan = [];
+    if (!fishBase && !spiderBase) {
+        plan.push(pick(byCat('jalat')), pick(byCat('hännät')));
+    } else if (fishBase) {
+        const fins = byCat('siivet').filter(p => p.id === 'fin');
+        if (fins.length && Math.random() < 0.6) plan.push(pick(fins)); // evät
+    } else {
+        if (Math.random() < 0.5) plan.push(pick(byCat('hännät')));
+    }
     if (topHeads.length && Math.random() < 0.7) plan.push(pick(topHeads));
     if (frontHeads.length && Math.random() < 0.6) plan.push(pick(frontHeads));
-    if (Math.random() < 0.5) plan.push(pick(byCat('siivet')));
-    if (Math.random() < 0.4) plan.push(pick(byCat('kädet')));
+    if (!fishBase && !spiderBase && Math.random() < 0.5) plan.push(pick(byCat('siivet')));
+    if (!spiderBase && Math.random() < 0.4) plan.push(pick(byCat('kädet')));
     if (Math.random() < 0.35) plan.push(pick(byCat('muut')));
 
     // Väri osan kategorian mukaan — vartalon paletista, ei satunnaisesta sävystä
@@ -3664,7 +3676,12 @@ function setupNewMobDialog() {
         const modelId = slugifyModelId(idInput.value.trim() || name);
         const tpl = MOB_TEMPLATES.find(t => t.id === newMobDialog.templateId);
         state.history.push(state.model);
-        state.model = tpl ? JSON.parse(JSON.stringify(tpl.model)) : createEmptyModel();
+        // Template-pohjat ovat yksiluisia (kaikki kuutiot body-luussa) — jaetaan
+        // moniluuiseksi luurangoksi, jotta Spore-osat kiinnittyvät oikeisiin
+        // luihin (head/body/legs) ja animaatiot tunnistavat raajat (sama
+        // logiikka kuin Randomizessa).
+        const baseModel = tpl ? JSON.parse(JSON.stringify(splitTemplateIntoSkeleton(tpl.model))) : createEmptyModel();
+        state.model = baseModel;
         state.model.modelId = modelId;
         state.projectName = name;
         state.sourceCategory = 'template';

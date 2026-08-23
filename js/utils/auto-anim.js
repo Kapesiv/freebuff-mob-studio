@@ -177,8 +177,10 @@ export function generateAutoAnimations(model) {
     if (a.tail) idle.tracks[a.tail.name] = { 0: [0, -4, 0], 30: [0, 4, 0], 60: [0, -4, 0] };
     animations.idle = idle;
 
-    // ---- walk: aito askellus (40 fr = 2 s)
-    if (a.legs.length) {
+    // ---- walk: aito askellus (40 fr = 2 s). Hämähäkkimäisillä (6+ jalkaa)
+    // käytetään sen sijaan crawl-hiipimistä — tavallinen kävely näyttää
+    // väärältä monijalkaisella.
+    if (a.legs.length && a.legs.length < 6) {
         const walk = { length: 40, tracks: {}, posTracks: {} };
         const phases = {};
         for (const n of a.legA) phases[n] = 0;
@@ -265,6 +267,32 @@ export function generateAutoAnimations(model) {
         if (a.tail) swim.tracks[a.tail.name] = { 0: [0, -25, 0], 20: [0, 25, 0], 40: [0, -25, 0] };
         if (a.head) swim.tracks[a.head.name] = { 0: [0, 0, 0], 20: [0, 6, 0], 40: [0, 0, 0] };
         animations.swim = swim;
+    }
+
+    // ---- crawl: hämähäkkimäinen hiipiminen (monta jalkaa, matala aaltoilu).
+    // Jalat liikkuvat peräkkäin vasemmalta oikealle aaltomaisesti ja keho
+    // keinuu hitaasti — näyttää hiipivältä hämähäkiltä, ei tavalliselta kävelyltä.
+    if (a.legs.length >= 6) {
+        const crawl = { length: 80, tracks: {}, posTracks: {} };
+        const xsorted = [...a.legs].sort((x, y) => info[x.name].center[0] - info[y.name].center[0]);
+        xsorted.forEach((leg, i) => {
+            const phase = Math.round((i / Math.max(1, xsorted.length)) * 80);
+            crawl.tracks[leg.name] = {};
+            crawl.posTracks[leg.name] = {};
+            for (let f = 0; f <= 80; f += 10) {
+                const kf = (f + phase) % 80;
+                const k = Math.sin((f / 80) * Math.PI * 2);
+                crawl.tracks[leg.name][kf] = [k * 8, 0, 0];
+                crawl.posTracks[leg.name][kf] = [0, Math.max(0, -k) * 0.8, 0];
+            }
+        });
+        if (a.body) {
+            crawl.tracks[a.body.name] = { 0: [0, 0, 0], 40: [2.5, 0, 0], 80: [0, 0, 0] };
+            crawl.posTracks[a.body.name] = { 0: [0, 0, 0], 40: [0, 0.4, 0], 80: [0, 0, 0] };
+        }
+        if (a.head) crawl.tracks[a.head.name] = { 0: [0, 0, 0], 40: [-4, 0, 0], 80: [0, 0, 0] };
+        if (a.tail) crawl.tracks[a.tail.name] = { 0: [0, -6, 0], 40: [0, 6, 0], 80: [0, -6, 0] };
+        animations.crawl = crawl;
     }
 
     return { animations, analysis: a };
