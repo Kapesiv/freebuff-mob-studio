@@ -2069,6 +2069,8 @@ function randomizeCreature() {
     rebuildModel();
     // Satunnaiset mutta vakaat tekstuurikuviot (raidat/täplät) perusvärin päälle
     const patterned = applyRandomTexturePatterns();
+    // Satunnainen emissiivinen valonhehku (~35 % olennoista hehkuu)
+    const glow = generateRandomGlow();
     const tmp = prepareMob({ category: 'template', model: JSON.parse(JSON.stringify(state.model)) });
     const cubes = state.model.bones.reduce((n, b) => n + b.cubes.length, 0);
     // Olento herää heti eloon: generoi kävely/idle-animaatiot luurangosta
@@ -2079,7 +2081,7 @@ function randomizeCreature() {
     applyGamePreviewDefault();
     updateProjectNameLabel();
     scheduleAutosave();
-    setStatus(`Randomize: "${state.projectName}" — ${attached} parts, ${state.model.bones.length} bones, ${cubes} cubes, ${tmp.size} blocks, ${patterned} patterned cubes, animations: ${animNames.join(', ') || 'none'}. Undo (⌘Z) restores the previous model — randomize again anytime.`);
+    setStatus(`Randomize: "${state.projectName}" — ${attached} parts, ${state.model.bones.length} bones, ${cubes} cubes, ${tmp.size} blocks, ${patterned} patterned cubes, ${glow ? 'glowing, ' : ''}animations: ${animNames.join(', ') || 'none'}. Undo (⌘Z) restores the previous model — randomize again anytime.`);
 }
 
 function deleteSelected() {
@@ -4437,6 +4439,59 @@ function applyRandomTexturePatterns() {
         if (state.uvEditor) state.uvEditor.draw();
     }
     return patterned;
+}
+
+/**
+ * Satunnainen emissiivinen valonhehku (glow) randomisoiduille olennoille.
+ * Noin 35 % olennoista hehkuu: silmät tai valitut kuutiot saavat kirkkaan
+ * emissiivisen värin, joka maalataan erilliseen glow-tekstuuriin
+ * (emissiveDataURL) — sama mekanismi kuin pelin omilla glow-mobeilla
+ * (esim. Deep Void). Päätös on deterministinen (seed projektin nimestä),
+ * joten sama malli hehkuu samalla tavalla autosaven/päivityksen yli.
+ * Palauttaa true jos olento hehkuu.
+ */
+function generateRandomGlow() {
+    const seedStr = state.projectName || 'creature';
+    const seed = seedStr.split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7) * 131;
+    const rand = seededRand(seed);
+    if (rand() >= 0.35) { // 35 %:lla hehku päällä
+        state.emissiveTexture = null;
+        state.emissiveDataURL = null;
+        return false;
+    }
+    // Kuumat hehkuvärit — syaani, vihreä, punainen, violetti, keltainen, sininen
+    const GLOW_COLORS = ['#66ffff', '#66ff66', '#ff6666', '#ff66ff', '#ffff66', '#66aaff'];
+    const glowColor = GLOW_COLORS[Math.floor(rand() * GLOW_COLORS.length)];
+    const c = document.createElement('canvas');
+    c.width = state.model.textureWidth;
+    c.height = state.model.textureHeight;
+    const tctx = c.getContext('2d');
+
+    // Kohteet: ensin silmät/valo-osat, muuten 1–2 pientä kuutiota
+    const all = [];
+    for (const bone of state.model.bones) for (const cube of bone.cubes) all.push(cube);
+    const eyeCubes = all.filter(cu => /eye|glow|lamp|orb|gem|beacon/i.test(cu.name || ''));
+    let targets = eyeCubes.length ? eyeCubes.slice() : [];
+    if (!targets.length) {
+        const pool = all.filter(cu => {
+            const d = cu.size || [1, 1, 1];
+            return Math.max(...d) <= 2;
+        });
+        const src = pool.length ? pool : all;
+        const n = Math.min(src.length, 1 + (rand() < 0.4 ? 1 : 0));
+        for (let i = 0; i < n && src.length; i++) {
+            targets.push(src.splice(Math.floor(rand() * src.length), 1)[0]);
+        }
+    }
+    for (const cube of targets) {
+        for (const r of computeFaceRects(cube)) {
+            tctx.fillStyle = glowColor;
+            tctx.fillRect(Math.round(r.x), Math.round(r.y), Math.round(r.w), Math.round(r.h));
+        }
+    }
+    state.emissiveDataURL = c.toDataURL();
+    applyEmissiveTexture();
+    return true;
 }
 
 function ensureTexture() {
