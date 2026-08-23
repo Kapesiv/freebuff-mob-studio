@@ -832,10 +832,84 @@ function readTextureColor(tx, ty) {
         .map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
+// ==================== RESHAPE (Spore-tyylinen vartalon muokkaus) ==========
+// Vedä muokataksesi koko olentoa: ylös/alas = korkeus (jalat pysyvät
+// maassa), vasen/oikea = leveys, Shift + veto = pituus. Skaalaus tapahtuu
+// koko mallille (luut + kuutiot), joten osat pysyvät kiinni pinnoissa.
+let reshapeActive = false;
+let reshapeStart = null;      // kopio vedon alusta (undo + palautus)
+let reshapeLastXY = null;
+
+function scaleModelAxis(axis, factor, pivot) {
+    for (const bone of state.model.bones) {
+        bone.pivot[axis] = pivot + (bone.pivot[axis] - pivot) * factor;
+        for (const c of bone.cubes) {
+            const cy = c.origin[axis] + c.size[axis] / 2;
+            c.size[axis] *= factor;
+            c.origin[axis] = pivot + (cy - pivot) * factor - c.size[axis] / 2;
+        }
+    }
+}
+
+function reshapeBegin(e) {
+    reshapeActive = true;
+    reshapeStart = JSON.parse(JSON.stringify(state.model));
+    state.history.push(JSON.parse(JSON.stringify(state.model)));
+    reshapeLastXY = [e.clientX, e.clientY];
+}
+
+function reshapeMove(e) {
+    if (!reshapeActive || !reshapeStart) return;
+    const dx = e.clientX - reshapeLastXY[0];
+    const dy = e.clientY - reshapeLastXY[1];
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+    const clampF = (v) => Math.max(0.35, Math.min(2.5, v));
+    // Ylös-veto (dy < 0) kasvattaa korkeutta → miinusmerkki y-akselilla
+    const fx = clampF(1 + dx * 0.012);
+    const fy = clampF(1 - dy * 0.012);
+    const fz = e.shiftKey ? clampF(1 + dx * 0.012) : 1;
+    // Palauta vedon alkutila ja sovella kumulatiiviset kertoimet
+    state.model = JSON.parse(JSON.stringify(reshapeStart));
+    const bb = modelBBox();
+    const pivX = (bb.mn[0] + bb.mx[0]) / 2;
+    const pivY = bb.mn[1];
+    const pivZ = (bb.mn[2] + bb.mx[2]) / 2;
+    if (fx !== 1) scaleModelAxis(0, fx, pivX);
+    if (fy !== 1) scaleModelAxis(1, fy, pivY);
+    if (fz !== 1) scaleModelAxis(2, fz, pivZ);
+    rebuildModel();
+}
+
+function reshapeEnd() {
+    if (!reshapeActive) return;
+    reshapeActive = false;
+    reshapeStart = null;
+    reshapeLastXY = null;
+    // Pyöristä luvut siisteiksi ja tallenna
+    for (const bone of state.model.bones) {
+        bone.pivot = bone.pivot.map(v => round2(v));
+        for (const c of bone.cubes) {
+            c.origin = c.origin.map(v => round2(v));
+            c.size = c.size.map(v => round2(v));
+        }
+    }
+    scheduleAutosave();
+    checkRenderConsistency();
+    const bb = modelBBox();
+    setStatus(`Reshaped — now ${((bb.mx[0]-bb.mn[0])/16).toFixed(2)} × ${((bb.mx[1]-bb.mn[1])/16).toFixed(2)} × ${((bb.mx[2]-bb.mn[2])/16).toFixed(2)} blocks`);
+}
+
 let paint3D = false;
 let paintLast = null;
 canvas.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
+    // Reshape: koko malli venyy/pullistuu vedolla (kuten Sporen kehonmuokkaus)
+    if (state.tool === 'reshape') {
+        e.preventDefault();
+        e.stopPropagation();
+        reshapeBegin(e);
+        return;
+    }
     // Väripipetti: yksi klikkaus poimii värin ja palaa maalaukseen
     if (state.tool === 'pipette') {
         e.preventDefault();
@@ -868,12 +942,13 @@ canvas.addEventListener('mousedown', (e) => {
     paint3DSpot(paintLast);
 });
 canvas.addEventListener('mousemove', (e) => {
+    if (state.tool === 'reshape') { reshapeMove(e); return; }
     if (!paint3D || state.tool !== 'paint') return;
     const p = paint3DAt(e);
     paint3DLine(paintLast, p);
     paintLast = p;
 });
-window.addEventListener('mouseup', () => { paint3D = false; paintLast = null; });
+window.addEventListener('mouseup', () => { paint3D = false; paintLast = null; reshapeEnd(); });
 
 // ==================== SELECTION ====================
 function selectCube(mesh) {
@@ -2551,14 +2626,17 @@ function setTool(tool) {
         transformControls.setMode('rotate');
     } else if (tool === 'scale') {
         transformControls.setMode('scale');
-    } else if (tool === 'paint' || tool === 'pipette') {
+    } else if (tool === 'paint' || tool === 'pipette' || tool === 'reshape') {
         transformControls.detach();
-        canvas.style.cursor = 'crosshair';
-        // Näkymän pysäytys: maalaus-/pipetti-tilassa kamera ei
+        canvas.style.cursor = tool === 'reshape' ? 'move' : 'crosshair';
+        // Näkymän pysäytys: maalaus-/pipetti-/reshape-tilassa kamera ei
         // kierrä/zoomaa/panoroi — malli pysyy täysin paikallaan.
         if (orbitControls) {
             orbitControls.enabled = false;
             orbitControls.mouseButtons.LEFT = null;
+        }
+        if (tool === 'reshape') {
+            setStatus('Reshape — drag: up/down = height · left/right = width · Shift = length');
         }
     } else {
         transformControls.detach();
