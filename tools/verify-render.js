@@ -41,11 +41,14 @@ const meshSetOk = [0, 1, 2].every(i =>
 if (!meshSetOk) {
     errors.push('✗ js/main.js rebuildModel: mesh.position must be origin + size/2 − pivot (missing "+ size[i] / 2" for some axis)');
 }
+// Origin kirjoitetaan meshin LOKAALISTA positiosta (mesh.position) + luun
+// pivotista — maailmapositio sisältää vanhempaluun asennon (animaatio),
+// joten se tuottaisi väärän originin parent-luille (render-varoitus).
 const gizmoOk = [0, 1, 2].every(i =>
-    mainSrc.includes(`worldPos.${'xyz'[i]} - cubeData.size[${i}] / 2`)
+    mainSrc.includes(`mesh.position.${'xyz'[i]} + boneData.pivot[${i}] - cubeData.size[${i}] / 2`)
 );
 if (!gizmoOk) {
-    errors.push('✗ js/main.js updatePropertiesFromObject: origin must be center − size/2 (missing "- size[i] / 2" for some axis)');
+    errors.push('✗ js/main.js updatePropertiesFromObject: origin must be local mesh position + pivot − size/2 (missing "+ boneData.pivot[i] - size[i] / 2" for some axis)');
 }
 
 // ---- minimal 4x4 matrix math (matches THREE conventions) ------------------

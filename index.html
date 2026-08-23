@@ -9,20 +9,30 @@
 <body>
     <div id="app">
         <header id="topbar">
-            <div class="logo">🧊 Freebuff Mob Studio <span id="project-name-label" class="project-name"></span></div>
+            <div class="logo">Freebuff Mob Studio <span id="project-name-label" class="project-name"></span></div>
             <div class="topbar-actions">
                 <button id="btn-new" title="New Project">New</button>
                 <button id="btn-save" title="Save project file">Save</button>
                 <button id="btn-open" title="Open project file">Open</button>
-                <button id="btn-import-bbmodel" title="Import Blockbench (.bbmodel)">Import Blockbench</button>
-                <button id="btn-export-bbmodel" title="Export Blockbench (.bbmodel) — vie malli tekstuureineen ja animaatioineen Blockbench-yhteensopivaksi">Export Blockbench</button>
-                <button id="btn-import-bedrock" title="Import Bedrock">Import Bedrock</button>
-                <button id="btn-export-bedrock" title="Export Bedrock">Export Bedrock</button>
-                <button id="btn-export-java" title="Export Java Edition">Export Java</button>
-                <button id="btn-export-anim-bedrock" title="Export animations (.animation.json, Bedrock)">Export Anim Bedrock</button>
-                <button id="btn-export-anim-java" title="Export animations (GeckoLib .animation.json, Java)">Export Anim Java</button>
-                <button id="btn-export-pack" title="📦 Lataa valmis resurssipaketti (.zip) — malli + tekstuurit + animaatiot suoraan peliin">📦 Pack</button>
-                <button id="btn-screenshot" title="📸 Tallenna PNG-kuva mobista nykyisestä kamerakulmasta (2× tarkkuus)">📸 Save PNG</button>
+                <details class="menu" id="menu-import">
+                    <summary title="Tuo malli tiedostosta (⌘I)">Tuo… <kbd>⌘I</kbd></summary>
+                    <div class="menu-items">
+                        <button id="btn-import-bbmodel" title="Import Blockbench (.bbmodel)">Blockbench…</button>
+                        <button id="btn-import-bedrock" title="Import Bedrock (.geo.json)">Bedrock…</button>
+                    </div>
+                </details>
+                <details class="menu" id="menu-export">
+                    <summary title="Vie malli tai animaatiot (⌘E)">Vie… <kbd>⌘E</kbd></summary>
+                    <div class="menu-items">
+                        <button id="btn-export-bbmodel" title="Export Blockbench (.bbmodel) — vie malli tekstuureineen ja animaatioineen Blockbench-yhteensopivaksi">Blockbench…</button>
+                        <button id="btn-export-bedrock" title="Export Bedrock (.geo.json)">Bedrock…</button>
+                        <button id="btn-export-java" title="Export Java Edition (GeckoLib)">Java…</button>
+                        <button id="btn-export-anim-bedrock" title="Export animations (.animation.json, Bedrock)">Animaatiot (Bedrock)…</button>
+                        <button id="btn-export-anim-java" title="Export animations (GeckoLib .animation.json, Java)">Animaatiot (GeckoLib)…</button>
+                    </div>
+                </details>
+                <button id="btn-export-pack" title="Lataa valmis resurssipaketti (.zip) — malli + tekstuurit + animaatiot suoraan peliin">Pack</button>
+                <button id="btn-screenshot" title="Tallenna PNG-kuva mobista nykyisestä kamerakulmasta (2× tarkkuus)">Save PNG</button>
             </div>
         </header>
 
@@ -31,19 +41,24 @@
                 <div class="panel-section">
                     <h3>Toolbox</h3>
                     <div id="toolbox" class="tool-grid">
-                        <button class="tool-btn active" data-tool="select" title="Select">🔘</button>
-                        <button class="tool-btn" data-tool="move" title="Move">✋</button>
-                        <button class="tool-btn" data-tool="rotate" title="Rotate">🔄</button>
-                        <button class="tool-btn" data-tool="scale" title="Scale">📐</button>
-                        <button class="tool-btn" data-tool="paint" title="Paint texture 3D — maalaa suoraan mallin pintaan">🖌</button>
-                        <button class="tool-btn" data-tool="pipette" title="Väripipetti — valitse väri suoraan mallista (palaa maalaukseen)">💉</button>
+                        <button class="tool-btn active" data-tool="select" title="Select"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
+                        <button class="tool-btn" data-tool="move" title="Move"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg></button>
+                        <button class="tool-btn" data-tool="rotate" title="Rotate"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+                        <button class="tool-btn" data-tool="scale" title="Scale"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7"/></svg></button>
+                        <button class="tool-btn" data-tool="paint" title="Paint texture 3D — maalaa suoraan mallin pintaan"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+                        <button class="tool-btn" data-tool="pipette" title="Väripipetti — valitse väri suoraan mallista (palaa maalaukseen)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h4L20 8l-4-4L2 18v4z"/><path d="M15 5l4 4"/></svg></button>
                     </div>
                 </div>
 
                 <div class="panel-section">
                     <h3>Mob Library <span class="hint" id="mob-count"></span></h3>
+                    <div class="lib-tabs">
+                        <button type="button" class="lib-tab active" data-libview="library">Kirjasto</button>
+                        <button type="button" class="lib-tab" data-libview="mine">Omat olennot</button>
+                    </div>
+                    <div id="lib-view-library">
                     <div class="mob-library-tools">
-                        <input id="mob-search" type="search" placeholder="🔍 Hae mobia…" autocomplete="off" />
+                        <input id="mob-search" type="search" placeholder="Hae mobia…" autocomplete="off" />
                         <select id="mob-sort" title="Lajittele">
                             <option value="default">Oletus</option>
                             <option value="biggest">Isoimmat ensin</option>
@@ -52,10 +67,10 @@
                         </select>
                         <select id="mob-size" title="Kokoluokka">
                             <option value="all">Kaikki koot</option>
-                            <option value="jatti">🐘 Jättiläinen (≥8.5 lohkoa)</option>
-                            <option value="iso">🦍 Iso (4–8.5)</option>
-                            <option value="keski">🧍 Keskikoko (1.5–4)</option>
-                            <option value="pieni">🐜 Pieni (&lt;1.5)</option>
+                            <option value="jatti">Jättiläinen (≥8.5 lohkoa)</option>
+                            <option value="iso">Iso (4–8.5)</option>
+                            <option value="keski">Keskikoko (1.5–4)</option>
+                            <option value="pieni">Pieni (&lt;1.5)</option>
                         </select>
                         <label class="mob-filter-deepvoid" title="Näytä vain Deep Void -otukset">
                             <input type="checkbox" id="mob-filter-deepvoid" /> Deep Void
@@ -67,7 +82,7 @@
                     <div id="mob-library" class="mob-grid"></div>
                     <div class="voxel-dropzone" id="voxel-dropzone" title="Vedä GLB/OBJ-malli tähän — vokseloidaan suoraan selaimessa">
                         <div class="voxel-drop-row">
-                            <span class="voxel-drop-icon">📦</span>
+                            <svg class="voxel-drop-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
                             <div class="voxel-drop-text">
                                 <strong>Vokseloi oma malli</strong>
                                 <span>Vedä .glb / .obj tähän (mukana .mtl + tekstuurikuva jos on)</span>
@@ -89,18 +104,37 @@
                         <div id="voxel-status" class="voxel-drop-status"></div>
                         <input type="file" id="voxel-file" accept=".glb,.obj,.mtl,.png,.jpg,.jpeg" hidden multiple />
                     </div>
+                    </div>
+                    <div id="lib-view-mine" hidden>
+                        <button id="btn-save-creature" class="action-btn" title="Tallenna nykyinen olento (malli + tekstuuri + animaatiot + statit) Omat olennot -kirjastoon">Tallenna nykyinen olento</button>
+                        <div id="my-creatures-grid" class="mob-grid"></div>
+                        <div id="my-creatures-empty" class="modal-hint">Ei tallennettuja olentoja vielä. Rakenna olento ja paina Tallenna — se jää kirjastoon selaimen muistiin.</div>
+                    </div>
                 </div>
 
                 <div class="panel-section">
                     <h3>Add Element</h3>
-                    <button id="btn-add-cube" class="action-btn">+ Cube</button>
-                    <button id="btn-add-group" class="action-btn">+ Bone/Group</button>
-                    <button id="btn-mirror-copy" class="action-btn" title="Kopioi valittu kuutio/luu peilikuvana vastakkaiselle puolelle">🪞 Mirror Copy</button>
-                    <button id="btn-symmetry" class="action-btn" title="Symmetry edit — muokkaa toista puolta (siirto/kierto/koko), toinen peilautuu livenä">🪞 Symmetry</button>
+                    <div class="add-row">
+                        <button id="btn-add-cube" class="action-btn" title="Lisää kuutio (+ oikea klikkaus: harvemmin käytetyt toiminnot)">+ Cube</button>
+                        <button id="btn-add-group" class="action-btn" title="Lisää luu/ryhmä (+ oikea klikkaus: harvemmin käytetyt toiminnot)">+ Bone/Group</button>
+                        <button id="btn-add-more" class="action-btn" title="Lisää… — Mirror Copy ja Symmetry (harvemmin käytetyt)">⋯</button>
+                    </div>
+                </div>
+
+                <div id="add-context-menu" hidden>
+                    <button id="ctx-mirror-copy" title="Kopioi valittu kuutio/luu peilikuvana vastakkaiselle puolelle">Mirror Copy</button>
+                    <button id="ctx-symmetry" title="Symmetry edit — muokkaa toista puolta (siirto/kierto/koko), toinen peilautuu livenä">Symmetry</button>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Osat (Spore) <span class="hint">— kiinnitä valmiita osia</span></h3>
+                    <label class="chk"><input type="checkbox" id="part-mirror" checked> Peilaa (sivuparit)</label>
+                    <div id="part-grid" class="mob-grid"></div>
                 </div>
 
                 <div class="panel-section">
                     <h3>New Mob Template <span class="hint">— aloita pohjasta</span></h3>
+                    <button id="btn-randomize" class="action-btn" title="Rakentaa satunnaisen olennon Spore-osista — jokaiselle osalle satunnainen luu, pinta, peilaus ja väri. Uudelleenklikkaus rakentaa uuden.">Randomize</button>
                     <div id="template-grid" class="mob-grid"></div>
                 </div>
 
@@ -116,7 +150,7 @@
                     <span id="viewport-info">Left-click: orbit | Right-click: pan | Scroll: zoom</span>
                 </div>
                 <div id="render-warning" title="Klikkaa valitaksesi ensimmäisen virheellisen kuution" hidden>
-                    ⚠️ <span id="render-warning-text"></span>
+                    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 15 14H1z"/><path d="M8 6v4"/><path d="M8 12h.01"/></svg> <span id="render-warning-text"></span>
                 </div>
             </main>
 
@@ -163,6 +197,35 @@
                     </div>
                 </div>
 
+                <div class="panel-section" id="part-edit-section" hidden>
+                    <h3>Osa (Spore)</h3>
+                    <div class="prop-group">
+                        <label id="part-edit-title">Osa</label>
+                        <div class="input-row">
+                            <input type="color" id="part-edit-color" value="#c68642" title="Väriä koko osa">
+                            <button id="part-edit-rand-color" class="action-btn" title="Satunnainen väri"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><circle cx="6.5" cy="6.5" r=".5"/><circle cx="17.5" cy="6.5" r=".5"/><circle cx="6.5" cy="17.5" r=".5"/><circle cx="17.5" cy="17.5" r=".5"/></svg></button>
+                            <button id="part-edit-exit" class="action-btn" title="Muokkaa yksittäisiä kuutioita">Kuutiotila</button>
+                        </div>
+                    </div>
+                    <div class="prop-group">
+                        <label>Skaalaus pivotista (1.0 = alkuperäinen)</label>
+                        <div class="input-row">
+                            <input type="number" id="part-scale-x" step="0.05" min="0.15" value="1" placeholder="X" title="Skaala X">
+                            <input type="number" id="part-scale-y" step="0.05" min="0.15" value="1" placeholder="Y" title="Skaala Y">
+                            <input type="number" id="part-scale-z" step="0.05" min="0.15" value="1" placeholder="Z" title="Skaala Z">
+                        </div>
+                        <button id="part-scale-reset" class="action-btn">↺ Palauta koko</button>
+                    </div>
+                    <div class="prop-group">
+                        <label>Kierto pivotista (°, suhteellinen)</label>
+                        <div class="input-row">
+                            <input type="number" id="part-rot-x" step="5" value="0" placeholder="X" title="Kierto X">
+                            <input type="number" id="part-rot-y" step="5" value="0" placeholder="Y" title="Kierto Y">
+                            <input type="number" id="part-rot-z" step="5" value="0" placeholder="Z" title="Kierto Z">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="panel-section">
                     <h3>Color &amp; Texture</h3>
                     <div class="prop-group">
@@ -171,21 +234,21 @@
                             <input type="color" id="prop-color" value="#ffffff">
                         </div>
                     </div>
-                    <button id="btn-load-texture" class="action-btn">🖼 Load Texture</button>
-                    <button id="btn-remove-texture" class="action-btn">🗑 Reset Texture</button>
+                    <button id="btn-load-texture" class="action-btn">Load Texture</button>
+                    <button id="btn-remove-texture" class="action-btn">Reset Texture</button>
                 </div>
 
                 <div class="panel-section">
                     <h3>UV Editor</h3>
                     <div class="uv-toolbar">
-                        <button class="tool-btn uv-tool active" data-uvtool="select" title="Select / Move faces">🔍</button>
-                        <button class="tool-btn uv-tool" data-uvtool="fill" title="Fill face with color">🪣</button>
-                        <button class="tool-btn uv-tool" data-uvtool="paint" title="Paint texture">🖌</button>
-                        <button class="tool-btn uv-tool" data-uvtool="resize" title="Resize cube — vedä kasvon reunasta muuttaaksesi kokoa">📏</button>
-                        <button id="btn-mirror-paint" class="tool-btn" title="Mirror paint — maalaa myös peilikuva vastakkaiselle puolelle">🪞</button>
+                        <button class="tool-btn uv-tool active" data-uvtool="select" title="Select / Move faces"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+                        <button class="tool-btn uv-tool" data-uvtool="fill" title="Fill face with color"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z"/><path d="m5 2 5 5"/><path d="M2 13h15"/><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4Z"/></svg></button>
+                        <button class="tool-btn uv-tool" data-uvtool="paint" title="Paint texture"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9.06 11.9 8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+                        <button class="tool-btn uv-tool" data-uvtool="resize" title="Resize cube — vedä kasvon reunasta muuttaaksesi kokoa"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4L5.3 2.7a2.41 2.41 0 0 1 3.4 0z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg></button>
+                        <button id="btn-mirror-paint" class="tool-btn" title="Mirror paint — maalaa myös peilikuva vastakkaiselle puolelle"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/></svg></button>
                         <input type="color" id="uv-paint-color" value="#000000" title="Brush / fill color">
                         <input type="range" id="uv-brush-size" min="1" max="12" value="3" title="Brush size">
-                        <button id="btn-toggle-palette" class="tool-btn" title="Väripaletti">🎨</button>
+                        <button id="btn-toggle-palette" class="tool-btn" title="Väripaletti"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg></button>
                     </div>
                     <div id="uv-palette" class="uv-palette" hidden>
                         <div class="palette-cats" id="palette-cats"></div>
@@ -220,11 +283,11 @@
                             <input type="color" id="bg-color" value="#1a1a2e">
                         </div>
                         <div class="input-row">
-                            <label>🎮 Game Preview</label>
+                            <label>Game Preview</label>
                             <input type="checkbox" id="chk-game-preview" title="Pelin näköinen esikatselu: Minecraft-valaistus, pehmeät varjot ja glow-kerros">
                         </div>
                         <div class="input-row">
-                            <label>🌙 Night</label>
+                            <label>Night</label>
                             <input type="checkbox" id="chk-game-night" title="Yö: taivas tummenee, valot siirtyvät kuunvaloon ja glow-kerrokset loistavat voimakkaammin">
                         </div>
                     </div>
@@ -237,15 +300,15 @@
             <button id="anim-new" title="Uusi animaatio">＋</button>
             <button id="anim-dup" title="Kopioi nykyinen animaatio">⧉</button>
             <button id="anim-rename" title="Nimeä animaatio uudelleen">✏</button>
-            <button id="anim-del" title="Poista animaatio">🗑</button>
-            <button id="anim-auto" title="🕺 Generoi kävely/idle/hyökkäys-animaatiot luurangosta automaattisesti — Spore-tyyli">🕺 Auto</button>
-            <button id="anim-pose" title="Pose mode — scrub time by hand without playback">✋ Pose</button>
+            <button id="anim-del" title="Poista animaatio"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+            <button id="anim-auto" title="Generoi kävely/idle/hyökkäys-animaatiot luurangosta automaattisesti — Spore-tyyli">Auto</button>
+            <button id="anim-pose" title="Pose mode — scrub time by hand without playback">Pose</button>
             <button id="anim-play" title="Play / Pause (Space)">▶</button>
             <button id="anim-add-key" title="Add keyframe for selected bone">+ Key</button>
-            <button id="anim-copy" title="Copy pose — tallentaa kaikkien luiden nykyisen asennon">📋 Copy Pose</button>
-            <button id="anim-paste" title="Paste pose — liimaa kopioidun asennon keyframeiksi nykyiseen aikaan">📌 Paste Pose</button>
-            <button id="anim-mirror" title="Mirror pose — peilaa asennon (oikea → vasen) samaan frameen">🪞 Mirror Pose</button>
-            <button id="anim-clear" title="Clear animation">🗑</button>
+            <button id="anim-copy" title="Copy pose — tallentaa kaikkien luiden nykyisen asennon">Copy Pose</button>
+            <button id="anim-paste" title="Paste pose — liimaa kopioidun asennon keyframeiksi nykyiseen aikaan">Paste Pose</button>
+            <button id="anim-mirror" title="Mirror pose — peilaa asennon (oikea → vasen) samaan frameen">Mirror Pose</button>
+            <button id="anim-clear" title="Clear animation"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
             <div class="anim-time-wrap">
                 <div class="anim-track">
                     <canvas id="anim-keys" title="Keyframes — raahaa pistettä siirtääksesi keyframea"></canvas>
@@ -267,7 +330,7 @@
     <!-- New mob dialog -->
     <div id="new-mob-dialog" class="modal-overlay" style="display:none">
         <div class="modal">
-            <h2>🧱 Luo uusi mobi</h2>
+            <h2>Luo uusi mobi</h2>
             <p class="modal-hint">Nimeä mobi ja valitse pohja — export-tiedostot saavat nimen modelId:stä.</p>
             <div class="modal-field">
                 <label for="new-mob-name">Mobin nimi</label>
@@ -277,7 +340,7 @@
                 <label for="new-mob-id">Exportin tiedostonimi (modelId)</label>
                 <div class="modal-id-row">
                     <input type="text" id="new-mob-id" value="geometry.my_mob" placeholder="geometry.my_mob" spellcheck="false">
-                    <button id="new-mob-id-sync" type="button" title="Generoi nimestä">🔁</button>
+                    <button id="new-mob-id-sync" type="button" title="Generoi nimestä"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
                 </div>
                 <span class="modal-field-note">Export: <span id="new-mob-file-preview">my_mob_bedrock.json</span></span>
             </div>
@@ -286,8 +349,78 @@
                 <div id="new-mob-templates" class="modal-templates"></div>
             </div>
             <div class="modal-actions">
-                <button id="new-mob-create" class="primary">🚀 Luo mobi</button>
+                <button id="new-mob-create" class="primary">Luo mobi</button>
                 <button id="new-mob-cancel">Peruuta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oman olennon tallennus -dialogi (Omat olennot) -->
+    <div id="save-creature-dialog" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <h2>Tallenna olento kirjastoon</h2>
+            <p class="modal-hint">Malli, tekstuuri, animaatiot ja statit (HP / vahinko / nopeus) tallennetaan selaimen muistiin. Olennon voit ladata takaisin milloin vain 'Omat olennot' -välilehdeltä.</p>
+            <div class="modal-field">
+                <label for="save-creature-name">Olennon nimi</label>
+                <input type="text" id="save-creature-name" placeholder="esim. Frost Wyrm" />
+            </div>
+            <div class="modal-field">
+                <label for="save-creature-emoji">Emoji</label>
+                <input type="text" id="save-creature-emoji" maxlength="4" value="✦" />
+                <div id="save-creature-emojis" class="emoji-picks"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="save-creature-confirm" class="primary">Tallenna</button>
+                <button id="save-creature-cancel">Peruuta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oman olennon tallennus -dialogi (Omat olennot) -->
+    <div id="save-creature-dialog" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <h2>Tallenna olento kirjastoon</h2>
+            <p class="modal-hint">Malli, tekstuuri, animaatiot ja statit (HP / vahinko / nopeus) tallennetaan selaimen muistiin. Olennon voit ladata takaisin milloin vain 'Omat olennot' -välilehdeltä.</p>
+            <div class="modal-field">
+                <label for="save-creature-name">Olennon nimi</label>
+                <input type="text" id="save-creature-name" placeholder="esim. Frost Wyrm" />
+            </div>
+            <div class="modal-field">
+                <label for="save-creature-emoji">Emoji</label>
+                <input type="text" id="save-creature-emoji" maxlength="4" value="✦" />
+                <div id="save-creature-emojis" class="emoji-picks"></div>
+            </div>
+            <div class="modal-actions">
+                <button id="save-creature-confirm" class="primary">Tallenna</button>
+                <button id="save-creature-cancel">Peruuta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Osan kiinnitys -dialogi (Spore-osat) -->
+    <div id="part-attach-dialog" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <h2 id="part-attach-title">Kiinnitä osa</h2>
+            <p class="modal-hint">Valitse mihin luuhun osa kiinnittyy ja mille pinnalle se asettuu. Pinta on mallin uloin pinta kyseiseen suuntaan — osa kasvattaa olentoa.</p>
+            <div class="modal-field">
+                <label for="part-attach-bone">Luu (vanhempi)</label>
+                <select id="part-attach-bone"></select>
+                <span class="modal-field-note">Osa perii tämän luun rotaation ja animaation (esim. head → pää seuraa pään liikettä).</span>
+            </div>
+            <div class="modal-field">
+                <label>Pinta</label>
+                <div id="part-attach-surface" class="surface-grid">
+                    <button type="button" data-at="bottom">⬇ Alhaalle</button>
+                    <button type="button" data-at="top">⬆ Ylös</button>
+                    <button type="button" data-at="front">Eteen</button>
+                    <button type="button" data-at="back">Taakse</button>
+                    <button type="button" data-at="side">↔ Sivulle</button>
+                </div>
+            </div>
+            <label class="chk"><input type="checkbox" id="part-attach-mirror" checked> Peilaa (sivuparit)</label>
+            <div class="modal-actions">
+                <button id="part-attach-confirm" class="primary">Kiinnitä</button>
+                <button id="part-attach-cancel">Peruuta</button>
             </div>
         </div>
     </div>
@@ -295,16 +428,16 @@
     <!-- Resurssipaketti-dialogi -->
     <div id="pack-dialog" class="modal-overlay" style="display:none">
         <div class="modal">
-            <h2>📦 Lataa resurssipaketti</h2>
-            <p class="modal-hint">Malli, tekstuurit ja animaatiot valmiina kansiorakenteessa. 🎮 Bedrock = addon (<code>resource_pack</code> + <code>behavior_pack</code>) — mobi spawnaa heti. ☕ Java = resurssipaketti + datapakki: <code>/function ns:summon_id</code> luo nimetyn mobin, spawn.json on modipohja.</p>
+            <h2>Lataa resurssipaketti</h2>
+            <p class="modal-hint">Malli, tekstuurit ja animaatiot valmiina kansiorakenteessa. Bedrock = addon (<code>resource_pack</code> + <code>behavior_pack</code>) — mobi spawnaa heti. Java = resurssipaketti + datapakki: <code>/function ns:summon_id</code> luo nimetyn mobin, spawn.json on modipohja.</p>
             <div class="modal-field">
                 <label>Formaatti</label>
                 <div id="pack-formats" class="seg">
-                    <button type="button" data-fmt="java" class="active">☕ Java (GeckoLib)</button>
-                    <button type="button" data-fmt="bedrock">🎮 Bedrock</button>
+                    <button type="button" data-fmt="java" class="active">Java (GeckoLib)</button>
+                    <button type="button" data-fmt="bedrock">Bedrock</button>
                     <button type="button" data-fmt="both">Molemmat</button>
                 </div>
-                <span class="modal-field-note">🎮 Bedrock latautuu <b>.mcaddon</b>-tiedostona — Minecraft avaa sen suoraan asennukseen (resource_pack + behavior_pack).</span>
+                <span class="modal-field-note">Bedrock latautuu <b>.mcaddon</b>-tiedostona — Minecraft avaa sen suoraan asennukseen (resource_pack + behavior_pack).</span>
             </div>
             <div class="modal-field">
                 <label for="pack-namespace">Namespace (modin id)</label>
@@ -312,11 +445,11 @@
                 <span class="modal-field-note" id="pack-note">Tiedostot näkyvät latauksessa</span>
             </div>
             <div class="modal-field">
-                <label>Käytös (🎮 Bedrock)</label>
+                <label>Käytös (Bedrock)</label>
                 <div id="pack-behavior" class="seg">
-                    <button type="button" data-behavior="passive">🐑 Lempeä</button>
-                    <button type="button" data-behavior="neutral" class="active">🐺 Neutraali</button>
-                    <button type="button" data-behavior="hostile">😈 Vihamielinen</button>
+                    <button type="button" data-behavior="passive">Lempeä</button>
+                    <button type="button" data-behavior="neutral" class="active">Neutraali</button>
+                    <button type="button" data-behavior="hostile">Vihamielinen</button>
                 </div>
             </div>
             <div class="modal-field pack-sliders">
@@ -324,13 +457,13 @@
                 <label class="pack-slider-row">Vahinko <input type="range" id="pack-damage" min="0" max="40" value="4"><span id="pack-damage-val">4</span></label>
                 <label class="pack-slider-row">Nopeus <input type="range" id="pack-speed" min="5" max="100" value="25"><span id="pack-speed-val">0.25</span></label>
                 <label class="pack-slider-row">Hyppy <input type="range" id="pack-jump" min="0" max="1" value="1"><span id="pack-jump-val">päällä</span></label>
-                <label class="pack-toggle-row"><input type="checkbox" id="pack-flying"><span>🪽 Lentävä mobi</span></label>
+                <label class="pack-toggle-row"><input type="checkbox" id="pack-flying"><span>Lentävä mobi</span></label>
                 <span class="modal-field-note">Bedrock ei säädä hyppykorkeutta erikseen — hyppy on päälle/pois ja korkeus seuraa nopeutta.</span>
             </div>
             <div class="modal-field pack-egg-row">
                 <canvas id="pack-egg-canvas" width="48" height="60" title="Spawn-eggin värit tekstuurin keskiarvosta"></canvas>
                 <div class="pack-egg-info">
-                    <div class="pack-egg-label">🥚 Spawn-eggin esikatselu</div>
+                    <div class="pack-egg-label">Spawn-eggin esikatselu</div>
                     <div class="pack-egg-colors">
                         <span class="pack-egg-color"><i id="pack-egg-base-swatch"></i><code id="pack-egg-base">#…</code></span>
                         <span class="pack-egg-color"><i id="pack-egg-overlay-swatch"></i><code id="pack-egg-overlay">#…</code></span>
@@ -340,13 +473,13 @@
             <div class="modal-field pack-egg-row">
                 <canvas id="pack-icon-canvas" width="128" height="128" title="Pakki-ikoni — sama kuva menee pack_icon.png:na ja pack.png:na"></canvas>
                 <div class="pack-egg-info">
-                    <div class="pack-egg-label">🖼 Pakki-ikoni</div>
+                    <div class="pack-egg-label">Pakki-ikoni</div>
                     <span class="modal-field-note">Sama kuva menee <code>pack_icon.png</code>:na Bedrockin pakkeihin ja <code>pack.png</code>:na Java-pakettiin — näkyy Minecraftin pakettilistassa.</span>
                 </div>
             </div>
             <div id="pack-file-list" class="pack-file-list"></div>
             <div class="modal-actions">
-                <button id="pack-download" class="primary">⬇️ Lataa .zip</button>
+                <button id="pack-download" class="primary">Lataa .zip</button>
                 <button id="pack-cancel">Peruuta</button>
             </div>
         </div>
@@ -356,7 +489,7 @@
     <div id="mob-stats-modal" class="modal-overlay" style="display:none">
         <div class="modal mob-stats-modal">
             <div class="mob-stats-head">
-                <span id="mstats-emoji" class="mob-stats-emoji">🐍</span>
+                <span id="mstats-emoji" class="mob-stats-emoji">✦</span>
                 <div class="mob-stats-title">
                     <h2 id="mstats-name">False Hydra</h2>
                     <span id="mstats-sub" class="modal-hint"></span>
@@ -366,33 +499,90 @@
 
             <div class="mob-stats-body">
                 <div class="mob-stats-col">
-                    <h3>❤️ Elämä (pelin bytecodesta)</h3>
+                    <h3>Elämä <span class="h3-sub">(pelin bytecodesta)</span></h3>
                     <div id="mstats-hp" class="mstats-hp"></div>
                     <div class="mstats-hearts" id="mstats-hearts"></div>
 
-                    <h3>📊 Ominaisuudet</h3>
+                    <h3>Ominaisuudet</h3>
                     <div class="mstats-grid" id="mstats-grid"></div>
 
-                    <h3>🎮 Kutsuminen</h3>
+                    <h3>Kutsuminen</h3>
                     <div class="mstats-summon">
                         <code id="mstats-summon" class="mstats-code"></code>
-                        <button id="mstats-copy" class="action-btn" title="Kopioi komento">📋 Kopioi</button>
+                        <button id="mstats-copy" class="action-btn" title="Kopioi komento">Kopioi</button>
                     </div>
                     <div class="modal-field-note">Rekisteri-id: <code id="mstats-registry"></code> · lähde: <code>the_deep_void</code> -modin lang/en_us.json</div>
                 </div>
 
                 <div class="mob-stats-col">
-                    <h3>⚔️ Kyvyt / AI-tavoitteet (bytecode)</h3>
+                    <h3>Kyvyt / AI-tavoitteet <span class="h3-sub">(bytecode)</span></h3>
                     <ul id="mstats-goals" class="mstats-goals"></ul>
 
-                    <h3>🎬 Animaatiot</h3>
+                    <h3>Animaatiot</h3>
                     <div id="mstats-anims" class="mstats-anims"></div>
                 </div>
             </div>
 
             <div class="modal-actions">
-                <button id="mstats-load" class="primary">🚀 Lataa editoriin</button>
+                <button id="mstats-load" class="primary">Lataa editoriin</button>
                 <button id="mstats-close2">Sulje</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aloitusnäyttö: näkyy kerran sovelluksen avauksessa. Kolme isoa
+         valintaa + yhden rivin ohje — tekniikka pysyy samana, vain
+         ensivaikutelma yksinkertaistuu. ?nosplash-parametri ohittaa sen
+         (kuvaustyökalut / CI). -->
+    <div id="start-screen" hidden>
+        <div class="start-card">
+            <svg class="start-logo" viewBox="0 0 48 48" aria-hidden="true">
+                <path d="M24 4 42 14 24 24 6 14Z" fill="#d4a45c" opacity=".9"/>
+                <path d="M6 14 24 24 24 44 6 34Z" fill="#d4a45c" opacity=".4"/>
+                <path d="M24 24 42 14 42 34 24 44Z" fill="#d4a45c" opacity=".65"/>
+            </svg>
+            <h1>Freebuff Mob Studio</h1>
+            <p class="start-hint">Mitä haluat tehdä?</p>
+            <div class="start-actions">
+                <button id="start-continue" class="start-btn start-continue" hidden>
+                    <span class="start-label"><strong>Jatka edellistä</strong><small id="start-continue-meta"></small></span>
+                    <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                </button>
+                <button id="start-library" class="start-btn">
+                    <span class="start-label"><strong>Lataa mobi kirjastosta</strong><small>143 valmista mobia — Deep Void, vanilja ja voxel-eläimet</small></span>
+                    <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                </button>
+                <button id="start-empty" class="start-btn">
+                    <span class="start-label"><strong>Rakenna tyhjästä</strong><small>Tyhjä projekti — kuutiot, luut, animaatiot ja Spore-osat</small></span>
+                    <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                </button>
+                <button id="start-randomize" class="start-btn">
+                    <span class="start-label"><strong>Randomize</strong><small>Satunnainen olento Spore-osista yhdellä klikkauksella</small></span>
+                    <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+                </button>
+            </div>
+            <div class="start-footer">
+                <label class="chk"><input type="checkbox" id="start-dont-show" checked> Älä näytä enää</label>
+                <button id="start-skip" class="start-skip">Jatka editoriin →</button>
+            </div>
+            <div class="start-tips">
+                <span class="start-kbd">⌘I Tuo · ⌘E Vie · ⌘Z Kumoa
+                    <button id="start-shortcuts-btn" class="start-help" title="Näytä kaikki oikotiet" aria-label="Näytä kaikki oikotiet">?</button>
+                </span>
+                <a class="start-gallery" href="examples/gallery/index.html" target="_blank" rel="noopener">Katso Esimerkkejä-galleriaa</a>
+                <span id="start-gallery-hint" class="start-gen-hint" hidden>Galleriaa ei ole — generoi: <code>node tools/export-example-shots.mjs --library</code></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Oikotieopas (aloitusnäytön '?'-nappi) -->
+    <div id="shortcuts-dialog" class="modal-overlay" style="display:none">
+        <div class="modal shortcuts-modal">
+            <h2>⌨️ Oikotiet</h2>
+            <p class="modal-hint">Kaikki editorin näppäimistöoikotiet — listaa täydennetään datasta, joten se pysyy ajan tasalla.</p>
+            <div class="shortcut-list"></div>
+            <div class="modal-actions">
+                <button id="shortcuts-close" class="primary">Sulje</button>
             </div>
         </div>
     </div>

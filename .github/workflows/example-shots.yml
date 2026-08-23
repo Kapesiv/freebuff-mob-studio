@@ -1,0 +1,66 @@
+name: Renderöi Esimerkkejä-kuvat
+
+# Push-loop on estetty paths-suodattimella: tämän workflown oma commit+push
+# koskettaa vain examples/**, mikä ei täsmää yhteenkään alla olevaan polkuun —
+# oma push ei siis koskaan käynnistä workflowa uudelleen. Tämä kattaa myös
+# examples/gallery/-kansion: vaikka galleria generoitaisiin tulevaisuudessa
+# --library-ajolla (tai käsin), sen push ei laukaise tätä workflowa.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'js/mobs/**'
+      - 'tools/export-example-shots.mjs'
+      - 'js/main.js'
+  workflow_dispatch:
+
+# Sarjallistetaan ajot: kaksi päällekkäistä ajoa voisi kilpailla git pushista
+# (non-fast-forward → epäonnistunut job). Vanhempi ajo ajetaan loppuun.
+concurrency:
+  group: example-shots
+  cancel-in-progress: false
+
+jobs:
+  render-shots:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chrome (headless)
+        run: |
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+
+      - name: Build self-contained preview
+        run: npm run build:preview
+
+      - name: Render example images (day + night)
+        run: node tools/export-example-shots.mjs --all
+
+      - name: Commit updated images
+        run: |
+          # Vain työkalun renderöimät README-kuvat (examples/*.png).
+          # examples/gallery/ ja muut mahdolliset tiedostot eivät pääse
+          # tähän commitiin — niille on oma käsittelynsä, jos tarpeen.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add examples/*.png
+          if git diff --cached --quiet; then
+            echo "Kuvat eivät muuttuneet — ei commitia."
+          else
+            git commit -m "Päivitä Esimerkkejä-kuvat"
+            git push
+          fi

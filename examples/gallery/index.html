@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mob-galleria — 143 mobia</title>
+<style>
+  body { margin: 0; padding: 24px; background: #1b1e23; color: #e9eaec;
+         font: 14px/1.45 system-ui, -apple-system, sans-serif; }
+  h1 { font-size: 19px; margin: 0 0 4px; letter-spacing: .2px; }
+  .sub { color: #9aa3b0; margin: 0 0 20px; }
+  .toolbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  .toolbar input, .toolbar select { background: #171a1f; color: #e9eaec; border: 1px solid #333943;
+         border-radius: 4px; padding: 6px 10px; font: inherit; }
+  .toolbar input { flex: 1; min-width: 180px; }
+  .toolbar input:focus, .toolbar select:focus { outline: none; border-color: #d4a45c; }
+  .toolbar button { background: #2a2f37; color: #e9eaec; border: 1px solid #333943;
+         border-radius: 4px; padding: 6px 14px; cursor: pointer; font: inherit; }
+  .toolbar button:hover { background: #343a44; }
+  .toolbar button.active { background: #8f723f; border-color: #d4a45c; }
+  .no-results { margin: 20px 0; color: #9aa3b0; font-size: 13px; }
+  h2 { font-size: 12px; margin: 28px 0 12px; color: #d4a45c; text-transform: uppercase;
+       letter-spacing: .09em; font-weight: 600; }
+  h2 .count { color: #6b7480; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 14px; }
+  figure { margin: 0; }
+  .frame { position: relative; display: block; color: inherit; text-decoration: none;
+           border: 1px solid #333943; border-radius: 4px;
+           overflow: hidden; background: #23272e; transition: border-color .15s; }
+  .frame:hover { border-color: #d4a45c; }
+  .frame img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .frame img.night { display: none; }
+  body.night .frame img.day { display: none; }
+  body.night .frame img.night { display: block; }
+  .tier { position: absolute; top: 6px; left: 6px; background: rgba(212,164,92,.16);
+          color: #d4a45c; border: 1px solid rgba(212,164,92,.4); font-size: 9px;
+          font-weight: 600; letter-spacing: .6px; padding: 2px 6px; border-radius: 3px; }
+  .edit { position: absolute; right: 6px; top: 6px; background: rgba(27,30,35,.85);
+          color: #e9eaec; border: 1px solid #333943; font-size: 10px; padding: 2px 6px; border-radius: 3px; }
+  .frame:hover .edit { border-color: #d4a45c; color: #d4a45c; }
+  .badge { position: absolute; right: 6px; bottom: 6px; background: rgba(0,0,0,.55);
+           color: #c6cad1; font-size: 11px; padding: 2px 6px; border-radius: 3px; }
+  figcaption { margin-top: 6px; font-size: 13px; color: #b6bcc6; text-align: center;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toplink { color: #d4a45c; text-decoration: none; margin-left: 12px; font-size: 13px; }
+  .toplink:hover { text-decoration: underline; }
+  .warn { color: #e0a26b; }
+</style>
+</head>
+<body>
+  <h1>Freebuff Mob Studio — kirjasto <a class="toplink" href="../preview.html">← Avaa editorissa</a></h1>
+  <p class="sub">143 mobia · renderöity sovelluksen omalla renderöinnillä (päivä) · klikkaa korttia avataksesi mobin editorissa</p>
+  <div class="toolbar">
+    <input id="filter-search" type="search" placeholder="Hae mobia…" oninput="applyFilter()" autocomplete="off" />
+    <select id="filter-size" onchange="applyFilter()" title="Kokoluokka">
+      <option value="all">Kaikki koot</option>
+      <option value="jatti">Jättiläinen (≥8.5)</option>
+      <option value="iso">Iso (4–8.5)</option>
+      <option value="keski">Keskikoko (1.5–4)</option>
+      <option value="pieni">Pieni (&lt;1.5)</option>
+    </select>
+    
+  </div>
+  <p id="no-results" class="no-results" hidden>Ei tuloksia — kokeile toista hakua tai poista suodattimet.</p>
+  
+  <h2>Deep Void <span class="count">72</span></h2>
+                <div class="grid"><figure data-size="keski" data-name="abductor">
+                    <a class="frame" href="../preview.html?mob=abductor" title="Avaa Abductor editorissa">
+                        <img class="day" src="abductor.png" alt="Abductor" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,8 lohkoa</span>
+                    </a>
+                    <figcaption>Abductor</figcaption>
+                </figure>
+<figure data-size="keski" data-name="alpha bone crawler">
+                    <a class="frame" href="../preview.html?mob=alpha_bone_crawler" title="Avaa Alpha Bone Crawler editorissa">
+                        <img class="day" src="alpha_bone_crawler.png" alt="Alpha Bone Crawler" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,8 lohkoa</span>
+                    </a>
+                    <figcaption>Alpha Bone Crawler</figcaption>
+                </figure>
+<figure data-size="iso" data-name="apostle of catastrophe">
+                    <a class="frame" href="../preview.html?mob=apostle_of_catastrophe" title="Avaa Apostle of Catastrophe editorissa">
+                        <img class="day" src="apostle_of_catastrophe.png" alt="Apostle of Catastrophe" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">7,1 lohkoa</span>
+                    </a>
+                    <figcaption>Apostle of Catastrophe</figcaption>
+                </figure>
+<figure data-size="keski" data-name="beholder">
+                    <a class="frame" href="../preview.html?mob=beholder" title="Avaa Beholder editorissa">
+                        <img class="day" src="beholder.png" alt="Beholder" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,8 lohkoa</span>
+                    </a>
+                    <figcaption>Beholder</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="big eye">
+                    <a class="frame" href="../preview.html?mob=big_eye" title="Avaa Big Eye editorissa">
+                        <img class="day" src="big_eye.png" alt="Big Eye" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,8 lohkoa</span>
+                    </a>
+                    <figcaption>Big Eye</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="bog walker">
+                    <a class="frame" href="../preview.html?mob=bog_walker" title="Avaa Bog Walker editorissa">
+                        <img class="day" src="bog_walker.png" alt="Bog Walker" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">11,9 lohkoa</span>
+                    </a>
+                    <figcaption>Bog Walker</figcaption>
+                </figure>
+<figure data-size="keski" data-name="bone cage">
+                    <a class="frame" href="../preview.html?mob=bone_cage" title="Avaa Bone Cage editorissa">
+                        <img class="day" src="bone_cage.png" alt="Bone Cage" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,5 lohkoa</span>
+                    </a>
+                    <figcaption>Bone Cage</figcaption>
+                </figure>
+<figure data-size="keski" data-name="bone crawler">
+                    <a class="frame" href="../preview.html?mob=bone_crawler" title="Avaa Bone Crawler editorissa">
+                        <img class="day" src="bone_crawler.png" alt="Bone Crawler" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,9 lohkoa</span>
+                    </a>
+                    <figcaption>Bone Crawler</figcaption>
+                </figure>
+<figure data-size="iso" data-name="bringer of despair">
+                    <a class="frame" href="../preview.html?mob=bringer_of_despair" title="Avaa Bringer of Despair editorissa">
+                        <img class="day" src="bringer_of_despair.png" alt="Bringer of Despair" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,8 lohkoa</span>
+                    </a>
+                    <figcaption>Bringer of Despair</figcaption>
+                </figure>
+<figure data-size="iso" data-name="cave nightmare">
+                    <a class="frame" href="../preview.html?mob=cave_nightmare" title="Avaa Cave Nightmare editorissa">
+                        <img class="day" src="cave_nightmare.png" alt="Cave Nightmare" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">7,9 lohkoa</span>
+                    </a>
+                    <figcaption>Cave Nightmare</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="chained weaver">
+                    <a class="frame" href="../preview.html?mob=chained_weaver" title="Avaa Chained Weaver editorissa">
+                        <img class="day" src="chained_weaver.png" alt="Chained Weaver" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">8,7 lohkoa</span>
+                    </a>
+                    <figcaption>Chained Weaver</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="cross eyes">
+                    <a class="frame" href="../preview.html?mob=cross_eyes" title="Avaa Cross Eyes editorissa">
+                        <img class="day" src="cross_eyes.png" alt="Cross Eyes" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,8 lohkoa</span>
+                    </a>
+                    <figcaption>Cross Eyes</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="damned">
+                    <a class="frame" href="../preview.html?mob=damned" title="Avaa Damned editorissa">
+                        <img class="day" src="damned.png" alt="Damned" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,8 lohkoa</span>
+                    </a>
+                    <figcaption>Damned</figcaption>
+                </figure>
+<figure data-size="iso" data-name="death maw">
+                    <a class="frame" href="../preview.html?mob=death_maw" title="Avaa Death Maw editorissa">
+                        <img class="day" src="death_maw.png" alt="Death Maw" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,3 lohkoa</span>
+                    </a>
+                    <figcaption>Death Maw</figcaption>
+                </figure>
+<figure data-size="iso" data-name="death vulture">
+                    <a class="frame" href="../preview.html?mob=death_vulture" title="Avaa Death Vulture editorissa">
+                        <img class="day" src="death_vulture.png" alt="Death Vulture" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,4 lohkoa</span>
+                    </a>
+                    <figcaption>Death Vulture</figcaption>
+                </figure>
+<figure data-size="iso" data-name="devourer">
+                    <a class="frame" href="../preview.html?mob=devourer" title="Avaa Devourer editorissa">
+                        <img class="day" src="devourer.png" alt="Devourer" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,0 lohkoa</span>
+                    </a>
+                    <figcaption>Devourer</figcaption>
+                </figure>
+<figure data-size="iso" data-name="dooming tombstone">
+                    <a class="frame" href="../preview.html?mob=tombstone" title="Avaa Dooming Tombstone editorissa">
+                        <img class="day" src="tombstone.png" alt="Dooming Tombstone" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,8 lohkoa</span>
+                    </a>
+                    <figcaption>Dooming Tombstone</figcaption>
+                </figure>
+<figure data-size="iso" data-name="everhunger">
+                    <a class="frame" href="../preview.html?mob=everhunger" title="Avaa Everhunger editorissa">
+                        <img class="day" src="everhunger.png" alt="Everhunger" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,4 lohkoa</span>
+                    </a>
+                    <figcaption>Everhunger</figcaption>
+                </figure>
+<figure data-size="iso" data-name="executioner">
+                    <a class="frame" href="../preview.html?mob=executioner" title="Avaa Executioner editorissa">
+                        <img class="day" src="executioner.png" alt="Executioner" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,3 lohkoa</span>
+                    </a>
+                    <figcaption>Executioner</figcaption>
+                </figure>
+<figure data-size="iso" data-name="eye centipede">
+                    <a class="frame" href="../preview.html?mob=eye_centipede" title="Avaa Eye Centipede editorissa">
+                        <img class="day" src="eye_centipede.png" alt="Eye Centipede" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,8 lohkoa</span>
+                    </a>
+                    <figcaption>Eye Centipede</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="false hydra">
+                    <a class="frame" href="../preview.html?mob=false_hydra" title="Avaa False Hydra editorissa">
+                        <img class="day" src="false_hydra.png" alt="False Hydra" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">14,5 lohkoa</span>
+                    </a>
+                    <figcaption>False Hydra</figcaption>
+                </figure>
+<figure data-size="keski" data-name="flesh cube">
+                    <a class="frame" href="../preview.html?mob=flesh_cube" title="Avaa Flesh Cube editorissa">
+                        <img class="day" src="flesh_cube.png" alt="Flesh Cube" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,3 lohkoa</span>
+                    </a>
+                    <figcaption>Flesh Cube</figcaption>
+                </figure>
+<figure data-size="keski" data-name="flesh fangs">
+                    <a class="frame" href="../preview.html?mob=flesh_fangs" title="Avaa Flesh Fangs editorissa">
+                        <img class="day" src="flesh_fangs.png" alt="Flesh Fangs" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,6 lohkoa</span>
+                    </a>
+                    <figcaption>Flesh Fangs</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="flesh lamprey">
+                    <a class="frame" href="../preview.html?mob=flesh_lamprey" title="Avaa Flesh Lamprey editorissa">
+                        <img class="day" src="flesh_lamprey.png" alt="Flesh Lamprey" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,2 lohkoa</span>
+                    </a>
+                    <figcaption>Flesh Lamprey</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="flesh worm">
+                    <a class="frame" href="../preview.html?mob=flesh_worm" title="Avaa Flesh Worm editorissa">
+                        <img class="day" src="flesh_worm.png" alt="Flesh Worm" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">19,1 lohkoa</span>
+                    </a>
+                    <figcaption>Flesh Worm</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="fool eater">
+                    <a class="frame" href="../preview.html?mob=fool_eater" title="Avaa Fool Eater editorissa">
+                        <img class="day" src="fool_eater.png" alt="Fool Eater" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">9,9 lohkoa</span>
+                    </a>
+                    <figcaption>Fool Eater</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="forsaken">
+                    <a class="frame" href="../preview.html?mob=forsaken" title="Avaa Forsaken editorissa">
+                        <img class="day" src="forsaken.png" alt="Forsaken" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">12,9 lohkoa</span>
+                    </a>
+                    <figcaption>Forsaken</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="four eyes">
+                    <a class="frame" href="../preview.html?mob=four_eyes" title="Avaa Four Eyes editorissa">
+                        <img class="day" src="four_eyes.png" alt="Four Eyes" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,8 lohkoa</span>
+                    </a>
+                    <figcaption>Four Eyes</figcaption>
+                </figure>
+<figure data-size="iso" data-name="gaoler">
+                    <a class="frame" href="../preview.html?mob=gaoler" title="Avaa Gaoler editorissa">
+                        <img class="day" src="gaoler.png" alt="Gaoler" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,1 lohkoa</span>
+                    </a>
+                    <figcaption>Gaoler</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="giant shadow hand">
+                    <a class="frame" href="../preview.html?mob=giant_shadow_hand" title="Avaa Giant Shadow Hand editorissa">
+                        <img class="day" src="giant_shadow_hand.png" alt="Giant Shadow Hand" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">17,1 lohkoa</span>
+                    </a>
+                    <figcaption>Giant Shadow Hand</figcaption>
+                </figure>
+<figure data-size="iso" data-name="gore spitter">
+                    <a class="frame" href="../preview.html?mob=gore_spitter" title="Avaa Gore Spitter editorissa">
+                        <img class="day" src="gore_spitter.png" alt="Gore Spitter" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">8,0 lohkoa</span>
+                    </a>
+                    <figcaption>Gore Spitter</figcaption>
+                </figure>
+<figure data-size="iso" data-name="gravekeeper">
+                    <a class="frame" href="../preview.html?mob=gravekeeper" title="Avaa Gravekeeper editorissa">
+                        <img class="day" src="gravekeeper.png" alt="Gravekeeper" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,8 lohkoa</span>
+                    </a>
+                    <figcaption>Gravekeeper</figcaption>
+                </figure>
+<figure data-size="iso" data-name="harvestmen">
+                    <a class="frame" href="../preview.html?mob=harvestmen" title="Avaa Harvestmen editorissa">
+                        <img class="day" src="harvestmen.png" alt="Harvestmen" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,0 lohkoa</span>
+                    </a>
+                    <figcaption>Harvestmen</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="hive brain">
+                    <a class="frame" href="../preview.html?mob=hive_brain" title="Avaa Hive Brain editorissa">
+                        <img class="day" src="hive_brain.png" alt="Hive Brain" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,9 lohkoa</span>
+                    </a>
+                    <figcaption>Hive Brain</figcaption>
+                </figure>
+<figure data-size="iso" data-name="hive fangs">
+                    <a class="frame" href="../preview.html?mob=hive_fangs" title="Avaa Hive Fangs editorissa">
+                        <img class="day" src="hive_fangs.png" alt="Hive Fangs" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,0 lohkoa</span>
+                    </a>
+                    <figcaption>Hive Fangs</figcaption>
+                </figure>
+<figure data-size="iso" data-name="hive watcher">
+                    <a class="frame" href="../preview.html?mob=hive_watcher" title="Avaa Hive Watcher editorissa">
+                        <img class="day" src="hive_watcher.png" alt="Hive Watcher" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,6 lohkoa</span>
+                    </a>
+                    <figcaption>Hive Watcher</figcaption>
+                </figure>
+<figure data-size="iso" data-name="hivemind">
+                    <a class="frame" href="../preview.html?mob=hivemind" title="Avaa Hivemind editorissa">
+                        <img class="day" src="hivemind.png" alt="Hivemind" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">7,6 lohkoa</span>
+                    </a>
+                    <figcaption>Hivemind</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="hollowed">
+                    <a class="frame" href="../preview.html?mob=hollowed" title="Avaa Hollowed editorissa">
+                        <img class="day" src="hollowed.png" alt="Hollowed" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">11,7 lohkoa</span>
+                    </a>
+                    <figcaption>Hollowed</figcaption>
+                </figure>
+<figure data-size="iso" data-name="hunter">
+                    <a class="frame" href="../preview.html?mob=hunter" title="Avaa Hunter editorissa">
+                        <img class="day" src="hunter.png" alt="Hunter" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,6 lohkoa</span>
+                    </a>
+                    <figcaption>Hunter</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="licker">
+                    <a class="frame" href="../preview.html?mob=licker" title="Avaa Licker editorissa">
+                        <img class="day" src="licker.png" alt="Licker" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">11,6 lohkoa</span>
+                    </a>
+                    <figcaption>Licker</figcaption>
+                </figure>
+<figure data-size="iso" data-name="lurker">
+                    <a class="frame" href="../preview.html?mob=lurker" title="Avaa Lurker editorissa">
+                        <img class="day" src="lurker.png" alt="Lurker" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,3 lohkoa</span>
+                    </a>
+                    <figcaption>Lurker</figcaption>
+                </figure>
+<figure data-size="keski" data-name="mad cultist">
+                    <a class="frame" href="../preview.html?mob=mad_cultist" title="Avaa Mad Cultist editorissa">
+                        <img class="day" src="mad_cultist.png" alt="Mad Cultist" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,3 lohkoa</span>
+                    </a>
+                    <figcaption>Mad Cultist</figcaption>
+                </figure>
+<figure data-size="iso" data-name="maniac">
+                    <a class="frame" href="../preview.html?mob=maniac" title="Avaa Maniac editorissa">
+                        <img class="day" src="maniac.png" alt="Maniac" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,7 lohkoa</span>
+                    </a>
+                    <figcaption>Maniac</figcaption>
+                </figure>
+<figure data-size="iso" data-name="mother bone crawler">
+                    <a class="frame" href="../preview.html?mob=mother_bone_crawler" title="Avaa Mother Bone Crawler editorissa">
+                        <img class="day" src="mother_bone_crawler.png" alt="Mother Bone Crawler" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,9 lohkoa</span>
+                    </a>
+                    <figcaption>Mother Bone Crawler</figcaption>
+                </figure>
+<figure data-size="iso" data-name="mourner">
+                    <a class="frame" href="../preview.html?mob=mourner" title="Avaa Mourner editorissa">
+                        <img class="day" src="mourner.png" alt="Mourner" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,7 lohkoa</span>
+                    </a>
+                    <figcaption>Mourner</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="multiple eyes">
+                    <a class="frame" href="../preview.html?mob=multiple_eyes" title="Avaa Multiple Eyes editorissa">
+                        <img class="day" src="multiple_eyes.png" alt="Multiple Eyes" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,9 lohkoa</span>
+                    </a>
+                    <figcaption>Multiple Eyes</figcaption>
+                </figure>
+<figure data-size="iso" data-name="overseer">
+                    <a class="frame" href="../preview.html?mob=overseer" title="Avaa Overseer editorissa">
+                        <img class="day" src="overseer.png" alt="Overseer" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,5 lohkoa</span>
+                    </a>
+                    <figcaption>Overseer</figcaption>
+                </figure>
+<figure data-size="iso" data-name="penitent">
+                    <a class="frame" href="../preview.html?mob=penitent" title="Avaa Penitent editorissa">
+                        <img class="day" src="penitent.png" alt="Penitent" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,5 lohkoa</span>
+                    </a>
+                    <figcaption>Penitent</figcaption>
+                </figure>
+<figure data-size="keski" data-name="preserver">
+                    <a class="frame" href="../preview.html?mob=preserver" title="Avaa Preserver editorissa">
+                        <img class="day" src="preserver.png" alt="Preserver" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,8 lohkoa</span>
+                    </a>
+                    <figcaption>Preserver</figcaption>
+                </figure>
+<figure data-size="iso" data-name="primordial bone crawler">
+                    <a class="frame" href="../preview.html?mob=primordial_bone_crawler" title="Avaa Primordial Bone Crawler editorissa">
+                        <img class="day" src="primordial_bone_crawler.png" alt="Primordial Bone Crawler" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,2 lohkoa</span>
+                    </a>
+                    <figcaption>Primordial Bone Crawler</figcaption>
+                </figure>
+<figure data-size="iso" data-name="prison guard">
+                    <a class="frame" href="../preview.html?mob=prison_guard" title="Avaa Prison Guard editorissa">
+                        <img class="day" src="prison_guard.png" alt="Prison Guard" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,4 lohkoa</span>
+                    </a>
+                    <figcaption>Prison Guard</figcaption>
+                </figure>
+<figure data-size="iso" data-name="rooted">
+                    <a class="frame" href="../preview.html?mob=rooted" title="Avaa Rooted editorissa">
+                        <img class="day" src="rooted.png" alt="Rooted" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,8 lohkoa</span>
+                    </a>
+                    <figcaption>Rooted</figcaption>
+                </figure>
+<figure data-size="keski" data-name="rotten corpse">
+                    <a class="frame" href="../preview.html?mob=rotten_corpse" title="Avaa Rotten Corpse editorissa">
+                        <img class="day" src="rotten_corpse.png" alt="Rotten Corpse" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,3 lohkoa</span>
+                    </a>
+                    <figcaption>Rotten Corpse</figcaption>
+                </figure>
+<figure data-size="iso" data-name="saw thrower">
+                    <a class="frame" href="../preview.html?mob=saw_thrower" title="Avaa Saw Thrower editorissa">
+                        <img class="day" src="saw_thrower.png" alt="Saw Thrower" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,2 lohkoa</span>
+                    </a>
+                    <figcaption>Saw Thrower</figcaption>
+                </figure>
+<figure data-size="iso" data-name="scarecrow">
+                    <a class="frame" href="../preview.html?mob=scarecrow" title="Avaa Scarecrow editorissa">
+                        <img class="day" src="scarecrow.png" alt="Scarecrow" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">7,8 lohkoa</span>
+                    </a>
+                    <figcaption>Scarecrow</figcaption>
+                </figure>
+<figure data-size="iso" data-name="shadow hand">
+                    <a class="frame" href="../preview.html?mob=shadow_hand" title="Avaa Shadow Hand editorissa">
+                        <img class="day" src="shadow_hand.png" alt="Shadow Hand" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,3 lohkoa</span>
+                    </a>
+                    <figcaption>Shadow Hand</figcaption>
+                </figure>
+<figure data-size="keski" data-name="skull smasher">
+                    <a class="frame" href="../preview.html?mob=skull_smasher" title="Avaa Skull Smasher editorissa">
+                        <img class="day" src="skull_smasher.png" alt="Skull Smasher" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,9 lohkoa</span>
+                    </a>
+                    <figcaption>Skull Smasher</figcaption>
+                </figure>
+<figure data-size="keski" data-name="small flesh cube">
+                    <a class="frame" href="../preview.html?mob=small_flesh_cube" title="Avaa Small Flesh Cube editorissa">
+                        <img class="day" src="small_flesh_cube.png" alt="Small Flesh Cube" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,7 lohkoa</span>
+                    </a>
+                    <figcaption>Small Flesh Cube</figcaption>
+                </figure>
+<figure data-size="iso" data-name="soulseeker (seeker)">
+                    <a class="frame" href="../preview.html?mob=soulseeker" title="Avaa Soulseeker (Seeker) editorissa">
+                        <img class="day" src="soulseeker.png" alt="Soulseeker (Seeker)" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">7,1 lohkoa</span>
+                    </a>
+                    <figcaption>Soulseeker (Seeker)</figcaption>
+                </figure>
+<figure data-size="keski" data-name="spitter crawler">
+                    <a class="frame" href="../preview.html?mob=spitter_crawler" title="Avaa Spitter Crawler editorissa">
+                        <img class="day" src="spitter_crawler.png" alt="Spitter Crawler" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,9 lohkoa</span>
+                    </a>
+                    <figcaption>Spitter Crawler</figcaption>
+                </figure>
+<figure data-size="keski" data-name="spore spewer">
+                    <a class="frame" href="../preview.html?mob=spore_spewer" title="Avaa Spore Spewer editorissa">
+                        <img class="day" src="spore_spewer.png" alt="Spore Spewer" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,8 lohkoa</span>
+                    </a>
+                    <figcaption>Spore Spewer</figcaption>
+                </figure>
+<figure data-size="iso" data-name="stalker">
+                    <a class="frame" href="../preview.html?mob=stalker" title="Avaa Stalker editorissa">
+                        <img class="day" src="stalker.png" alt="Stalker" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,0 lohkoa</span>
+                    </a>
+                    <figcaption>Stalker</figcaption>
+                </figure>
+<figure data-size="iso" data-name="stalker (new)">
+                    <a class="frame" href="../preview.html?mob=stalker_new" title="Avaa Stalker (New) editorissa">
+                        <img class="day" src="stalker_new.png" alt="Stalker (New)" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">6,3 lohkoa</span>
+                    </a>
+                    <figcaption>Stalker (New)</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="swarmer">
+                    <a class="frame" href="../preview.html?mob=swarmer" title="Avaa Swarmer editorissa">
+                        <img class="day" src="swarmer.png" alt="Swarmer" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,4 lohkoa</span>
+                    </a>
+                    <figcaption>Swarmer</figcaption>
+                </figure>
+<figure data-size="keski" data-name="thumper">
+                    <a class="frame" href="../preview.html?mob=thumper" title="Avaa Thumper editorissa">
+                        <img class="day" src="thumper.png" alt="Thumper" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Thumper</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="void fly">
+                    <a class="frame" href="../preview.html?mob=void_fly" title="Avaa Void Fly editorissa">
+                        <img class="day" src="void_fly.png" alt="Void Fly" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,4 lohkoa</span>
+                    </a>
+                    <figcaption>Void Fly</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="void fly maggot">
+                    <a class="frame" href="../preview.html?mob=void_fly_maggot" title="Avaa Void Fly Maggot editorissa">
+                        <img class="day" src="void_fly_maggot.png" alt="Void Fly Maggot" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,4 lohkoa</span>
+                    </a>
+                    <figcaption>Void Fly Maggot</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="void tentacle">
+                    <a class="frame" href="../preview.html?mob=void_tentacle" title="Avaa Void Tentacle editorissa">
+                        <img class="day" src="void_tentacle.png" alt="Void Tentacle" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">9,8 lohkoa</span>
+                    </a>
+                    <figcaption>Void Tentacle</figcaption>
+                </figure>
+<figure data-size="keski" data-name="void watcher">
+                    <a class="frame" href="../preview.html?mob=void_watcher" title="Avaa Void Watcher editorissa">
+                        <img class="day" src="void_watcher.png" alt="Void Watcher" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,8 lohkoa</span>
+                    </a>
+                    <figcaption>Void Watcher</figcaption>
+                </figure>
+<figure data-size="iso" data-name="voidborn tentacles">
+                    <a class="frame" href="../preview.html?mob=voidborn_tentacles" title="Avaa Voidborn Tentacles editorissa">
+                        <img class="day" src="voidborn_tentacles.png" alt="Voidborn Tentacles" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">4,0 lohkoa</span>
+                    </a>
+                    <figcaption>Voidborn Tentacles</figcaption>
+                </figure>
+<figure data-size="iso" data-name="wanderer">
+                    <a class="frame" href="../preview.html?mob=wanderer" title="Avaa Wanderer editorissa">
+                        <img class="day" src="wanderer.png" alt="Wanderer" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">5,5 lohkoa</span>
+                    </a>
+                    <figcaption>Wanderer</figcaption>
+                </figure>
+<figure data-size="jatti" data-name="weaver of souls">
+                    <a class="frame" href="../preview.html?mob=weaver_of_souls" title="Avaa Weaver of Souls editorissa">
+                        <img class="day" src="weaver_of_souls.png" alt="Weaver of Souls" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">8,7 lohkoa</span>
+                    </a>
+                    <figcaption>Weaver of Souls</figcaption>
+                </figure></div>
+<h2>Vanilja <span class="count">59</span></h2>
+                <div class="grid"><figure data-size="pieni" data-name="allay">
+                    <a class="frame" href="../preview.html?mob=allay" title="Avaa Allay editorissa">
+                        <img class="day" src="allay.png" alt="Allay" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,7 lohkoa</span>
+                    </a>
+                    <figcaption>Allay</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="armadillo">
+                    <a class="frame" href="../preview.html?mob=armadillo" title="Avaa Armadillo editorissa">
+                        <img class="day" src="armadillo.png" alt="Armadillo" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,6 lohkoa</span>
+                    </a>
+                    <figcaption>Armadillo</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="axolotl">
+                    <a class="frame" href="../preview.html?mob=axolotl" title="Avaa Axolotl editorissa">
+                        <img class="day" src="axolotl.png" alt="Axolotl" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,8 lohkoa</span>
+                    </a>
+                    <figcaption>Axolotl</figcaption>
+                </figure>
+<figure data-size="keski" data-name="bat">
+                    <a class="frame" href="../preview.html?mob=bat" title="Avaa Bat editorissa">
+                        <img class="day" src="bat.png" alt="Bat" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,4 lohkoa</span>
+                    </a>
+                    <figcaption>Bat</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="bee">
+                    <a class="frame" href="../preview.html?mob=bee" title="Avaa Bee editorissa">
+                        <img class="day" src="bee.png" alt="Bee" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,6 lohkoa</span>
+                    </a>
+                    <figcaption>Bee</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="blaze">
+                    <a class="frame" href="../preview.html?mob=blaze" title="Avaa Blaze editorissa">
+                        <img class="day" src="blaze.png" alt="Blaze" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,8 lohkoa</span>
+                    </a>
+                    <figcaption>Blaze</figcaption>
+                </figure>
+<figure data-size="keski" data-name="bogged">
+                    <a class="frame" href="../preview.html?mob=bogged" title="Avaa Bogged editorissa">
+                        <img class="day" src="bogged.png" alt="Bogged" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,2 lohkoa</span>
+                    </a>
+                    <figcaption>Bogged</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="breeze">
+                    <a class="frame" href="../preview.html?mob=breeze" title="Avaa Breeze editorissa">
+                        <img class="day" src="breeze.png" alt="Breeze" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,1 lohkoa</span>
+                    </a>
+                    <figcaption>Breeze</figcaption>
+                </figure>
+<figure data-size="keski" data-name="camel">
+                    <a class="frame" href="../preview.html?mob=camel" title="Avaa Camel editorissa">
+                        <img class="day" src="camel.png" alt="Camel" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,8 lohkoa</span>
+                    </a>
+                    <figcaption>Camel</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="cat">
+                    <a class="frame" href="../preview.html?mob=cat" title="Avaa Cat editorissa">
+                        <img class="day" src="cat.png" alt="Cat" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,0 lohkoa</span>
+                    </a>
+                    <figcaption>Cat</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="chicken">
+                    <a class="frame" href="../preview.html?mob=chicken" title="Avaa Chicken editorissa">
+                        <img class="day" src="chicken.png" alt="Chicken" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,9 lohkoa</span>
+                    </a>
+                    <figcaption>Chicken</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="cod">
+                    <a class="frame" href="../preview.html?mob=cod" title="Avaa Cod editorissa">
+                        <img class="day" src="cod.png" alt="Cod" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,4 lohkoa</span>
+                    </a>
+                    <figcaption>Cod</figcaption>
+                </figure>
+<figure data-size="keski" data-name="copper golem">
+                    <a class="frame" href="../preview.html?mob=copper_golem" title="Avaa Copper Golem editorissa">
+                        <img class="day" src="copper_golem.png" alt="Copper Golem" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,5 lohkoa</span>
+                    </a>
+                    <figcaption>Copper Golem</figcaption>
+                </figure>
+<figure data-size="keski" data-name="cow">
+                    <a class="frame" href="../preview.html?mob=cow" title="Avaa Cow editorissa">
+                        <img class="day" src="cow.png" alt="Cow" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,8 lohkoa</span>
+                    </a>
+                    <figcaption>Cow</figcaption>
+                </figure>
+<figure data-size="keski" data-name="creaking">
+                    <a class="frame" href="../preview.html?mob=creaking" title="Avaa Creaking editorissa">
+                        <img class="day" src="creaking.png" alt="Creaking" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,8 lohkoa</span>
+                    </a>
+                    <figcaption>Creaking</figcaption>
+                </figure>
+<figure data-size="keski" data-name="creeper">
+                    <a class="frame" href="../preview.html?mob=creeper" title="Avaa Creeper editorissa">
+                        <img class="day" src="creeper.png" alt="Creeper" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,6 lohkoa</span>
+                    </a>
+                    <figcaption>Creeper</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="dolphin">
+                    <a class="frame" href="../preview.html?mob=dolphin" title="Avaa Dolphin editorissa">
+                        <img class="day" src="dolphin.png" alt="Dolphin" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,7 lohkoa</span>
+                    </a>
+                    <figcaption>Dolphin</figcaption>
+                </figure>
+<figure data-size="keski" data-name="drowned">
+                    <a class="frame" href="../preview.html?mob=drowned" title="Avaa Drowned editorissa">
+                        <img class="day" src="drowned.png" alt="Drowned" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Drowned</figcaption>
+                </figure>
+<figure data-size="keski" data-name="enderman">
+                    <a class="frame" href="../preview.html?mob=enderman" title="Avaa Enderman editorissa">
+                        <img class="day" src="enderman.png" alt="Enderman" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,1 lohkoa</span>
+                    </a>
+                    <figcaption>Enderman</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="endermite">
+                    <a class="frame" href="../preview.html?mob=endermite" title="Avaa Endermite editorissa">
+                        <img class="day" src="endermite.png" alt="Endermite" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,3 lohkoa</span>
+                    </a>
+                    <figcaption>Endermite</figcaption>
+                </figure>
+<figure data-size="keski" data-name="evoker">
+                    <a class="frame" href="../preview.html?mob=evoker" title="Avaa Evoker editorissa">
+                        <img class="day" src="evoker.png" alt="Evoker" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Evoker</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="fox">
+                    <a class="frame" href="../preview.html?mob=fox" title="Avaa Fox editorissa">
+                        <img class="day" src="fox.png" alt="Fox" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,9 lohkoa</span>
+                    </a>
+                    <figcaption>Fox</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="frog">
+                    <a class="frame" href="../preview.html?mob=frog" title="Avaa Frog editorissa">
+                        <img class="day" src="frog.png" alt="Frog" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,5 lohkoa</span>
+                    </a>
+                    <figcaption>Frog</figcaption>
+                </figure>
+<figure data-size="iso" data-name="ghast">
+                    <a class="frame" href="../preview.html?mob=ghast" title="Avaa Ghast editorissa">
+                        <img class="day" src="ghast.png" alt="Ghast" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">7,6 lohkoa</span>
+                    </a>
+                    <figcaption>Ghast</figcaption>
+                </figure>
+<figure data-size="keski" data-name="glow squid">
+                    <a class="frame" href="../preview.html?mob=glow_squid" title="Avaa Glow Squid editorissa">
+                        <img class="day" src="glow_squid.png" alt="Glow Squid" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Glow Squid</figcaption>
+                </figure>
+<figure data-size="keski" data-name="goat">
+                    <a class="frame" href="../preview.html?mob=goat" title="Avaa Goat editorissa">
+                        <img class="day" src="goat.png" alt="Goat" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,6 lohkoa</span>
+                    </a>
+                    <figcaption>Goat</figcaption>
+                </figure>
+<figure data-size="keski" data-name="hoglin">
+                    <a class="frame" href="../preview.html?mob=hoglin" title="Avaa Hoglin editorissa">
+                        <img class="day" src="hoglin.png" alt="Hoglin" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Hoglin</figcaption>
+                </figure>
+<figure data-size="keski" data-name="husk">
+                    <a class="frame" href="../preview.html?mob=husk" title="Avaa Husk editorissa">
+                        <img class="day" src="husk.png" alt="Husk" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,0 lohkoa</span>
+                    </a>
+                    <figcaption>Husk</figcaption>
+                </figure>
+<figure data-size="keski" data-name="iron golem">
+                    <a class="frame" href="../preview.html?mob=iron_golem" title="Avaa Iron Golem editorissa">
+                        <img class="day" src="iron_golem.png" alt="Iron Golem" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,7 lohkoa</span>
+                    </a>
+                    <figcaption>Iron Golem</figcaption>
+                </figure>
+<figure data-size="keski" data-name="llama">
+                    <a class="frame" href="../preview.html?mob=llama" title="Avaa Llama editorissa">
+                        <img class="day" src="llama.png" alt="Llama" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,3 lohkoa</span>
+                    </a>
+                    <figcaption>Llama</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="ocelot">
+                    <a class="frame" href="../preview.html?mob=ocelot" title="Avaa Ocelot editorissa">
+                        <img class="day" src="ocelot.png" alt="Ocelot" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,0 lohkoa</span>
+                    </a>
+                    <figcaption>Ocelot</figcaption>
+                </figure>
+<figure data-size="keski" data-name="panda">
+                    <a class="frame" href="../preview.html?mob=panda" title="Avaa Panda editorissa">
+                        <img class="day" src="panda.png" alt="Panda" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,7 lohkoa</span>
+                    </a>
+                    <figcaption>Panda</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="parrot">
+                    <a class="frame" href="../preview.html?mob=parrot" title="Avaa Parrot editorissa">
+                        <img class="day" src="parrot.png" alt="Parrot" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,9 lohkoa</span>
+                    </a>
+                    <figcaption>Parrot</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="phantom">
+                    <a class="frame" href="../preview.html?mob=phantom" title="Avaa Phantom editorissa">
+                        <img class="day" src="phantom.png" alt="Phantom" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,3 lohkoa</span>
+                    </a>
+                    <figcaption>Phantom</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="pig">
+                    <a class="frame" href="../preview.html?mob=pig" title="Avaa Pig editorissa">
+                        <img class="day" src="pig.png" alt="Pig" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,4 lohkoa</span>
+                    </a>
+                    <figcaption>Pig</figcaption>
+                </figure>
+<figure data-size="keski" data-name="pillager">
+                    <a class="frame" href="../preview.html?mob=pillager" title="Avaa Pillager editorissa">
+                        <img class="day" src="pillager.png" alt="Pillager" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Pillager</figcaption>
+                </figure>
+<figure data-size="keski" data-name="polar bear">
+                    <a class="frame" href="../preview.html?mob=polar_bear" title="Avaa Polar Bear editorissa">
+                        <img class="day" src="polar_bear.png" alt="Polar Bear" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,5 lohkoa</span>
+                    </a>
+                    <figcaption>Polar Bear</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="pufferfish">
+                    <a class="frame" href="../preview.html?mob=pufferfish" title="Avaa Pufferfish editorissa">
+                        <img class="day" src="pufferfish.png" alt="Pufferfish" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,2 lohkoa</span>
+                    </a>
+                    <figcaption>Pufferfish</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="salmon">
+                    <a class="frame" href="../preview.html?mob=salmon" title="Avaa Salmon editorissa">
+                        <img class="day" src="salmon.png" alt="Salmon" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,4 lohkoa</span>
+                    </a>
+                    <figcaption>Salmon</figcaption>
+                </figure>
+<figure data-size="keski" data-name="sheep">
+                    <a class="frame" href="../preview.html?mob=sheep" title="Avaa Sheep editorissa">
+                        <img class="day" src="sheep.png" alt="Sheep" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,6 lohkoa</span>
+                    </a>
+                    <figcaption>Sheep</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="shulker">
+                    <a class="frame" href="../preview.html?mob=shulker" title="Avaa Shulker editorissa">
+                        <img class="day" src="shulker.png" alt="Shulker" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,0 lohkoa</span>
+                    </a>
+                    <figcaption>Shulker</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="silverfish">
+                    <a class="frame" href="../preview.html?mob=silverfish" title="Avaa Silverfish editorissa">
+                        <img class="day" src="silverfish.png" alt="Silverfish" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,5 lohkoa</span>
+                    </a>
+                    <figcaption>Silverfish</figcaption>
+                </figure>
+<figure data-size="keski" data-name="skeleton">
+                    <a class="frame" href="../preview.html?mob=skeleton" title="Avaa Skeleton editorissa">
+                        <img class="day" src="skeleton.png" alt="Skeleton" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,0 lohkoa</span>
+                    </a>
+                    <figcaption>Skeleton</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="slime">
+                    <a class="frame" href="../preview.html?mob=slime" title="Avaa Slime editorissa">
+                        <img class="day" src="slime.png" alt="Slime" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,4 lohkoa</span>
+                    </a>
+                    <figcaption>Slime</figcaption>
+                </figure>
+<figure data-size="keski" data-name="sniffer">
+                    <a class="frame" href="../preview.html?mob=sniffer" title="Avaa Sniffer editorissa">
+                        <img class="day" src="sniffer.png" alt="Sniffer" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Sniffer</figcaption>
+                </figure>
+<figure data-size="keski" data-name="snow golem">
+                    <a class="frame" href="../preview.html?mob=snow_golem" title="Avaa Snow Golem editorissa">
+                        <img class="day" src="snow_golem.png" alt="Snow Golem" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,7 lohkoa</span>
+                    </a>
+                    <figcaption>Snow Golem</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="spider">
+                    <a class="frame" href="../preview.html?mob=spider" title="Avaa Spider editorissa">
+                        <img class="day" src="spider.png" alt="Spider" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,5 lohkoa</span>
+                    </a>
+                    <figcaption>Spider</figcaption>
+                </figure>
+<figure data-size="keski" data-name="squid">
+                    <a class="frame" href="../preview.html?mob=squid" title="Avaa Squid editorissa">
+                        <img class="day" src="squid.png" alt="Squid" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Squid</figcaption>
+                </figure>
+<figure data-size="keski" data-name="stray">
+                    <a class="frame" href="../preview.html?mob=stray" title="Avaa Stray editorissa">
+                        <img class="day" src="stray.png" alt="Stray" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,0 lohkoa</span>
+                    </a>
+                    <figcaption>Stray</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="tadpole">
+                    <a class="frame" href="../preview.html?mob=tadpole" title="Avaa Tadpole editorissa">
+                        <img class="day" src="tadpole.png" alt="Tadpole" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,1 lohkoa</span>
+                    </a>
+                    <figcaption>Tadpole</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="tropical fish">
+                    <a class="frame" href="../preview.html?mob=tropical_fish" title="Avaa Tropical Fish editorissa">
+                        <img class="day" src="tropical_fish.png" alt="Tropical Fish" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,4 lohkoa</span>
+                    </a>
+                    <figcaption>Tropical Fish</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="turtle">
+                    <a class="frame" href="../preview.html?mob=turtle" title="Avaa Turtle editorissa">
+                        <img class="day" src="turtle.png" alt="Turtle" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,3 lohkoa</span>
+                    </a>
+                    <figcaption>Turtle</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="vex">
+                    <a class="frame" href="../preview.html?mob=vex" title="Avaa Vex editorissa">
+                        <img class="day" src="vex.png" alt="Vex" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">0,7 lohkoa</span>
+                    </a>
+                    <figcaption>Vex</figcaption>
+                </figure>
+<figure data-size="keski" data-name="villager">
+                    <a class="frame" href="../preview.html?mob=villager" title="Avaa Villager editorissa">
+                        <img class="day" src="villager.png" alt="Villager" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Villager</figcaption>
+                </figure>
+<figure data-size="keski" data-name="vindicator">
+                    <a class="frame" href="../preview.html?mob=vindicator" title="Avaa Vindicator editorissa">
+                        <img class="day" src="vindicator.png" alt="Vindicator" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,1 lohkoa</span>
+                    </a>
+                    <figcaption>Vindicator</figcaption>
+                </figure>
+<figure data-size="keski" data-name="warden">
+                    <a class="frame" href="../preview.html?mob=warden" title="Avaa Warden editorissa">
+                        <img class="day" src="warden.png" alt="Warden" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,7 lohkoa</span>
+                    </a>
+                    <figcaption>Warden</figcaption>
+                </figure>
+<figure data-size="keski" data-name="witch">
+                    <a class="frame" href="../preview.html?mob=witch" title="Avaa Witch editorissa">
+                        <img class="day" src="witch.png" alt="Witch" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,6 lohkoa</span>
+                    </a>
+                    <figcaption>Witch</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="wolf">
+                    <a class="frame" href="../preview.html?mob=wolf" title="Avaa Wolf editorissa">
+                        <img class="day" src="wolf.png" alt="Wolf" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,0 lohkoa</span>
+                    </a>
+                    <figcaption>Wolf</figcaption>
+                </figure>
+<figure data-size="keski" data-name="zombie">
+                    <a class="frame" href="../preview.html?mob=zombie" title="Avaa Zombie editorissa">
+                        <img class="day" src="zombie.png" alt="Zombie" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,0 lohkoa</span>
+                    </a>
+                    <figcaption>Zombie</figcaption>
+                </figure></div>
+<h2>Voxel-eläimet <span class="count">11</span></h2>
+                <div class="grid"><figure data-size="keski" data-name="voxel bear">
+                    <a class="frame" href="../preview.html?mob=vox_bear" title="Avaa Voxel Bear editorissa">
+                        <img class="day" src="vox_bear.png" alt="Voxel Bear" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,6 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Bear</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel dino">
+                    <a class="frame" href="../preview.html?mob=vox_dino" title="Avaa Voxel Dino editorissa">
+                        <img class="day" src="vox_dino.png" alt="Voxel Dino" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,5 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Dino</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel dragon">
+                    <a class="frame" href="../preview.html?mob=vox_dragon" title="Avaa Voxel Dragon editorissa">
+                        <img class="day" src="vox_dragon.png" alt="Voxel Dragon" loading="lazy" />
+                        
+                        <span class="tier">BOSSI</span>
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">3,5 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Dragon</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel flamingo">
+                    <a class="frame" href="../preview.html?mob=vox_flamingo" title="Avaa Voxel Flamingo editorissa">
+                        <img class="day" src="vox_flamingo.png" alt="Voxel Flamingo" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,6 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Flamingo</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="voxel fox">
+                    <a class="frame" href="../preview.html?mob=vox_fox" title="Avaa Voxel Fox editorissa">
+                        <img class="day" src="vox_fox.png" alt="Voxel Fox" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,1 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Fox</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel horse">
+                    <a class="frame" href="../preview.html?mob=vox_horse" title="Avaa Voxel Horse editorissa">
+                        <img class="day" src="vox_horse.png" alt="Voxel Horse" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,2 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Horse</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel lion">
+                    <a class="frame" href="../preview.html?mob=vox_lion" title="Avaa Voxel Lion editorissa">
+                        <img class="day" src="vox_lion.png" alt="Voxel Lion" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,5 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Lion</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="voxel parrot">
+                    <a class="frame" href="../preview.html?mob=vox_parrot" title="Avaa Voxel Parrot editorissa">
+                        <img class="day" src="vox_parrot.png" alt="Voxel Parrot" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,0 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Parrot</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel stork">
+                    <a class="frame" href="../preview.html?mob=vox_stork" title="Avaa Voxel Stork editorissa">
+                        <img class="day" src="vox_stork.png" alt="Voxel Stork" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,8 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Stork</figcaption>
+                </figure>
+<figure data-size="keski" data-name="voxel tiger">
+                    <a class="frame" href="../preview.html?mob=vox_tiger" title="Avaa Voxel Tiger editorissa">
+                        <img class="day" src="vox_tiger.png" alt="Voxel Tiger" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,5 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Tiger</figcaption>
+                </figure>
+<figure data-size="pieni" data-name="voxel wolf">
+                    <a class="frame" href="../preview.html?mob=vox_wolf" title="Avaa Voxel Wolf editorissa">
+                        <img class="day" src="vox_wolf.png" alt="Voxel Wolf" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">1,3 lohkoa</span>
+                    </a>
+                    <figcaption>Voxel Wolf</figcaption>
+                </figure></div>
+<h2>Pohja <span class="count">1</span></h2>
+                <div class="grid"><figure data-size="keski" data-name="humanoid">
+                    <a class="frame" href="../preview.html?mob=humanoid" title="Avaa Humanoid editorissa">
+                        <img class="day" src="humanoid.png" alt="Humanoid" loading="lazy" />
+                        
+                        
+                        <span class="edit">Muokkaa</span>
+                        <span class="badge">2,0 lohkoa</span>
+                    </a>
+                    <figcaption>Humanoid</figcaption>
+                </figure></div>
+<script>
+function applyFilter() {
+  var q = (document.getElementById('filter-search').value || '').toLowerCase().trim();
+  var size = document.getElementById('filter-size').value;
+  var visible = 0;
+  document.querySelectorAll('figure').forEach(function (f) {
+    var okSize = size === 'all' || f.dataset.size === size;
+    var okQ = !q || (f.dataset.name || '').indexOf(q) !== -1;
+    var show = okSize && okQ;
+    f.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.querySelectorAll('h2').forEach(function (h) {
+    var grid = h.nextElementSibling;
+    var hasVisible = grid && [].some.call(grid.querySelectorAll('figure'), function (f) { return f.style.display !== 'none'; });
+    h.style.display = hasVisible ? '' : 'none';
+  });
+  document.getElementById('no-results').hidden = visible > 0;
+}
+</script>
+</body>
+</html>

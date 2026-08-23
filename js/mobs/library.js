@@ -144,6 +144,8 @@ function mobHeightBlocks(model, category) {
  * bossi/minioni-tier + kokoluokka. Käytetään sekä moduulin latauksessa
  * että selaimessa vokseloiduille omille malleille (drag & drop).
  */
+export { mobHeightBlocks };
+
 export function prepareMob(mob) {
     autoLayoutUVs(mob.model);
     mob.size = mobHeightBlocks(mob.model, mob.category || 'voxel');

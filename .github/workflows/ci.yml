@@ -27,6 +27,27 @@ jobs:
       - name: Verify render correctness
         run: npm run verify:render
 
+      - name: Verify animations keep bones attached
+        run: npm run verify:anim
+
+      - name: Verify walk feet don't sink into the ground
+        run: npm run verify:walk
+
+      - name: Install Chrome (headless, for the race verifier)
+        run: |
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+
+      - name: Verify fast mob-switch doesn't let a stale texture overwrite the new mob
+        run: npm run verify:race
+
+      - name: Verify storage cleanup (orphan/stale removed, active kept, status notice)
+        run: npm run verify:cleanup
+
+      - name: Verify mob count badge matches the library
+        run: node tools/mob-count.mjs --check
+
       - name: Build self-contained preview
         run: npm run build:preview
 
@@ -36,3 +57,79 @@ jobs:
           name: preview
           path: preview.html
           if-no-files-found: error
+
+  # Toistettavuusportti: ubuntu-runnerin tuore renderi vastaa repo-versioita
+  # (examples/*.png) toleranssissa.
+  #
+  # PR:issä vertailu ajetaan aina — mob-muutos vaatii kuvien päivityksen mukaan
+  # (node tools/export-example-shots.mjs --all).
+  #
+  # Mainilla vertailu ohitetaan vain yhdessä tapauksessa: push koskettaa
+  # mobeja/kuvaustyökalua mutta EI examples/-kuvia — silloin kuvat päivittää
+  # example-shots.yml välittömästi pushin jälkeen, joten vertailu vanhentuneita
+  # kuvia vastaan antaisi väärän punaisen. Kaikissa muissa push-tapauksissa
+  # (esim. example-shots.yml:n oma kuvakommitti) vertailu ajetaan.
+  decide-shots:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.decide.outputs.run }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # pushin before/after-diff vaatii koko historian
+
+      - name: Päätä, ajetaanko kuvien toistettavuusvertailu
+        id: decide
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          BEFORE="${{ github.event.before }}"
+          AFTER="${{ github.event.after }}"
+          if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+            # haaran luonti — koko puu on uutta, ajetaan
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" 2>/dev/null || true)
+          MOB=0
+          EXAMPLES=0
+          if [ -n "$CHANGED" ]; then
+            MOB=$(printf '%s\n' "$CHANGED" | grep -cE '^(js/mobs/|js/main\.js$|tools/export-example-shots\.mjs)' || true)
+            EXAMPLES=$(printf '%s\n' "$CHANGED" | grep -cE '^examples/' || true)
+          fi
+          if [ "$MOB" -gt 0 ] && [ "$EXAMPLES" -eq 0 ]; then
+            echo "Mobi-muutos ilman examples/-kuvia — kuvat päivittää example-shots.yml. Ohitetaan vertailu."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  verify-example-shots:
+    runs-on: ubuntu-latest
+    needs: decide-shots
+    if: needs.decide-shots.outputs.run == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chrome (headless)
+        run: |
+          wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt-get update
+          sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+
+      - name: Verify example images are reproducible on this runner
+        run: node tools/verify-example-shots.mjs

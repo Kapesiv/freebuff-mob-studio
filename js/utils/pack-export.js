@@ -26,7 +26,7 @@
  */
 import { exportBedrockGeometry } from '../formats/bedrock.js';
 import { exportJavaModel } from '../formats/java.js';
-import { exportJavaAnimations } from '../formats/animation.js';
+import { exportBedrockAnimations, exportJavaAnimations } from '../formats/animation.js';
 
 const enc = new TextEncoder();
 
@@ -321,21 +321,45 @@ function modelBounds(model) {
 }
 
 /** Animaatioiden lyhyet nimet + viittaukset client-entityä varten. */
-function animationEntries(animations) {
+function animationEntries(animations, id) {
     const map = animations && animations.tracks ? { animation: animations } : (animations || {});
     const entries = {};
     const animate = [];
     for (const key of Object.keys(map)) {
         const short = key.replace(/^animation\.[^.]+\./, '') || key;
-        entries[short] = key;
+        // Bedrockin client-entity viittaa animaatiotiedoston KOKONAISIIN
+        // avaimiin ("animation.<id>.<nimi>") — pelkkä lyhyt nimi ei täsmää,
+        // joten animaatio ei muuten pyörisi pelissä.
+        entries[short] = `animation.${id}.${short}`;
         animate.push(short);
     }
     return { entries, animate };
 }
 
+/**
+ * Valitse pelissä automaattisesti soitettava animaatio: käyttäjän valitsema
+ * (jos se on idle/kävely/lento-tyyppinen), sitten idle-tyyppinen, sitten
+ * kävely/lento, lopuksi ensimmäinen — ei KAIKKIA yhtä aikaa (ne sotkisivat
+ * toisensa, esim. walk + idle taistelevat samoista luista).
+ */
+function pickPrimaryAnimation(animations, preferred) {
+    const map = animations && animations.tracks ? { animation: animations } : (animations || {});
+    const names = Object.keys(map);
+    if (!names.length) return null;
+    const prefer = (re) => names.find((n) => re.test(n));
+    return (
+        (preferred && /idle|walk|fly|run|ambient|swim/i.test(preferred) && map[preferred] ? preferred : null) ||
+        prefer(/idle|ambient/i) ||
+        prefer(/walk|fly|run|swim/i) ||
+        (preferred && map[preferred] ? preferred : null) ||
+        names[0]
+    );
+}
+
 /** RP:n client-entity — sitoo geometrian, tekstuurit, animaatiot ja spawn-eggin. */
-function bedrockEntityFile(model, id, ns, animations, eggColors) {
-    const { entries, animate } = animationEntries(animations);
+function bedrockEntityFile(model, id, ns, animations, eggColors, opts = {}) {
+    const { entries } = animationEntries(animations, id);
+    const hasGlow = !!opts.hasGlow;
     const desc = {
         identifier: `${ns}:${id}`,
         materials: { default: 'entity_alphatest' },
@@ -347,9 +371,19 @@ function bedrockEntityFile(model, id, ns, animations, eggColors) {
             overlay_color: (eggColors && eggColors.overlay) || '#4a5f3f',
         },
     };
+    if (hasGlow) {
+        // Glow-kerros: toinen material (entity_emissive_alpha hehkuu
+        // valaistuksesta riippumatta) + glow-tekstuuri + toinen
+        // render-controller — vain glow-pikselit näkyvät toisella ajolla.
+        desc.materials.glow = 'entity_emissive_alpha';
+        desc.textures.glow = `textures/entity/${id}_glow`;
+        desc.render_controllers.push('controller.render.glow');
+    }
     if (Object.keys(entries).length) {
         desc.animations = entries;
-        desc.scripts = { animate };
+        // Yksi ensisijainen animaatio pelissä (ei kaikki yhtä aikaa)
+        const chosen = pickPrimaryAnimation(animations, opts.primaryAnimation) || Object.keys(entries)[0];
+        desc.scripts = { animate: [chosen] };
     }
     return {
         format_version: '1.10.0',
@@ -469,17 +503,69 @@ function bedrockSpawnRules(id, ns) {
     };
 }
 
-function bedrockRenderControllers() {
-    return {
-        format_version: '1.8.0',
-        render_controllers: {
-            'controller.render.default': {
-                geometry: 'Geometry.default',
-                materials: [{ '*': 'Material.default' }],
-                textures: ['Texture.default'],
-            },
+function bedrockRenderControllers(hasGlow) {
+    const controllers = {
+        'controller.render.default': {
+            geometry: 'Geometry.default',
+            materials: [{ '*': 'Material.default' }],
+            textures: ['Texture.default'],
         },
     };
+    if (hasGlow) {
+        // Emissiivinen läpikäynti: sama geometria, mutta glow-tekstuurilla
+        // + entity_emissive_alpha -materialilla — hehkuvat osat loistavat.
+        controllers['controller.render.glow'] = {
+            geometry: 'Geometry.default',
+            materials: [{ '*': 'Material.glow' }],
+            textures: ['Texture.glow'],
+        };
+    }
+    return {
+        format_version: '1.8.0',
+        render_controllers: controllers,
+    };
+}
+
+/** Asennusohje Bedrock-paketin juureen (.mcaddon — Minecraft ohittaa ylimääräiset tiedostot). */
+function bedrockReadme(name, id, ns, hasAnims, primaryAnim, hasGlow) {
+    const lines = [
+        '==============================================================',
+        `  ${name} — Minecraft Bedrock -addon (Freebuff Mob Studio)`,
+        '==============================================================',
+        '',
+        'ASENNUS (2 tapaa):',
+        '  1) Avaa ladattu .mcaddon-tiedosto (tuplaklikkaus) — Minecraft',
+        '     asentaa resource_pack + behavior_pack automaattisesti.',
+        '  2) Tai kopioi kansiot resource_pack/ ja behavior_pack/',
+        '     manuaalisesti .../resource_packs/ ja .../behavior_packs/',
+        '     ja ota ne käyttöön Maailman asetuksissa.',
+        '',
+        'KUTSU:',
+        `  /summon ${ns}:${id} ~ ~ ~`,
+        '',
+        'SPAWN-EGGI:',
+        '  Löytyy luovasta inventaariosta (spawn_egg-värit johdettu',
+        '  mobin tekstuurista).',
+        '',
+        'ANIMAATIO:',
+        `  ${hasAnims ? (primaryAnim ? 'Soitetaan automaattisesti: ' + primaryAnim : 'Animaatiotiedosto mukana.') : 'Ei animaatioita (staattinen malli).'}`,
+        '',
+        'GLOW:',
+        `  ${hasGlow ? 'Emissiiviset osat hehkuvat (entity_emissive_alpha).' : 'Ei glow-kerrosta.'}`,
+        '',
+        'TIEDOSTOT:',
+        `  resource_pack/models/entity/${id}.geo.json        (geometria)`,
+        `  resource_pack/textures/entity/${id}.png          (tekstuuri)`,
+        (hasGlow ? `  resource_pack/textures/entity/${id}_glow.png    (glow-kerros)` : ''),
+        (hasAnims ? `  resource_pack/animations/${id}.animation.json  (animaatiot)` : ''),
+        `  resource_pack/entity/${id}.entity.json           (client-entity)`,
+        `  behavior_pack/entities/${id}.json                (käytös: HP, vahinko, nopeus)`,
+        `  behavior_pack/spawn_rules/${id}.json             (spawn-säännöt)`,
+        '',
+        'Generoi: Freebuff Mob Studio — ' + new Date().toISOString(),
+        '',
+    ];
+    return lines.filter((l) => l !== undefined).join('\n');
 }
 
 /** Kevyt tiedostolista esikatseluun (ei generoi PNG:tä). */
@@ -487,6 +573,7 @@ export function previewPackFiles(formats, id, ns, hasAnims, hasGlow) {
     const out = [];
     if (formats.includes('bedrock')) {
         out.push(
+            'ASENNUS-OHJE.txt',
             'resource_pack/manifest.json',
             'resource_pack/pack_icon.png',
             `resource_pack/entity/${id}.entity.json`,
@@ -547,14 +634,16 @@ export function buildResourcePack(model, opts = {}) {
 
     if (formats.includes('bedrock')) {
         const rpModuleUuid = uuid();
+        const primaryAnim = pickPrimaryAnimation(opts.animations, opts.primaryAnimation);
+        files.push({ path: 'ASENNUS-OHJE.txt', data: enc.encode(bedrockReadme(name, id, ns, hasAnims, primaryAnim, !!glow)) });
         files.push({ path: 'resource_pack/manifest.json', data: jsonBytes(bedrockManifest(name, rpModuleUuid)) });
         if (icon) files.push({ path: 'resource_pack/pack_icon.png', data: icon });
-        files.push({ path: `resource_pack/entity/${id}.entity.json`, data: jsonBytes(bedrockEntityFile(model, id, ns, opts.animations, opts.eggColors)) });
+        files.push({ path: `resource_pack/entity/${id}.entity.json`, data: jsonBytes(bedrockEntityFile(model, id, ns, opts.animations, opts.eggColors, { primaryAnimation: opts.primaryAnimation, hasGlow: !!glow })) });
         files.push({ path: `resource_pack/models/entity/${id}.geo.json`, data: jsonBytes(exportBedrockGeometry(model)) });
-        files.push({ path: `resource_pack/render_controllers/${id}.render_controllers.json`, data: jsonBytes(bedrockRenderControllers()) });
+        files.push({ path: `resource_pack/render_controllers/${id}.render_controllers.json`, data: jsonBytes(bedrockRenderControllers(!!glow)) });
         if (png) files.push({ path: `resource_pack/textures/entity/${id}.png`, data: png });
         if (glow) files.push({ path: `resource_pack/textures/entity/${id}_glow.png`, data: glow });
-        if (hasAnims) files.push({ path: `resource_pack/animations/${id}.animation.json`, data: jsonBytes(exportJavaAnimations(model, opts.animations)) });
+        if (hasAnims) files.push({ path: `resource_pack/animations/${id}.animation.json`, data: jsonBytes(exportBedrockAnimations(model, opts.animations)) });
         // Behavior pack — mobi spawnaa pelissä
         files.push({ path: 'behavior_pack/manifest.json', data: jsonBytes(behaviorManifest(name, rpModuleUuid)) });
         if (icon) files.push({ path: 'behavior_pack/pack_icon.png', data: icon });
