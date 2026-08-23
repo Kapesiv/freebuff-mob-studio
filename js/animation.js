@@ -46,7 +46,7 @@ export function initAnimation(state, callbacks) {
             el.play.textContent = '▶';
             if (callbacks.onMessage) callbacks.onMessage('Pose mode: click a part in 3D and rotate the bone — the pose saves as a keyframe automatically');
         } else {
-            if (callbacks.onMessage) callbacks.onMessage('Asentotila pois');
+            if (callbacks.onMessage) callbacks.onMessage('Pose mode off');
         }
         if (el.pose) el.pose.classList.toggle('active', on);
     }

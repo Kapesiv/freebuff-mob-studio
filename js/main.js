@@ -2073,6 +2073,7 @@ function updateBoneTree() {
                     state.model.bones.splice(bi, 1);
                     deselectAll();
                     rebuildModel();
+                    scheduleAutosave();
                 }
                 return;
             }
@@ -2285,15 +2286,15 @@ document.getElementById('render-warning').addEventListener('click', () => {
 // ==================== PROPERTY INPUT HANDLERS ====================
 function setupPropertyInputs() {
     const props = {
-        'prop-pos-x': (v, cd) => cd.origin[0] = parseFloat(v),
-        'prop-pos-y': (v, cd) => cd.origin[1] = parseFloat(v),
-        'prop-pos-z': (v, cd) => cd.origin[2] = parseFloat(v),
-        'prop-rot-x': (v, cd) => cd.rotation[0] = parseFloat(v),
-        'prop-rot-y': (v, cd) => cd.rotation[1] = parseFloat(v),
-        'prop-rot-z': (v, cd) => cd.rotation[2] = parseFloat(v),
-        'prop-size-x': (v, cd) => cd.size[0] = Math.max(0.25, parseFloat(v)),
-        'prop-size-y': (v, cd) => cd.size[1] = Math.max(0.25, parseFloat(v)),
-        'prop-size-z': (v, cd) => cd.size[2] = Math.max(0.25, parseFloat(v)),
+        'prop-pos-x': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.origin[0] = n; },
+        'prop-pos-y': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.origin[1] = n; },
+        'prop-pos-z': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.origin[2] = n; },
+        'prop-rot-x': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.rotation[0] = n; },
+        'prop-rot-y': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.rotation[1] = n; },
+        'prop-rot-z': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.rotation[2] = n; },
+        'prop-size-x': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.size[0] = Math.max(0.25, n); },
+        'prop-size-y': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.size[1] = Math.max(0.25, n); },
+        'prop-size-z': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.size[2] = Math.max(0.25, n); },
         'prop-name': (v, cd) => cd.name = v,
     };
 
@@ -2577,7 +2578,7 @@ function setupLibrary() {
         } else if (libraryFilter.sort === 'smallest') {
             list.sort((a, b) => (a.size || 0) - (b.size || 0));
         } else if (libraryFilter.sort === 'name') {
-            list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fi'));
+            list.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'en'));
         }
         container.innerHTML = '';
         // Ryhmittely: Bossit (score ≥ 16) omaksi osiokseen, sitten Minionit
@@ -2743,7 +2744,7 @@ function setupLibrary() {
         if (!state.currentAnimName) { setStatus('No animation to rename'); return; }
         saveCurrentAnimation();
         const old = state.currentAnimName;
-        const name = (prompt('Animaation uusi nimi:', old) || '').trim();
+        const name = (prompt('New animation name:', old) || '').trim();
         if (!name || name === old) return;
         if (state.projectAnimations[name]) { setStatus(`Name already taken: ${name}`); return; }
         state.projectAnimations[name] = state.projectAnimations[old];
@@ -2864,6 +2865,8 @@ function openMobStats(mob) {
     const hpEl = document.getElementById('mstats-hp');
     const heartsEl = document.getElementById('mstats-hearts');
     if (stats.hp != null) {
+        // Poista edellinen HP-bar (muuten bar kasautuu joka modalin avauksella)
+        hpEl.parentElement.querySelectorAll('.mstats-hp-bar').forEach(el => el.remove());
         const hearts = stats.hp / 2;
         const pct = Math.min(100, (stats.hp / 999) * 100);
         hpEl.innerHTML = `${stats.hp} <small>HP = ${hearts} hearts</small>`;
@@ -2900,11 +2903,28 @@ function openMobStats(mob) {
     grid.innerHTML = rows.map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('');
 
     // ⚔️ kyvyt
+    const GOAL_LABELS = {
+        'Kostaa vahingon aiheuttajalle': 'Retaliates against attacker',
+        'Vaeltelee satunnaisesti': 'Wanders randomly',
+        'Katselee ympärilleen': 'Looks around',
+        'Kelluu veden pinnalla': 'Floats on water',
+        'Hyökkää lähimmän vihollisen kimppuun': 'Attacks nearest enemy',
+        'Katsoo pelaajaa': 'Looks at player',
+        'Väistelee tiettyjä entiteettejä': 'Avoids certain entities',
+        'Vaeltelee (välttää vettä)': 'Wanders (avoids water)',
+        'Ui satunnaisesti': 'Swims randomly',
+        'Seuraa toista mobia': 'Follows another mob',
+        'Seuraa syöttiä': 'Follows food',
+        'Loikkaa kohti kohdetta': 'Jumps at target',
+        'Tuhoaa lohkoja': 'Destroys blocks',
+        'Kostaa omistajalle tehdyn vahingon': 'Retaliates against owner\'s attacker',
+        'Hyökkää omistajansa vihollisia vastaan': 'Attacks owner\'s enemies',
+    };
     const goalsEl = document.getElementById('mstats-goals');
     if (stats.goals && stats.goals.length) {
-        goalsEl.innerHTML = stats.goals.map((g) => `<li title="${g.id}">${g.label}</li>`).join('');
+        goalsEl.innerHTML = stats.goals.map((g) => `<li title="${g.id}">${GOAL_LABELS[g.label] || g.label}</li>`).join('');
     } else {
-        goalsEl.innerHTML = '<li style="border:none">Ei vakiintuneita AI-tavoitteita (staattinen/scriptattu)</li>';
+        goalsEl.innerHTML = '<li style="border:none">No standard AI goals (static/scripted)</li>';
     }
 
     // 🎬 animaatiot
@@ -2926,8 +2946,8 @@ function openMobStats(mob) {
     document.getElementById('mstats-copy').onclick = () => {
         navigator.clipboard && navigator.clipboard.writeText(stats.summon);
         const b = document.getElementById('mstats-copy');
-        b.textContent = '✅ Kopioitu';
-        setTimeout(() => (b.textContent = 'Kopioi'), 1200);
+        b.textContent = 'Copied';
+        setTimeout(() => (b.textContent = 'Copy'), 1200);
     };
 
     modal.style.display = 'flex';
@@ -3164,7 +3184,7 @@ function putMyCreatures(list) {
     try {
         localStorage.setItem(MY_CREATURES_KEY, JSON.stringify(list));
     } catch (e) {
-        console.warn('Omat olennot -tallennus epäonnistui:', e);
+        console.warn('My Creatures save failed:', e);
         setStatus('Save failed — is browser storage full?');
     }
 }
@@ -3223,7 +3243,7 @@ function saveCurrentCreature(name, emoji) {
     });
     const entry = {
         id,
-        name: name || 'Olento',
+        name: name || 'Creature',
         emoji: emoji || '🧬',
         savedAt: Date.now(),
         sourceCategory: state.sourceCategory || 'voxel',
@@ -3255,9 +3275,9 @@ function loadMyCreature(id) {
     if (!entry) { renderMyCreatures(); return; }
     const mob = {
         id: entry.id,
-        name: entry.name || 'Olento',
+        name: entry.name || 'Creature',
         emoji: entry.emoji || '🧬',
-        description: 'Oma olento — Omat olennot -kirjastosta',
+        description: 'Custom creature — from My Creatures library',
         category: 'mine',
         model: JSON.parse(JSON.stringify(entry.model)),
         textureDataURL: entry.textureDataURL || null,
@@ -3304,9 +3324,8 @@ function renderMyCreatures() {
             `${entry.cubes} cubes`,
             `${entry.animCount || 0} animations`
         ];
-        if (stats.health) chips.push(`${stats.health} HP`);
-        if (stats.damage) chips.push(`${stats.damage} vahinko`);
-        if (stats.speed) chips.push(`${stats.speed} nopeus`);
+        if (stats.health) chips.push(`${stats.health} HP`);            if (stats.damage) chips.push(`${stats.damage} damage`);
+        if (stats.speed) chips.push(`${stats.speed} speed`);
 
         const head = document.createElement('div');
         head.className = 'my-creature-head';
@@ -3316,7 +3335,7 @@ function renderMyCreatures() {
         const title = document.createElement('div');
         title.className = 'my-creature-title';
         const strong = document.createElement('strong');
-        strong.textContent = entry.name || 'Olento';
+        strong.textContent = entry.name || 'Creature';
         const meta = document.createElement('span');
         meta.className = 'my-creature-meta';
         meta.textContent = `${sizeLabels[entry.sizeClass] || ''} · ${entry.size} blocks`.replace(/^ · /, '');
@@ -3325,7 +3344,7 @@ function renderMyCreatures() {
         const del = document.createElement('button');
         del.type = 'button';
         del.className = 'my-creature-del';
-        del.title = 'Poista olento';
+        del.title = 'Delete creature';
         del.textContent = '✕';
         del.addEventListener('click', () => deleteMyCreature(entry.id));
         head.appendChild(emoji);
@@ -3343,7 +3362,7 @@ function renderMyCreatures() {
         const load = document.createElement('button');
         load.type = 'button';
         load.className = 'action-btn my-creature-load';
-        load.textContent = '📂 Lataa';
+        load.textContent = 'Load';
         load.addEventListener('click', () => loadMyCreature(entry.id));
 
         card.appendChild(head);
@@ -3392,7 +3411,7 @@ function setupSaveCreatureDialog() {
         picks.querySelectorAll('.emoji-pick').forEach(x => x.classList.toggle('active', x.textContent === saveCreatureDialog.emoji));
     });
     const confirm = () => {
-        const name = nameInput.value.trim() || 'Olento';
+        const name = nameInput.value.trim() || 'Creature';
         const emoji = saveCreatureDialog.emoji || '🧬';
         overlay.style.display = 'none';
         saveCurrentCreature(name, emoji);
@@ -3846,8 +3865,8 @@ function setupFileIO() {
         // .mcaddon vain kun valittuna pelkkä Bedrock (Minecraft avaa sen suoraan)
         const isMcaddon = currentPackFormats().length === 1 && currentPackFormats()[0] === 'bedrock';
         const dlBtn = document.getElementById('pack-download');
-        dlBtn.textContent = isMcaddon ? '⬇️ Lataa .mcaddon' : '⬇️ Lataa .zip';
-        dlBtn.title = isMcaddon ? 'Minecraft avaa .mcaddonin suoraan asennukseen' : '';
+        dlBtn.textContent = isMcaddon ? '⬇ Download .mcaddon' : '⬇ Download .zip';
+        dlBtn.title = isMcaddon ? 'Minecraft opens .mcaddon directly for installation' : '';
     }
 
     function openPackDialog() {
@@ -4532,7 +4551,7 @@ function setupUVEditor() {
 
     function renderPalette() {
         if (palettePanel.hidden) return;
-        const allCats = [...PALETTE_CATEGORIES, { id: 'custom', name: 'Omat' }];
+        const allCats = [...PALETTE_CATEGORIES, { id: 'custom',        name: 'Custom' }];
         catsEl.innerHTML = '';
         for (const cat of allCats) {
             const b = document.createElement('button');
@@ -4810,7 +4829,7 @@ let staleCleanupRemoved = 0;
         })();
         if (prev && prev.model && prev.model.bones) {
             const name = prev.projectName
-                || (prev.model.modelId ? prev.model.modelId.replace(/^geometry\./, '') : 'Oma olento');
+                || (prev.model.modelId ? prev.model.modelId.replace(/^geometry\./, '') : 'Custom creature');
             const bones = prev.model.bones.length;
             const cubes = prev.model.bones.reduce((n, b) => n + (b.cubes || []).length, 0);
             const size = mobHeightBlocks(prev.model, prev.sourceCategory || 'voxel');

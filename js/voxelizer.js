@@ -831,7 +831,7 @@ export async function voxelizeModel(files, opts = {}) {
         id,
         name,
         emoji: '📦',
-        desc: `Oma malli vokseloituna selaimessa (${name}) — ${tris.length.toLocaleString('fi')} kolmiota`,
+        desc: `Custom model voxelized in browser (${name}) — ${tris.length.toLocaleString('en')} triangles`,
         heightBlocks,
         voxel
     };
