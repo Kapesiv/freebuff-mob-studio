@@ -2582,6 +2582,10 @@ function setupToolbar() {
         btn.addEventListener('click', () => setTool(btn.dataset.tool));
     });
 
+    // Test Creature -tila
+    const testBtn = document.getElementById('btn-test');
+    if (testBtn) testBtn.addEventListener('click', () => setTestMode(!state.testMode));
+
     document.getElementById('btn-add-cube').addEventListener('click', addCube);
     document.getElementById('btn-add-group').addEventListener('click', addBone);
 
@@ -4675,6 +4679,16 @@ function rebuildCubeMesh(cubeIndex) {
 
 // ==================== KEYBOARD SHORTCUTS ====================
 document.addEventListener('keydown', (e) => {
+    // Test Creature: välilyönti hyppää (animaation play/pause on pois käytöstä
+    // testitilassa animation.js:ssä — Space kuuluu hypylle)
+    if (state.testMode && (e.code === 'Space' || e.key === 'ArrowUp')) {
+        e.preventDefault();
+        const root = state.testRoot;
+        if (root && Math.abs(root.position.y - state.testGroundY) < 0.01 && state.testVy === 0) {
+            state.testVy = 11;
+        }
+        return;
+    }
     // Delete selected
     if (e.key === 'Delete' || e.key === 'Backspace') {
         if (document.activeElement.tagName === 'INPUT') return;
@@ -4805,9 +4819,123 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 // ==================== ANIMATION LOOP ====================
+// ==================== TEST CREATURE ====================
+// Spore-henkinen testitila: olento kävelee/ryömii/lentää/uii maatasolla
+// eteenpäin, kamera seuraa sivulta ja välilyönti hyppää. Koko malli
+// siirretään tilapäisesti omaan testRoot-ryhmään (luut pysyvät paikallaan,
+// animaatiot toimivat normaalisti), joka liikkuu eteenpäin joka framessa.
+state.testMode = false;
+state.testRoot = null;
+state.testGroundY = 0;
+state.testVy = 0;
+let testLastT = 0;
+
+function setTestMode(on) {
+    if (on === state.testMode) return;
+    const btn = document.getElementById('btn-test');
+    if (btn) btn.classList.toggle('active', on);
+    if (on) enterTestMode();
+    else exitTestMode();
+}
+
+function enterTestMode() {
+    state.testMode = true;
+    // Maasto + varjot näkyviin (Game Preview) ja gizmo pois
+    const gp = document.getElementById('chk-game-preview');
+    if (gp && !gp.checked) { gp.checked = true; setGamePreview(true); }
+    updateShadowBounds();
+    if (state.selectedPart) deselectAll();
+    if (transformControls.object) transformControls.detach();
+    transformControls.enabled = false;
+    orbitControls.enabled = false;
+
+    // Koko malli omaan ryhmään, jotta se voi liikkua vapaasti
+    const root = new THREE.Group();
+    root.name = 'testRoot';
+    state.model.bones.forEach((b, bi) => {
+        const hasParent = b.parent && state.model.bones.some(o => o.name === b.parent);
+        if (!hasParent && state.bones[bi]) { scene.remove(state.bones[bi]); root.add(state.bones[bi]); }
+    });
+    scene.add(root);
+    state.testRoot = root;
+    // Jalat maahan (mallin alareuna y = 0)
+    const bb = modelBBox();
+    state.testGroundY = bb ? -bb.mn[1] : 0;
+    root.position.y = state.testGroundY;
+    state.testVy = 0;
+
+    // Liikkumisanimaatio päälle: walk > crawl > fly > swim > idle
+    const anims = Object.keys(state.projectAnimations || {});
+    const pick = ['walk', 'crawl', 'fly', 'swim', 'idle'].find(n => anims.includes(n));
+    if (pick) {
+        const sel = document.getElementById('anim-select');
+        if (sel) { sel.value = pick; sel.dispatchEvent(new Event('change')); }
+    }
+    if (state.animation) state.animation.playing = true;
+    setStatus('Test Creature — it walks! Space = jump · click Test again to exit');
+}
+
+function exitTestMode() {
+    const root = state.testRoot;
+    state.testMode = false;
+    state.testRoot = null;
+    state.testVy = 0;
+    if (root) {
+        // Palauta luut takaisin sceneen (applyPose palauttaa lepoposeen)
+        state.model.bones.forEach((b, bi) => {
+            const hasParent = b.parent && state.model.bones.some(o => o.name === b.parent);
+            if (!hasParent && state.bones[bi] && state.bones[bi].parent === root) {
+                root.remove(state.bones[bi]);
+                scene.add(state.bones[bi]);
+            }
+        });
+        scene.remove(root);
+    }
+    transformControls.enabled = true;
+    orbitControls.enabled = true;
+    if (state.animation) { state.animation.applyPose(); state.animation.playing = false; }
+    const fit = computeModelFit(state.model);
+    if (fit) fitCameraToMob({ fit });
+    setStatus('Test mode off — back to editing');
+}
+
+/** Liikuta olentoa eteenpäin, hyppää ja seuraa kameralla (joka frame). */
+function updateTestMode(dt) {
+    const root = state.testRoot;
+    if (!root) return;
+    // Kävely eteenpäin (malli katsoo -Z:tä) — vain kun animaatio pyörii.
+    // Nopeus skaalautuu mallin korkeuteen (isompi = nopeampi).
+    if (state.animation && state.animation.playing) {
+        const bb = modelBBox();
+        const h = bb ? bb.mx[1] - bb.mn[1] : 2;
+        const speed = Math.max(2, h * 0.8);
+        root.position.z -= speed * dt;
+    }
+    // Hyppy + painovoima
+    if (state.testVy !== 0 || root.position.y > state.testGroundY + 0.001) {
+        state.testVy -= 28 * dt;
+        root.position.y += state.testVy * dt;
+        if (root.position.y <= state.testGroundY) {
+            root.position.y = state.testGroundY;
+            state.testVy = 0;
+        }
+    }
+    // Kamera seuraa sivulta (vakioetäisyys)
+    const p = root.position;
+    camera.position.set(p.x + 12, p.y + 8, p.z + 16);
+    camera.lookAt(p.x, p.y + 3, p.z);
+}
+
 function animate() {
     requestAnimationFrame(animate);
-    orbitControls.update();
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - (testLastT || now)) / 1000);
+    testLastT = now;
+    if (state.testMode) {
+        updateTestMode(dt);
+    } else {
+        orbitControls.update();
+    }
     if (renderer) renderer.render(scene, camera);
 }
 

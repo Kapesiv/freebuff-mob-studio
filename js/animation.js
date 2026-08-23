@@ -522,9 +522,9 @@ export function initAnimation(state, callbacks) {
         }
     });
 
-    // Space toggles playback
+    // Space toggles playback (Test Creature -tilassa Space on hyppy)
     document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+        if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT' && !state.testMode) {
             e.preventDefault();
             el.play.click();
         }

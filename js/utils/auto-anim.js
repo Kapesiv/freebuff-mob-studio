@@ -25,6 +25,37 @@ function boneInfo(bone) {
     };
 }
 
+/** Luuketjun jälkeläiset (lapset, lastenlapset…) vanhempaviittauksista. */
+function chainChildren(model, bone) {
+    const out = [];
+    const byParent = new Map();
+    for (const b of model.bones || []) {
+        if (!b.parent) continue;
+        if (!byParent.has(b.parent)) byParent.set(b.parent, []);
+        byParent.get(b.parent).push(b);
+    }
+    let frontier = byParent.get(bone.name) || [];
+    while (frontier.length) {
+        out.push(...frontier);
+        const next = [];
+        for (const f of frontier) next.push(...(byParent.get(f.name) || []));
+        frontier = next;
+    }
+    return out;
+}
+
+/** Onko bone jonkin toisen luun jälkeläinen (vanhempiketjussa)? */
+function isDescendant(model, bone, ancestor) {
+    let p = bone.parent;
+    let guard = 0;
+    while (p && guard++ < 64) {
+        if (p === ancestor.name) return true;
+        const pb = (model.bones || []).find((x) => x.name === p);
+        p = pb ? pb.parent : null;
+    }
+    return false;
+}
+
 export function analyzeSkeleton(model) {
     const bones = (model.bones || []).filter((b) => b.cubes && b.cubes.length);
     const info = {};
@@ -71,9 +102,14 @@ export function analyzeSkeleton(model) {
         }
     }
 
-    // 2) Geometriapohjainen täydennys luokittelemattomille luille
+    // 2) Geometriapohjainen täydennys luokittelemattomille luille.
+    // Ketjulapset (luu jolla on vanhempi mallissa) jätetään pois — ne taipuvat
+    // vanhempansa mukana eivätkä saa itsenäistä roolia (muuten jalan kärki
+    // laskettaisiin omaksi jalakseen ja sarvet luokiteltaisiin siiviksi).
+    const allNames = new Set(all.map((b) => b.name));
     for (const b of all) {
         if (used.has(b)) continue;
+        if (b.parent && allNames.has(b.parent)) continue;
         const i = info[b.name];
         const nearGround = i.mn[1] <= mn[1] + H * 0.22;
         const tallNarrow = i.dims[1] >= i.dims[0] * 1.15 && i.dims[1] >= i.dims[2] * 1.15 && i.dims[1] >= H * 0.2;
@@ -97,6 +133,13 @@ export function analyzeSkeleton(model) {
     if (!res.body && all.length) {
         res.body = all.reduce((a, b) => (info[b.name].volume > info[a.name].volume ? b : a));
     }
+
+    // Ketjulapset pois itsenäisistä luokista: jalan kärki (foot) taipuu jalan
+    // mukana, ei ole oma jalka. Pidetään vain ketjun ylin luu per luokka.
+    const keepTops = (arr) => arr.filter((b) => !arr.some((o) => o !== b && isDescendant(model, b, o)));
+    res.legs = keepTops(res.legs);
+    res.arms = keepTops(res.arms);
+    res.wings = keepTops(res.wings);
 
     // Jalkaparit: A/B-vaiheet (diagonaalinen askellus 4+ jalalla)
     const legA = [], legB = [];
@@ -161,6 +204,27 @@ function buildWalkTrack(legNames, phases, geo, scaleF) {
     return { tracks, posTracks };
 }
 
+/**
+ * Häntäketjun taivutusaalto: jokainen segmentti heiluu vanhempaansa nähden
+ * viiveellä ja kasvavalla amplitudilla — aalto kulkee pitkin häntää.
+ * Perusmuoto on sama -cos-aalto kuin juuren trackilla, joten liike on
+ * yhtenäinen eikä luut irtoa toisistaan (lapset perivät vanhempansa).
+ */
+function addChainSway(anim, chain, amp, length, frames) {
+    if (!chain || chain.length < 2) return;
+    chain.slice(1).forEach((seg, i) => {
+        const d = i + 1;
+        const a = amp * (1 + d * 0.85);
+        const lag = Math.round((length / 8) * d);
+        const tr = {};
+        for (const f of frames) {
+            const t = ((f - lag) % length + length) % length;
+            tr[f] = [0, -Math.cos((t / length) * Math.PI * 2) * a, 0];
+        }
+        anim.tracks[seg.name] = tr;
+    });
+}
+
 export function generateAutoAnimations(model) {
     const a = analyzeSkeleton(model);
     const { info } = a;
@@ -170,11 +234,15 @@ export function generateAutoAnimations(model) {
     const geo = {};
     for (const leg of a.legs) geo[leg.name] = legGeo(leg, info);
 
+    // Häntäketju (tyvi + segmentit) — aalto taivuttaa segmentit peräkkäin
+    const tailChain = a.tail ? [a.tail, ...chainChildren(model, a.tail)] : null;
+
     // ---- idle: hengitys + pään katselu + hännän heilunta (60 fr = 3 s)
     const idle = { length: 60, tracks: {}, posTracks: {} };
     if (a.body) idle.tracks[a.body.name] = { 0: [1.0, 0, 0], 30: [-1.0, 0, 0], 60: [1.0, 0, 0] };
     if (a.head) idle.tracks[a.head.name] = { 0: [0, 0, 0], 15: [3, 6, 0], 30: [0, 0, 0], 45: [-3, -6, 0], 60: [0, 0, 0] };
     if (a.tail) idle.tracks[a.tail.name] = { 0: [0, -4, 0], 30: [0, 4, 0], 60: [0, -4, 0] };
+    addChainSway(idle, tailChain, 4, 60, [0, 15, 30, 45, 60]);
     animations.idle = idle;
 
     // ---- walk: aito askellus (40 fr = 2 s). Hämähäkkimäisillä (6+ jalkaa)
@@ -196,6 +264,20 @@ export function generateAutoAnimations(model) {
         }
         if (a.head) walk.tracks[a.head.name] = { 0: [0, 0, 0], 12: [1.6, 0, 0], 20: [0, 0, 0], 32: [1.6, 0, 0], 40: [0, 0, 0] };
         if (a.tail) walk.tracks[a.tail.name] = { 0: [0, -6, 0], 20: [0, 6, 0], 40: [0, -6, 0] };
+        addChainSway(walk, tailChain, 5, 40, [0, 10, 20, 30, 40]);
+        // Nivelöidyt jalat: kärki/jalkaterä koukistuu kävelyssä (polvi taipuu
+        // kun jalka heilahtaa) — vastakkainen suunta juuren kulmaan nähden.
+        for (const leg of a.legs) {
+            const kids = chainChildren(model, leg);
+            if (!kids.length) continue;
+            const phase = phases[leg.name] || 0;
+            for (const kid of kids) {
+                walk.tracks[kid.name] = {};
+                for (const f of WALK_FRAMES) {
+                    walk.tracks[kid.name][(f + phase) % 40] = [angAt(f) * -0.5, 0, 0];
+                }
+            }
+        }
         // kaksijalkaisilla kädet heiluvat vastakkaiseen tahtiin kuin jalat
         if (a.arms.length && a.legs.length <= 2) {
             a.arms.forEach((arm, i) => {
@@ -257,6 +339,7 @@ export function generateAutoAnimations(model) {
         }
         if (a.head) fly.tracks[a.head.name] = { 0: [0, 0, 0], 20: [6, 0, 0], 40: [0, 0, 0] };
         if (a.tail) fly.tracks[a.tail.name] = { 0: [0, 0, 0], 20: [0, 8, 0], 40: [0, 0, 0] };
+        addChainSway(fly, tailChain, 6, 40, [0, 10, 20, 30, 40]);
         animations.fly = fly;
     }
 
@@ -265,6 +348,7 @@ export function generateAutoAnimations(model) {
         const swim = { length: 40, tracks: {}, posTracks: {} };
         if (a.body) swim.tracks[a.body.name] = { 0: [0, -8, 0], 20: [0, 8, 0], 40: [0, -8, 0] };
         if (a.tail) swim.tracks[a.tail.name] = { 0: [0, -25, 0], 20: [0, 25, 0], 40: [0, -25, 0] };
+        addChainSway(swim, tailChain, 14, 40, [0, 10, 20, 30, 40]);
         if (a.head) swim.tracks[a.head.name] = { 0: [0, 0, 0], 20: [0, 6, 0], 40: [0, 0, 0] };
         animations.swim = swim;
     }
@@ -285,6 +369,16 @@ export function generateAutoAnimations(model) {
                 crawl.tracks[leg.name][kf] = [k * 8, 0, 0];
                 crawl.posTracks[leg.name][kf] = [0, Math.max(0, -k) * 0.8, 0];
             }
+            // Nivelöity jalka: sääri ojentuu hiipimisessä (kevyt vastaliike)
+            const kids = chainChildren(model, leg);
+            for (const kid of kids) {
+                crawl.tracks[kid.name] = {};
+                for (let f = 0; f <= 80; f += 10) {
+                    const kf = (f + phase) % 80;
+                    const k = Math.sin((f / 80) * Math.PI * 2);
+                    crawl.tracks[kid.name][kf] = [k * 5, 0, 0];
+                }
+            }
         });
         if (a.body) {
             crawl.tracks[a.body.name] = { 0: [0, 0, 0], 40: [2.5, 0, 0], 80: [0, 0, 0] };
@@ -292,6 +386,7 @@ export function generateAutoAnimations(model) {
         }
         if (a.head) crawl.tracks[a.head.name] = { 0: [0, 0, 0], 40: [-4, 0, 0], 80: [0, 0, 0] };
         if (a.tail) crawl.tracks[a.tail.name] = { 0: [0, -6, 0], 40: [0, 6, 0], 80: [0, -6, 0] };
+        addChainSway(crawl, tailChain, 6, 80, [0, 10, 20, 30, 40, 50, 60, 70, 80]);
         animations.crawl = crawl;
     }
 
