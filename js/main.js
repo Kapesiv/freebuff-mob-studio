@@ -1937,13 +1937,45 @@ const RANDOM_CREATURE_NAMES = [
  * satunnaisia sävyjä). Yksi undo palauttaa edellisen mallin (osat
  * lisätään noHistory-optiolla).
  */
+
+/**
+ * Muunna yksiluinen template-malli (kaikki kuutiot yhdessä body-luussa)
+ * moniluuiseksi: jokainen kuutio omaan luuhunsa, pivot = kuution
+ * keskipiste. Renderöinti pysyy identtisenä (mesh.position lasketaan
+ * origin + size/2 − pivot), mutta osat voivat kiinnittyä oikeisiin
+ * luihin (head/body/legs) ja animaatiogenerointi tunnistaa raajat.
+ */
+function splitTemplateIntoSkeleton(model) {
+    const out = JSON.parse(JSON.stringify(model));
+    out.bones = [];
+    for (const bone of model.bones) {
+        for (const cube of bone.cubes) {
+            out.bones.push({
+                name: cube.name,
+                pivot: [
+                    cube.origin[0] + cube.size[0] / 2,
+                    cube.origin[1] + cube.size[1] / 2,
+                    cube.origin[2] + cube.size[2] / 2
+                ],
+                rotation: [0, 0, 0],
+                cubes: [JSON.parse(JSON.stringify(cube))]
+            });
+        }
+    }
+    return out;
+}
+
 function randomizeCreature() {
-    // Pohja: 6-luinen Humanoid (body, head, arms, legs — oikeat luut
-    // osien kiinnitystä varten, toisin kuin yksiluuinen template)
-    const base = LIBRARY_MOBS.find((m) => m.name === 'Humanoid' && m.category === 'template');
-    if (!base) { setStatus('Humanoid template not found'); return; }
+    // Pohja: satunnainen template (Humanoid/Quadruped/Bird/Fish/Spider).
+    // MOB_TEMPLATES-pohjat ovat yksiluisia, joten ne jaetaan moniluuiseksi
+    // luurangoksi — osien kiinnitys ja animaatiot vaativat erilliset luut.
+    const tpl = MOB_TEMPLATES[Math.floor(Math.random() * MOB_TEMPLATES.length)];
+    if (!tpl) { setStatus('No templates found'); return; }
+    // Jaetaan aina moniluuiseksi — myös spider-pohja (2 luuta, joissa useita
+    // kuutioita) saa jokaiselle kuutiolle oman luun, jotta osat kiinnittyvät
+    // oikeisiin luihin eivätkä kaikki body-luuhun.
     state.history.push(state.model);
-    state.model = JSON.parse(JSON.stringify(base.model));
+    state.model = JSON.parse(JSON.stringify(splitTemplateIntoSkeleton(tpl.model)));
     state.projectName = RANDOM_CREATURE_NAMES[Math.floor(Math.random() * RANDOM_CREATURE_NAMES.length)];
     state.model.modelId = slugifyModelId(state.projectName);
     state.sourceCategory = 'template';
@@ -1957,18 +1989,24 @@ function randomizeCreature() {
     const sel = document.getElementById('anim-select');
     if (sel) { sel.innerHTML = ''; sel.style.display = 'none'; }
 
-    // Yhtenäinen perusväripaletti: vartalo + vaaleampi pää + tummemmat raajat
+    // Yhtenäinen perusväripaletti: vartalo + vaaleampi pää + tummemmat raajat.
+    // Kaikki kuutiot saavat palettivärin — myös template-pohjien siivet,
+    // hännät ja evät (wing/tail/fin), etteivät ne jää erivärisiksi täpliksi.
     const h = Math.random() * 360;
     const s = 0.45 + Math.random() * 0.30;
     const l = 0.38 + Math.random() * 0.22;
     const col = (dl, ds = 0) => hslToHex(h, Math.min(0.90, Math.max(0.15, s + ds)), Math.min(0.80, Math.max(0.15, l + dl)));
     const bodyColor = col(0), headColor = col(8), armColor = col(-8), legColor = col(-14, 5);
+    const wingColor = col(-4), tailColor = col(-10);
     for (const bone of state.model.bones) {
         for (const cube of bone.cubes) {
-            if (cube.name === 'head') cube.color = headColor;
-            else if (/arm/.test(cube.name)) cube.color = armColor;
-            else if (/leg/.test(cube.name)) cube.color = legColor;
-            else if (cube.name === 'body') cube.color = bodyColor;
+            if (cube.name === 'head' || /skull|jaw|beak|comb/.test(cube.name)) cube.color = headColor;
+            else if (/arm|hand|claw/.test(cube.name)) cube.color = armColor;
+            else if (/leg|foot|thigh|hoof/.test(cube.name)) cube.color = legColor;
+            else if (/wing/.test(cube.name)) cube.color = wingColor;
+            else if (/tail|fin|tentacle|stinger/.test(cube.name)) cube.color = tailColor;
+            else if (/body|chest|torso|abdomen|belly|hips|main|neck/.test(cube.name)) cube.color = bodyColor;
+            else cube.color = bodyColor;
         }
     }
 
@@ -2017,6 +2055,8 @@ function randomizeCreature() {
 
     deselectAll();
     rebuildModel();
+    // Satunnaiset mutta vakaat tekstuurikuviot (raidat/täplät) perusvärin päälle
+    const patterned = applyRandomTexturePatterns();
     const tmp = prepareMob({ category: 'template', model: JSON.parse(JSON.stringify(state.model)) });
     const cubes = state.model.bones.reduce((n, b) => n + b.cubes.length, 0);
     // Olento herää heti eloon: generoi kävely/idle-animaatiot luurangosta
@@ -2027,7 +2067,7 @@ function randomizeCreature() {
     applyGamePreviewDefault();
     updateProjectNameLabel();
     scheduleAutosave();
-    setStatus(`Randomize: "${state.projectName}" — ${attached} parts, ${state.model.bones.length} bones, ${cubes} cubes, ${tmp.size} blocks, animations: ${animNames.join(', ') || 'none'}. Undo (⌘Z) restores the previous model — randomize again anytime.`);
+    setStatus(`Randomize: "${state.projectName}" — ${attached} parts, ${state.model.bones.length} bones, ${cubes} cubes, ${tmp.size} blocks, ${patterned} patterned cubes, animations: ${animNames.join(', ') || 'none'}. Undo (⌘Z) restores the previous model — randomize again anytime.`);
 }
 
 function deleteSelected() {
@@ -4315,6 +4355,73 @@ function fillCubeFaces(tctx, cube, color) {
  * filling every cube's face regions with its color — so the model is
  * always colored and paintable, even without an uploaded image.
  */
+/**
+ * Maalaa kuution kasvoille kuvion (vaakaraidat tai täplät) olemassa olevan
+ * perusvärin päälle. Käyttää samaa determinististä seediä kuin
+ * fillCubeFaces, joten kuvio pysyy vakaana tekstuurin uudelleenluonnissa
+ * (autosave/päivitys eivät vaihda sitä).
+ */
+function paintCubePattern(tctx, cube, base, rand, kind) {
+    for (const r of computeFaceRects(cube)) {
+        const shade = FACE_SHADE[r.face] || 1;
+        const x = Math.round(r.x), y = Math.round(r.y);
+        const w = Math.round(r.w), h = Math.round(r.h);
+        if (w < 2 || h < 2) continue;
+        if (kind === 'stripes') {
+            // Vaakaraidat: vuorotteleva vaalea/tumma nauha kasvon yli
+            const band = Math.max(1, Math.round(h / (2 + Math.floor(rand() * 4))));
+            for (let yy = 0; yy < h; yy += band) {
+                const on = Math.floor(yy / band) % 2 === 0;
+                tctx.fillStyle = shadeHex(base, shade * (on ? 1.18 : 0.68));
+                tctx.fillRect(x, y + yy, w, Math.min(band, h - yy));
+            }
+        } else if (kind === 'spots') {
+            // Täplät: muutama erisävyinen neliö kasvon alueella
+            const n = Math.max(2, Math.round((w * h) / 22));
+            for (let i = 0; i < n; i++) {
+                const s = Math.max(1, Math.round(rand() * 3));
+                const px = x + Math.floor(rand() * Math.max(1, w - s));
+                const py = y + Math.floor(rand() * Math.max(1, h - s));
+                tctx.fillStyle = shadeHex(base, shade * (rand() < 0.5 ? 0.55 : 1.3));
+                tctx.fillRect(px, py, s, s);
+            }
+        }
+    }
+}
+
+/**
+ * Satunnaiset mutta vakaat tekstuurikuviot (raidat/täplät) koko olennolle.
+ * Valinta perustuu kuution nimen seediin — samasta mallista tulee aina sama
+ * kuvio. Pienet kuutiot (alle 4px kasvot) saavat vain täpliä tai eivät
+ * mitään, ettei kuvio muutu sotkuksi.
+ */
+function applyRandomTexturePatterns() {
+    if (!state.textureCanvas) ensureTexture();
+    const tctx = state.textureCanvas.getContext('2d');
+    let patterned = 0;
+    for (const bone of state.model.bones) {
+        for (const cube of bone.cubes) {
+            const seed = (cube.name || 'cube').split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7) * 131
+                + ((cube.uv && cube.uv.offset) ? cube.uv.offset[0] * 13 + cube.uv.offset[1] * 7 : 1);
+            const rand = seededRand(seed);
+            const roll = rand();
+            const maxDim = Math.max(...computeFaceRects(cube).map(r => Math.max(r.w, r.h)));
+            let kind = null;
+            if (maxDim >= 4 && roll < 0.3) kind = 'stripes';
+            else if (maxDim >= 3 && roll < 0.55) kind = 'spots';
+            if (kind) {
+                paintCubePattern(tctx, cube, cube.color || '#ffffff', rand, kind);
+                patterned++;
+            }
+        }
+    }
+    if (patterned > 0) {
+        state.texture.needsUpdate = true;
+        if (state.uvEditor) state.uvEditor.draw();
+    }
+    return patterned;
+}
+
 function ensureTexture() {
     if (state.textureCanvas) return;
     const c = document.createElement('canvas');
