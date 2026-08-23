@@ -54,7 +54,6 @@ const state = {
     history: new History(),
     animation: null,
     uvEditor: null,
-    selectedFace: null,
     projectAnimations: {},     // name -> { length, tracks, posTracks } (editoitavat)
     currentAnimName: null,
     mirrorPaint: false,        // maalaa myös peilikuva vastakkaiselle puolelle
