@@ -1150,6 +1150,23 @@ function round2(v) { return Math.round(v * 100) / 100; }
  */
 function partSides(inst) {
     const sides = [{ bones: inst.bones, root: inst.root }];
+    const group = (inst.root && inst.root.partGroup) || null;
+    if (group && group.length > 1) {
+        // partGroup (2×2 / useat kopiot): kaikki juuret + niiden lisäluut
+        const seen = new Set(inst.bones.map(b => b.name));
+        for (const rn of group) {
+            if (seen.has(rn)) continue;
+            const rb = state.model.bones.find(b => b.name === rn);
+            if (!rb) continue;
+            const bones = state.model.bones.filter(b =>
+                b.name === rn || (b.name.length > rn.length + 1 && b.name.startsWith(rn + '_'))
+            );
+            for (const b of bones) seen.add(b.name);
+            sides.push({ bones, root: rb });
+        }
+        return sides;
+    }
+    // Fallback: partPair (vanhat tallennukset) tai geometrinen vastine
     let pairBones = null;
     if (inst.root && inst.root.partPair) {
         const p = inst.root.partPair;
@@ -1653,7 +1670,7 @@ function addBone() {
 // pinnalle (alhaalle / ylös / eteen / taakse / sivulle) osa kiinnittyy.
 
 let pendingPartId = null;
-let pendingPartMirror = true;
+let pendingPartCopies = 2;
 
 function openPartAttachDialog(partId, opts = {}) {
     const part = MOB_PARTS.find(p => p.id === partId);
@@ -1678,9 +1695,14 @@ function openPartAttachDialog(partId, opts = {}) {
     const surfBtns = document.querySelectorAll('#part-attach-surface button');
     surfBtns.forEach(btn => btn.classList.toggle('selected', btn.dataset.at === part.attach.at));
 
-    // Peilaus: paneelin globaali oletus, käyttäjä voi vaihtaa per osa
-    pendingPartMirror = opts.mirror !== false;
-    document.getElementById('part-attach-mirror').checked = pendingPartMirror;
+    // Kopioiden määrä: paneelin globaali oletus, käyttäjä voi vaihtaa per osa.
+    // Epäsymmetriset osat (ei part.symmetric) pakotetaan yhteen kopioon —
+    // peilipari ei ole järkevä jos osa ei ole symmetrinen.
+    const forced = part.symmetric === false ? 1 : null;
+    const copiesSel = document.getElementById('part-attach-copies');
+    pendingPartCopies = forced || (opts.copies || 2);
+    copiesSel.value = String(pendingPartCopies);
+    copiesSel.disabled = !!forced;
 
     pendingPartId = partId;
     document.getElementById('part-attach-title').textContent = `Attach ${part.name}`;
@@ -1708,8 +1730,8 @@ function setupPartAttachDialog() {
         const select = document.getElementById('part-attach-bone');
         const sel = document.querySelector('#part-attach-surface button.selected');
         const at = sel ? sel.dataset.at : null;
-        const mirror = document.getElementById('part-attach-mirror').checked;
-        addPartToModel(pendingPartId, { boneName: select.value, at, mirror });
+        const copies = parseInt(document.getElementById('part-attach-copies').value, 10) || 2;
+        addPartToModel(pendingPartId, { boneName: select.value, at, copies });
         closePartAttachDialog();
     });
 
@@ -1844,9 +1866,31 @@ function repaintPartFaces(newCubes) {
     if (state.texture) state.texture.needsUpdate = true;
 }
 
+/** Osan omien kuutioiden koko (x/y/z) — käytetään 2×2-ruudukon rivivälinä. */
+function partBBoxSize(part) {
+    let mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+    for (const b of part.bones) for (const c of b.cubes) {
+        for (let i = 0; i < 3; i++) {
+            mn[i] = Math.min(mn[i], c.origin[i]);
+            mx[i] = Math.max(mx[i], c.origin[i] + c.size[i]);
+        }
+    }
+    return [0, 1, 2].map(i => (Number.isFinite(mn[i]) ? Math.max(1, mx[i] - mn[i]) : 1));
+}
+
+/** 2×2-ruudukon toissijainen akseli pinnan suuntaan nähden (0=x, 1=y, 2=z). */
+function surfaceSecondaryAxis(at) {
+    if (at === 'top' || at === 'bottom') return 2; // pinta vaakatasossa → rivit eteen/taakse
+    return 1; // front/back/side → rivit ylös/alas
+}
+
 /**
  * Lisää Spore-tyylisen osan malliin.
- * opts: { boneName, at, mirror, color (koko osan väri), noHistory (ei pushia historiaan) }
+ * opts: { boneName, at, copies (1|2|4), mirror (vanha: boolean, yhteensopivuus),
+ *         color (koko osan väri), noHistory (ei pushia historiaan) }
+ * Kopiot: 1 = yksittäinen, 2 = peilipari, 4 = 2×2-ruudukko (Spore-klusterit).
+ * Jokainen kopio on oma juuriluu; partGroup-merkintä listaa kaikki kopiot
+ * (poisto ja editointi partSides():n kautta toimivat kaikille).
  */
 function addPartToModel(partId, opts = {}) {
     const part = MOB_PARTS.find(p => p.id === partId);
@@ -1855,12 +1899,25 @@ function addPartToModel(partId, opts = {}) {
     if (!target) { setStatus('No bone to attach to — start from a template (e.g. Humanoid)'); return; }
     const at = opts.at || part.attach.at;
     const off = partAttachOffset(part, target, at);
-    const mirror = opts.mirror !== false && !!part.symmetric;
+    // Kopioiden määrä: 1 / 2 (peilipari) / 4 (2×2). Epäsymmetriset → aina 1.
+    let copies = part.symmetric === false ? 1 : (opts.copies || (opts.mirror !== false && !!part.symmetric ? 2 : 1));
+    if (copies !== 1 && copies !== 2 && copies !== 4) copies = 2;
+    const grid = copies === 4;
 
     if (!opts.noHistory) state.history.push(state.model);
     const newCubes = [];
-    let sideRootName = null;
-    const addSide = (flipX) => {
+    const groupRoots = []; // kaikkien kopioiden juurinimet (partGroup)
+
+    // 2×2: toisen rivin siirtymä pinnan toissijaista akselia pitkin (osa ei
+    // mene päällekkäin — väli = osan koko + 0.5).
+    let rowOff = [0, 0, 0];
+    if (grid) {
+        const partSize = partBBoxSize(part);
+        const sec = surfaceSecondaryAxis(at);
+        rowOff[sec] = partSize[sec] + 0.5;
+    }
+
+    const addSide = (flipX, rowOffset) => {
         const suffix = partCounter++;
         let prevName = null;
         let rootName = null;
@@ -1874,7 +1931,7 @@ function addPartToModel(partId, opts = {}) {
                 : `${part.id}_${suffix}${flipX ? 'm' : ''}_${pi}`;
             if (pi === 0) rootName = boneName;
             // Peilaus kääntää VAIN x-akselin — y/z pysyvät samoina
-            const pivot = pb.pivot.map((v, i) => (flipX && i === 0 ? -1 : 1) * (target.pivot[i] + off[i] + v));
+            const pivot = pb.pivot.map((v, i) => (flipX && i === 0 ? -1 : 1) * (target.pivot[i] + off[i] + rowOffset[i] + v));
             const boneData = {
                 name: boneName,
                 pivot,
@@ -1882,14 +1939,8 @@ function addPartToModel(partId, opts = {}) {
                 cubes: [],
                 parent: prevName || target.name
             };
-            // Peilipari kirjataan molempiin juuriluihin (poistoa varten)
-            if (pi === 0 && sideRootName) {
-                boneData.partPair = sideRootName;
-                const first = state.model.bones.find(b => b.name === sideRootName);
-                if (first) first.partPair = boneName;
-            }
             for (const pc of pb.cubes) {
-                const origin = pc.origin.map((v, i) => (flipX && i === 0 ? -1 : 1) * (target.pivot[i] + off[i] + v));
+                const origin = pc.origin.map((v, i) => (flipX && i === 0 ? -1 : 1) * (target.pivot[i] + off[i] + rowOffset[i] + v));
                 boneData.cubes.push({
                     name: `${pc.name}_${suffix}${flipX ? 'm' : ''}`,
                     origin: flipX ? [-(origin[0] + pc.size[0]), origin[1], origin[2]] : origin,
@@ -1903,17 +1954,35 @@ function addPartToModel(partId, opts = {}) {
             state.model.bones.push(boneData);
             prevName = boneName;
         }
-        if (!flipX) sideRootName = rootName;
+        groupRoots.push(rootName);
     };
-    addSide(false);
-    if (mirror) addSide(true);
+
+    // Kopiot: 1 = yksittäinen, 2 = peilipari, 4 = 2×2 (kaksi peiliparia,
+    // toinen rivi siirrettynä pinnan suuntaisesti).
+    addSide(false, [0, 0, 0]);
+    if (copies >= 2) addSide(true, [0, 0, 0]);
+    if (grid) { addSide(false, rowOff); addSide(true, rowOff); }
+
+    // partGroup: jokainen juuriluu tietää kaikki kopionsa (editointi + poisto).
+    // partPair säilyy vierekkäiselle peilille (vanhat tallennukset / fallback).
+    for (let i = 0; i < groupRoots.length; i++) {
+        const root = state.model.bones.find(b => b.name === groupRoots[i]);
+        if (!root) continue;
+        root.partGroup = groupRoots.slice();
+        if (copies >= 2 && (i % 2 === 1)) {
+            const mate = groupRoots[i - 1];
+            root.partPair = mate;
+            const mateBone = state.model.bones.find(b => b.name === mate);
+            if (mateBone && !mateBone.partPair) mateBone.partPair = root.name;
+        }
+    }
 
     packPartUVs(newCubes);
     repaintPartFaces(newCubes);
     deselectAll(); // vanha valinta viittaisi poistettuun meshiin rebuildin jälkeen
     rebuildModel();
     scheduleAutosave();
-    setStatus(`Attached ${part.name}${mirror ? ' (both sides)' : ''} → ${target.name}`);
+    setStatus(`Attached ${part.name} (${copies === 1 ? 'single' : copies + ' copies'}) → ${target.name}`);
 }
 
 // ==================== 🎲 RANDOMIZE (Spore) ====================
@@ -2053,12 +2122,16 @@ function randomizeCreature() {
         const natural = findPartAttachBone(part, {});
         if (!natural) continue;
         // Jalat ja siivet peilataan aina (yksipuolinen jalka näyttää rumalta),
-        // koristeet (sarvet, korvat) usein mutta eivät aina.
+        // koristeet (sarvet, korvat) usein mutta eivät aina. 2×2-klusterit:
+        // päät/koristeet (sarvet, korvat, piikit) saavat joskus neljä kopiota
+        // Spore-tyyliin.
         const alwaysPair = part.category === 'jalat' || part.category === 'siivet';
+        let copies = part.symmetric === false ? 1 : 2;
+        if (!alwaysPair && (part.category === 'päät' || part.category === 'muut') && Math.random() < 0.3) copies = 4;
         addPartToModel(part.id, {
             boneName: natural.name,
             at: part.attach.at,
-            mirror: part.symmetric && (alwaysPair || Math.random() < 0.9),
+            copies,
             color: partColor(part.category),
             noHistory: true
         });
@@ -2085,40 +2158,48 @@ function randomizeCreature() {
 }
 
 function deleteSelected() {
-    // Spore-osa: Delete poistaa koko osan (kaikki sen luut + peilisisarus)
+    // Spore-osa: Delete poistaa koko osan (kaikki kopiot — peiliparit ja 2×2)
     if (state.selectedPart) {
         state.history.push(state.model);
         const inst = state.selectedPart;
         const names = new Set(inst.bones.map(b => b.name));
-        // Peilisisar poistetaan myös — symmetrinen osa ei saa jäädä
-        // yksipuoliseksi vahingossa. Ensisijaisesti kiinnityksen kirjaama
-        // partPair, muuten geometrinen vastine (sama osa, viereinen laskuri,
-        // pivot peilattu x:n yli).
-        let pairBones = [];
-        if (inst.root && inst.root.partPair) {
-            const p = inst.root.partPair;
-            pairBones = state.model.bones.filter(b => b.name === p || (b.name.length > p.length + 1 && b.name.startsWith(p + '_')));
+        // partGroup (uudet kiinnitykset): kaikki kopiot suoraan merkinnästä.
+        // Fallback: partPair / geometrinen vastine (vanhat tallennukset).
+        const group = (inst.root && inst.root.partGroup) || null;
+        if (group && group.length > 1) {
+            for (const rn of group) {
+                const bones = state.model.bones.filter(b =>
+                    b.name === rn || (b.name.length > rn.length + 1 && b.name.startsWith(rn + '_'))
+                );
+                for (const b of bones) names.add(b.name);
+            }
         } else {
-            const myCounter = parseInt(inst.key.split('_').pop().replace(/m$/, ''), 10);
-            for (const b of state.model.bones) {
-                if (names.has(b.name)) continue;
-                const oi = getPartInstanceForBone(b);
-                if (!oi || oi.id !== inst.id || oi.key === inst.key) continue;
-                const oc = parseInt(oi.key.split('_').pop().replace(/m$/, ''), 10);
-                if (Math.abs(oc - myCounter) !== 1) continue;
-                const rp = inst.root.pivot, op = oi.root.pivot;
-                if (Math.abs(op[0] + rp[0]) < 0.6 && Math.abs(op[1] - rp[1]) < 0.6 && Math.abs(op[2] - rp[2]) < 0.6) {
-                    pairBones = oi.bones;
-                    break;
+            let pairBones = [];
+            if (inst.root && inst.root.partPair) {
+                const p = inst.root.partPair;
+                pairBones = state.model.bones.filter(b => b.name === p || (b.name.length > p.length + 1 && b.name.startsWith(p + '_')));
+            } else {
+                const myCounter = parseInt(inst.key.split('_').pop().replace(/m$/, ''), 10);
+                for (const b of state.model.bones) {
+                    if (names.has(b.name)) continue;
+                    const oi = getPartInstanceForBone(b);
+                    if (!oi || oi.id !== inst.id || oi.key === inst.key) continue;
+                    const oc = parseInt(oi.key.split('_').pop().replace(/m$/, ''), 10);
+                    if (Math.abs(oc - myCounter) !== 1) continue;
+                    const rp = inst.root.pivot, op = oi.root.pivot;
+                    if (Math.abs(op[0] + rp[0]) < 0.6 && Math.abs(op[1] - rp[1]) < 0.6 && Math.abs(op[2] - rp[2]) < 0.6) {
+                        pairBones = oi.bones;
+                        break;
+                    }
                 }
             }
+            for (const pb of pairBones) names.add(pb.name);
         }
-        for (const pb of pairBones) names.add(pb.name);
         state.model.bones = state.model.bones.filter(b => !names.has(b.name));
         deselectAll();
         rebuildModel();
         scheduleAutosave();
-        setStatus('Part deleted' + (names.size > inst.bones.length ? ' (mirror side included)' : ''));
+        setStatus('Part deleted' + (names.size > inst.bones.length ? ` (${names.size / inst.bones.length} copies removed)` : ''));
         return;
     }
     if (state.selectedCube !== null) {

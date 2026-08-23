@@ -396,7 +396,15 @@
                     <button type="button" data-at="side">↔ Side</button>
                 </div>
             </div>
-            <label class="chk"><input type="checkbox" id="part-attach-mirror" checked> Mirror (side pairs)</label>
+            <div class="modal-field">
+                <label for="part-attach-copies">Copies</label>
+                <select id="part-attach-copies">
+                    <option value="2" selected>2 — mirror pair (left + right)</option>
+                    <option value="1">1 — single</option>
+                    <option value="4">4 — 2×2 grid</option>
+                </select>
+                <span class="modal-field-note">2×2 places two rows along the surface — Spore-style clusters (spikes, legs, horns).</span>
+            </div>
             <div class="modal-actions">
                 <button id="part-attach-confirm" class="primary">Attach</button>
                 <button id="part-attach-cancel">Cancel</button>
