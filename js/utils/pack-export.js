@@ -61,7 +61,7 @@ function bedrockManifest(name, moduleUuid) {
         format_version: 2,
         header: {
             name: `${name} (Freebuff Mob Studio)`,
-            description: 'Malli, tekstuurit ja animaatiot — Freebuff Mob Studio',
+            description: 'Model, textures and animations — Freebuff Mob Studio',
             uuid: uuid(),
             version: [1, 0, 0],
             min_engine_version: [1, 16, 0],
@@ -77,7 +77,7 @@ function behaviorManifest(name, rpModuleUuid) {
         format_version: 2,
         header: {
             name: `${name} Behavior (Freebuff Mob Studio)`,
-            description: 'Mobin käyttäytyminen ja spawn — Freebuff Mob Studio',
+            description: 'Mob behavior and spawning — Freebuff Mob Studio',
             uuid: uuid(),
             version: [1, 0, 0],
             min_engine_version: [1, 16, 0],
@@ -133,14 +133,14 @@ function summonFunction(name, id, ns) {
     const display = JSON.stringify({ text: name, italic: false });
     return [
         `# ── Freebuff Mob Studio — ${name} ─────────────────────────`,
-        '# 1) Laita tämä resurssipaketti kansioon .../resourcepacks/',
-        '# 2) Laita datapack-kansio .../saves/<maailma>/datapacks/',
-        '# 3) Pelissä: /reload',
-        `# Spawnaa mobi: /function ${ns}:summon_${id}`,
+        '# 1) Put this resource pack in .../resourcepacks/',
+        '# 2) Put the data pack in .../saves/<world>/datapacks/',
+        '# 3) In game: /reload',
+        `# Summon the mob: /function ${ns}:summon_${id}`,
         '#',
-        '# Java ei voi luoda uutta entity-tyyppiä datapaketista — tämä luo',
-        '# nimetyn armor standin, joka näyttää mallin (paper + custom_model_data).',
-        `# GeckoLib-modissa käytä /summon <modid>:${id} ja spawn/${id}.json on pohja.`,
+        '# Java cannot create a new entity type from a data pack — this creates',
+        '# a named armor stand that displays the model (paper + custom_model_data).',
+        `# In a GeckoLib mod use /summon <modid>:${id}; spawn/${id}.json is the base.`,
         `summon armor_stand ~ ~1 ~ {CustomName:'${display}',CustomNameVisible:1b,NoGravity:0b,Small:0b,ShowArms:0b,ArmorItems:[{},{},{},{id:"minecraft:paper",Count:1b,tag:{CustomModelData:1001}}]}`,
         '',
     ].join('\n');
@@ -263,12 +263,12 @@ BiomeModifications.addSpawn(BiomeSelectors.spawnsOneOf(RegistryKey.of(
 
 ## 6) Vinkkejä
 
-- \`geo/${id}.geo.json\` sisältää jo oikean geometrianimen \`geometry.${id}\`.
-- Animaatiot ovat muodossa \`animation.${id}.<nimi>\` — GeckoLib lukee ne suoraan.
-- Jos animaatio ei pyöri: varmista että \`getAnimationResource\` palauttaa
-  oikean tiedoston ja että animaatio on ajossa (\`triggerAnim\` tai \`setAnimation\`).
-- Glow-tekstuuri (\`${id}_glow.png\`): käytä sitä emissiivisenä karttana
-  tai lisää oma render-kerros, jos haluat hehkuvat osat.
+- \`geo/${id}.geo.json\` already contains the correct geometry name \`geometry.${id}\`.
+- Animations use the form \`animation.${id}.<name>\` — GeckoLib reads them directly.
+- If an animation doesn't play: make sure \`getAnimationResource\` returns
+  the right file and that the animation is running (\`triggerAnim\` or \`setAnimation\`).
+- Glow texture (\`${id}_glow.png\`): use it as an emissive map
+  or add your own render layer for glowing parts.
 
 Generoi: Freebuff Mob Studio — ${new Date().toISOString()}
 `;
@@ -283,10 +283,10 @@ Generoi: Freebuff Mob Studio — ${new Date().toISOString()}
 function spawnTemplate(name, id, ns) {
     return [
         '{',
-        `  // Freebuff Mob Studio — ${name} — luonnolliset spawn-säännöt (Java 1.21.2+)`,
-        '  // HUOM: Java ei voi luoda uutta entity-tyyppiä datapaketista.',
-        `  // Vaihda "type" modisi entity-tyyppiin (esim. "<modid>:${id}" GeckoLib-modissa),`,
-        '  // niin mobi alkaa spawnata luonnosta. Tämä on valmis pohja.',
+        `  // Freebuff Mob Studio — ${name} — natural spawn rules (Java 1.21.2+)`,
+        '  // NOTE: Java cannot create a new entity type from a data pack.',
+        `  // Change "type" to your mod's entity type (e.g. "<modid>:${id}" in a GeckoLib mod),`,
+        '  // so the mob starts spawning naturally. This is a ready-made template.',
         '  "spawns": [',
         '    {',
         '      "type": "minecraft:zombie",',
@@ -533,36 +533,36 @@ function bedrockReadme(name, id, ns, hasAnims, primaryAnim, hasGlow) {
         `  ${name} — Minecraft Bedrock -addon (Freebuff Mob Studio)`,
         '==============================================================',
         '',
-        'ASENNUS (2 tapaa):',
-        '  1) Avaa ladattu .mcaddon-tiedosto (tuplaklikkaus) — Minecraft',
-        '     asentaa resource_pack + behavior_pack automaattisesti.',
-        '  2) Tai kopioi kansiot resource_pack/ ja behavior_pack/',
-        '     manuaalisesti .../resource_packs/ ja .../behavior_packs/',
-        '     ja ota ne käyttöön Maailman asetuksissa.',
+        'INSTALLATION (2 ways):',
+        '  1) Open the downloaded .mcaddon file (double-click) — Minecraft',
+        '     installs resource_pack + behavior_pack automatically.',
+        '  2) Or copy the resource_pack/ and behavior_pack/ folders',
+        '     manually to .../resource_packs/ and .../behavior_packs/',
+        '     and enable them in World settings.',
         '',
-        'KUTSU:',
+        'SUMMON:',
         `  /summon ${ns}:${id} ~ ~ ~`,
         '',
-        'SPAWN-EGGI:',
-        '  Löytyy luovasta inventaariosta (spawn_egg-värit johdettu',
-        '  mobin tekstuurista).',
+        'SPAWN EGG:',
+        '  Found in the creative inventory (spawn egg colors derived',
+        '  from the mob\'s texture).',
         '',
-        'ANIMAATIO:',
-        `  ${hasAnims ? (primaryAnim ? 'Soitetaan automaattisesti: ' + primaryAnim : 'Animaatiotiedosto mukana.') : 'Ei animaatioita (staattinen malli).'}`,
+        'ANIMATION:',
+        `  ${hasAnims ? (primaryAnim ? 'Played automatically: ' + primaryAnim : 'Animation file included.') : 'No animations (static model).'}`,
         '',
         'GLOW:',
-        `  ${hasGlow ? 'Emissiiviset osat hehkuvat (entity_emissive_alpha).' : 'Ei glow-kerrosta.'}`,
+        `  ${hasGlow ? 'Emissive parts glow (entity_emissive_alpha).' : 'No glow layer.'}`,
         '',
-        'TIEDOSTOT:',
-        `  resource_pack/models/entity/${id}.geo.json        (geometria)`,
-        `  resource_pack/textures/entity/${id}.png          (tekstuuri)`,
-        (hasGlow ? `  resource_pack/textures/entity/${id}_glow.png    (glow-kerros)` : ''),
-        (hasAnims ? `  resource_pack/animations/${id}.animation.json  (animaatiot)` : ''),
+        'FILES:',
+        `  resource_pack/models/entity/${id}.geo.json        (geometry)`,
+        `  resource_pack/textures/entity/${id}.png          (texture)`,
+        (hasGlow ? `  resource_pack/textures/entity/${id}_glow.png    (glow layer)` : ''),
+        (hasAnims ? `  resource_pack/animations/${id}.animation.json  (animations)` : ''),
         `  resource_pack/entity/${id}.entity.json           (client-entity)`,
-        `  behavior_pack/entities/${id}.json                (käytös: HP, vahinko, nopeus)`,
-        `  behavior_pack/spawn_rules/${id}.json             (spawn-säännöt)`,
+        `  behavior_pack/entities/${id}.json                (behavior: HP, damage, speed)`,
+        `  behavior_pack/spawn_rules/${id}.json             (spawn rules)`,
         '',
-        'Generoi: Freebuff Mob Studio — ' + new Date().toISOString(),
+        'Generated: Freebuff Mob Studio — ' + new Date().toISOString(),
         '',
     ];
     return lines.filter((l) => l !== undefined).join('\n');

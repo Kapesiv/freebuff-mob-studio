@@ -26,7 +26,7 @@ export const MOB_TEMPLATES = [
         id: 'humanoid',
         name: 'Humanoid',
         emoji: '🧍',
-        description: 'Ihmishahmo — steve-tyylinen perusta, 5 osaa',
+        description: 'Humanoid — Steve-style base, 5 parts',
         model: {
             modelId: 'geometry.template_humanoid',
             textureWidth: 64,
@@ -50,7 +50,7 @@ export const MOB_TEMPLATES = [
         id: 'quadruped',
         name: 'Quadruped',
         emoji: '🐄',
-        description: 'Nelijalkainen — lehmä/sika-tyylinen, 6 osaa',
+        description: 'Quadruped — cow/pig style, 6 parts',
         model: {
             modelId: 'geometry.template_quadruped',
             textureWidth: 64,
@@ -74,7 +74,7 @@ export const MOB_TEMPLATES = [
         id: 'bird',
         name: 'Bird',
         emoji: '🐔',
-        description: 'Lintu — kana-tyylinen, 7 osaa',
+        description: 'Bird — chicken style, 7 parts',
         model: {
             modelId: 'geometry.template_bird',
             textureWidth: 64,
@@ -100,7 +100,7 @@ export const MOB_TEMPLATES = [
         id: 'fish',
         name: 'Fish',
         emoji: '🐟',
-        description: 'Kala — turska-tyylinen, 4 osaa',
+        description: 'Fish — cod style, 4 parts',
         model: {
             modelId: 'geometry.template_fish',
             textureWidth: 32,
@@ -122,7 +122,7 @@ export const MOB_TEMPLATES = [
         id: 'spider',
         name: 'Spider',
         emoji: '🕷️',
-        description: 'Hämähäkki — 3 osaa, 8 jalkaa',
+        description: 'Spider — 3 parts, 8 legs',
         model: {
             modelId: 'geometry.template_spider',
             textureWidth: 64,

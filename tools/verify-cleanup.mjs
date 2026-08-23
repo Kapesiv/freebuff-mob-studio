@@ -252,7 +252,7 @@ check('tuore ei-aktiivinen avain → JÄÄ', has('freebuff_mobstudio_project_v5_
 check('aikaleimaton avain (ikä tuntematon) → JÄÄ', has('freebuff_mobstudio_project_v5_deeplink_stalker'), JSON.stringify(d.keys));
 check('yli 30 pv tavallinen autosave (ei aktiivinen) → poistettu', !has('freebuff_mobstudio_project_v5'), JSON.stringify(d.keys));
 check('Omat olennot: vanha poistettu, tuore jää', JSON.stringify(d.creatures) === JSON.stringify(['Tuore olento']), JSON.stringify(d.creatures));
-const m = d.status.match(/🧹 (\d+) vanhaa tallennusta siivottu/);
+const m = d.status.match(/(\d+) old saves cleaned/);
 check('statusilmoitus näkyy ja luku on 4', !!m && m[1] === '4', d.status);
 
 console.log(failures ? `\n✗ ${failures} tarkistusta epäonnistui` : '\n✅ tallennussiivous toimii: orpo/vanha poistetaan, tuore/aktiivinen säilyy, ilmoitus näkyy');

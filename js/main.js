@@ -274,7 +274,8 @@ function setGamePreview(on) {
     state.gamePreview = on;
     if (on) {
         // Pelin näköinen taivas — säilytetään käyttäjän bg-väri talteen
-        state._editorClearColor = renderer.getClearColor(new THREE.Color()).getHex();
+        // (ilman WebGL:ää rendereriä ei ole — editorin oletus jää voimaan)
+        if (renderer) state._editorClearColor = renderer.getClearColor(new THREE.Color()).getHex();
         // Varjot päälle pelinäkymässä
         for (const mesh of state.cubes) {
             mesh.castShadow = true;
@@ -328,7 +329,7 @@ function applyPreviewOptions(opts) {
         applyGamePreviewDefault();
         if (state.gamePreviewNight) {
             setGamePreviewNight(true);
-            setStatus('Yötila päällä — kuunvalo, glow loistaa voimakkaammin');
+            setStatus('Night mode on — moonlight, glow shines brighter');
         }
     } else {
         const chk = document.getElementById('chk-game-preview');
@@ -848,12 +849,12 @@ canvas.addEventListener('mousedown', (e) => {
                     input.value = color;
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                setStatus(`Väri valittu: ${color} — jatka maalausta`);
+                setStatus(`Color picked: ${color} — continue painting`);
             } else {
-                setStatus('Osuma oli läpinäkyvä — kokeile toista kohtaa');
+                setStatus('Hit was transparent — try another spot');
             }
         } else {
-            setStatus('Ei osumaa malliin');
+            setStatus('No hit on the model');
         }
         setTool('paint'); // palaa maalaukseen valitulla värillä
         return;
@@ -1038,7 +1039,7 @@ function getPartInstanceForBone(bone) {
         bones,
         root,
         part,
-        label: part ? `${part.emoji} ${part.name}${m[3] ? ' (peili)' : ''}` : key
+        label: part ? `${part.name}${m[3] ? ' (mirror)' : ''}` : key
     };
 }
 
@@ -1063,8 +1064,7 @@ function selectPart(inst) {
         }
     }
     highlightBoneTree();
-    showPartPanel(inst);
-    setStatus(`Osa valittu: ${inst.label} — raahaa gizmolla (G siirto · R kierto · skaala-työkalu), väri ja skaala oikealla`);
+    showPartPanel(inst);        setStatus(`Part selected: ${inst.label} — drag with the gizmo (G move · R rotate · scale tool), color and scale on the right`);
 }
 
 /** Poistu osatilasta yksittäiskuutioiden hienosäätöön (kuutiotila). */
@@ -1083,7 +1083,7 @@ function exitPartMode() {
     if (ci !== null && state.cubes[ci]) {
         doSelectCube(ci);
         state.partFineTune = true; // kuutiotila: klikkaukset osuvat yksittäisiin kuutioihin
-        setStatus(`Kuutiotila: ${inst.label} — muokkaa kuutioita yksitellen. Klikkaa osaa vasemmassa puussa palataksesi osatilaan`);
+        setStatus(`Cube mode: ${inst.label} — edit cubes one by one. Click the part in the left tree to return to part mode`);
     } else {
         deselectAll();
     }
@@ -1116,7 +1116,7 @@ function bakePartFromGroup(obj) {
         inst.panelScale = abs;
         updatePartPanelScaleInputs();
         scheduleAutosave();
-        setStatus(`${inst.label} skaalattu — ${abs[0].toFixed(2)}× / ${abs[1].toFixed(2)}× / ${abs[2].toFixed(2)}×`);
+        setStatus(`${inst.label} scaled — ${abs[0].toFixed(2)}× / ${abs[1].toFixed(2)}× / ${abs[2].toFixed(2)}×`);
     } else if (mode === 'translate') {
         const worldPos = obj.getWorldPosition(new THREE.Vector3());
         const dx = worldPos.x - inst.root.pivot[0];
@@ -1127,7 +1127,7 @@ function bakePartFromGroup(obj) {
             translatePartData(inst, dx, dy, dz);
             syncPartToScene(inst);
             scheduleAutosave();
-            setStatus(`${inst.label} siirretty`);
+            setStatus(`${inst.label} moved`);
         }
     }
 }
@@ -1284,7 +1284,7 @@ function showPartPanel(inst) {
     if (!section) return;
     section.hidden = false;
     document.getElementById('part-edit-title').textContent =
-        `${inst.label} — ${partCubeCount(inst)} kuutiota · ${inst.bones.length} luuta`;
+        `${inst.label} — ${partCubeCount(inst)} cubes · ${inst.bones.length} bones`;
     const first = inst.bones[0] && inst.bones[0].cubes[0];
     document.getElementById('part-edit-color').value = (first && first.color) || '#c68642';
     updatePartPanelScaleInputs();
@@ -1342,7 +1342,7 @@ function paintPartColor(inst, color) {
     state.texture.needsUpdate = true;
     if (state.uvEditor) state.uvEditor.draw();
     scheduleAutosave();
-    setStatus(`${inst.label} väritetty: ${color}`);
+    setStatus(`${inst.label} colored: ${color}`);
 }
 
 function hslToHex(h, s, l) {
@@ -1395,7 +1395,7 @@ function setupPartEditPanel() {
         setPartScale(inst, 1, 'z');
         updatePartPanelScaleInputs();
         scheduleAutosave();
-        setStatus(`↺ ${inst.label} palautettu alkuperäiseen kokoon`);
+        setStatus(`${inst.label} reset to original size`);
     });
 
     // Kierto: suhteellinen delta asteina
@@ -1619,7 +1619,7 @@ function openPartAttachDialog(partId, opts = {}) {
     for (const b of bones) {
         const opt = document.createElement('option');
         opt.value = b.name;
-        opt.textContent = `${b.name} (${b.cubes.length} kuutiota)`;
+        opt.textContent = `${b.name} (${b.cubes.length} cubes)`;
         select.appendChild(opt);
     }
     // Oletus: osan oma oletusluu (auto-etsintä)
@@ -1635,7 +1635,7 @@ function openPartAttachDialog(partId, opts = {}) {
     document.getElementById('part-attach-mirror').checked = pendingPartMirror;
 
     pendingPartId = partId;
-    document.getElementById('part-attach-title').textContent = `Kiinnitä ${part.emoji} ${part.name}`;
+    document.getElementById('part-attach-title').textContent = `Attach ${part.name}`;
     document.getElementById('part-attach-dialog').style.display = 'flex';
 }
 
@@ -1802,9 +1802,9 @@ function repaintPartFaces(newCubes) {
  */
 function addPartToModel(partId, opts = {}) {
     const part = MOB_PARTS.find(p => p.id === partId);
-    if (!part) { setStatus('Osaa ei löytynyt: ' + partId); return; }
+    if (!part) { setStatus('Part not found: ' + partId); return; }
     const target = findPartAttachBone(part, opts);
-    if (!target) { setStatus('Ei kiinnitysluuta — aloita pohjasta (esim. Humanoid)'); return; }
+    if (!target) { setStatus('No bone to attach to — start from a template (e.g. Humanoid)'); return; }
     const at = opts.at || part.attach.at;
     const off = partAttachOffset(part, target, at);
     const mirror = opts.mirror !== false && !!part.symmetric;
@@ -1865,7 +1865,7 @@ function addPartToModel(partId, opts = {}) {
     deselectAll(); // vanha valinta viittaisi poistettuun meshiin rebuildin jälkeen
     rebuildModel();
     scheduleAutosave();
-    setStatus(`Lisättiin ${part.emoji} ${part.name}${mirror ? ' (molemmille puolille)' : ''} → ${target.name}`);
+    setStatus(`Attached ${part.name}${mirror ? ' (both sides)' : ''} → ${target.name}`);
 }
 
 // ==================== 🎲 RANDOMIZE (Spore) ====================
@@ -1873,10 +1873,10 @@ function addPartToModel(partId, opts = {}) {
 // peilaus ja väri joka osalle — Sporen luontieditorin hengessä.
 
 const RANDOM_CREATURE_NAMES = [
-    'Mörökölli', 'Kipinä', 'Rölli', 'Peikonkala', 'Nokkahäntä', 'Karvaturpa',
-    'Tähtisilmä', 'Ukkoseläin', 'Metsänhenki', 'Suokummitus', 'Kivikala',
-    'Tulikettu', 'Jäähirmu', 'Myrskyhapas', 'Kellokäpälä', 'Huurmeselkä',
-    'Rämeenkulkija', 'Piikkisydän', 'Varjovatsa', 'Pöyhökorva'
+    'Goblin', 'Spark', 'Troll', 'Goblinfish', 'Beaktail', 'Shaggysnout',
+    'Stareye', 'Thunderbeast', 'Forest Spirit', 'Bog Ghost', 'Stonefish',
+    'Firefox', 'Frost Fiend', 'Storm Horse', 'Bellpaw', 'Frostback',
+    'Marsh Wader', 'Thornheart', 'Shadow Belly', 'Fluffy Ear'
 ];
 
 const RANDOM_SURFACES = ['bottom', 'top', 'front', 'back', 'side'];
@@ -1898,7 +1898,7 @@ function randomizeCreature() {
     // Pohja: 6-luinen Humanoid (body, head, arms, legs — oikeat luut
     // osien kiinnitystä varten, toisin kuin yksiluuinen template)
     const base = LIBRARY_MOBS.find((m) => m.name === 'Humanoid' && m.category === 'template');
-    if (!base) { setStatus('⚠️ Humanoid-pohjaa ei löytynyt'); return; }
+    if (!base) { setStatus('Humanoid template not found'); return; }
     state.history.push(state.model);
     state.model = JSON.parse(JSON.stringify(base.model));
     state.projectName = RANDOM_CREATURE_NAMES[Math.floor(Math.random() * RANDOM_CREATURE_NAMES.length)];
@@ -1959,7 +1959,7 @@ function randomizeCreature() {
     applyGamePreviewDefault();
     updateProjectNameLabel();
     scheduleAutosave();
-    setStatus(`Randomize: "${state.projectName}" — ${attached} osaa, ${state.model.bones.length} luuta, ${cubes} kuutiota, ${tmp.size} lohkoa, animaatiot: ${animNames.join(', ') || 'ei yhtään'}. Undo (⌘Z) palauttaa edellisen mallin — randomisoi uudelleen milloin vain!`);
+    setStatus(`Randomize: "${state.projectName}" — ${attached} parts, ${state.model.bones.length} bones, ${cubes} cubes, ${tmp.size} blocks, animations: ${animNames.join(', ') || 'none'}. Undo (⌘Z) restores the previous model — randomize again anytime.`);
 }
 
 function deleteSelected() {
@@ -1996,7 +1996,7 @@ function deleteSelected() {
         deselectAll();
         rebuildModel();
         scheduleAutosave();
-        setStatus('Osa poistettu' + (names.size > inst.bones.length ? ' (peilipuoli mukana)' : ''));
+        setStatus('Part deleted' + (names.size > inst.bones.length ? ' (mirror side included)' : ''));
         return;
     }
     if (state.selectedCube !== null) {
@@ -2262,7 +2262,7 @@ function checkRenderConsistency() {
         offenders.sort((a, b) => b.dev - a.dev);
         const first = offenders.slice(0, 3).map(o => `${o.cube} (${o.dev.toFixed(2)})`).join(', ');
         document.getElementById('render-warning-text').textContent =
-            `${offenders.length} kuutiota renderöityy väärin — 3D-näkymä ja data eroavat yli 0.01: ${first}${offenders.length > 3 ? '…' : ''}`;
+            `${offenders.length} cubes render incorrectly — the 3D view and data differ by more than 0.01: ${first}${offenders.length > 3 ? '…' : ''}`;
         banner.dataset.firstIdx = offenders[0].idx;
         banner.hidden = false;
     } else {
@@ -2278,7 +2278,7 @@ document.getElementById('render-warning').addEventListener('click', () => {
     if (!Number.isNaN(idx) && state.cubes[idx]) {
         selectCube(state.cubes[idx]);
         const cubeData = findCubeData(idx);
-        setStatus(`⚠️ ${cubeData ? cubeData.name : 'kuutio'} valittu — tarkista sen sijainti/koko`);
+        setStatus(`${cubeData ? cubeData.name : 'cube'} selected — check its position/size`);
     }
 });
 
@@ -2393,11 +2393,11 @@ function setupToolbar() {
         state.symmetryEdit = !state.symmetryEdit;
         ctxSym.classList.toggle('active', state.symmetryEdit);
         ctxSym.title = state.symmetryEdit
-            ? 'Symmetry päällä — muokkaa toista puolta, toinen peilautuu livenä (klikkaa sammuuttaaksesi)'
-            : 'Symmetry edit — muokkaa toista puolta (siirto/kierto/koko), toinen peilautuu livenä';
+            ? 'Symmetry on — edit one side, the other mirrors live (click to turn off)'
+            : 'Symmetry edit — edit one side (move/rotate/scale), the other mirrors live';
         setStatus(state.symmetryEdit
-            ? 'Symmetry päällä — valitse oikea/vasen kuutio tai luu ja muokkaa, peilikuva seuraa livenä'
-            : 'Symmetry pois');
+            ? 'Symmetry on — select a cube or bone on either side and edit, the mirror follows live'
+            : 'Symmetry off');
     }
 
     function openAddContextMenu(x, y) {
@@ -2451,9 +2451,9 @@ function setupToolbar() {
             state.mirrorPaint = !state.mirrorPaint;
             mirrorPaintBtn.classList.toggle('active', state.mirrorPaint);
             mirrorPaintBtn.title = state.mirrorPaint
-                ? 'Peilattu maalaus PÄÄLLÄ — maalaa myös peilikuva (klikkaa pois)'
-                : 'Mirror paint — maalaa myös peilikuva vastakkaiselle puolelle';
-            setStatus(state.mirrorPaint ? 'Peilattu maalaus päällä' : 'Peilattu maalaus pois');
+                ? 'Mirror paint ON — also paint the mirror image (click to turn off)'
+                : 'Mirror paint — also paint the mirror image on the opposite side';
+            setStatus(state.mirrorPaint ? 'Mirror paint on' : 'Mirror paint off');
         });
     }
 
@@ -2482,8 +2482,8 @@ function setupToolbar() {
             setGamePreview(e.target.checked);
             updateShadowBounds();
             setStatus(e.target.checked
-                ? 'Pelin näköinen esikatselu päällä — Minecraft-valaistus, varjot ja glow (editorivalot pois)'
-                : 'Editorinäkymä palautettu');
+                ? 'Game preview on — Minecraft lighting, shadows and glow (editor lights off)'
+                : 'Editor view restored');
         });
         // Pidä varjot editorissa pois päältä oletuksena — kevyempi
         setGamePreview(false);
@@ -2501,8 +2501,8 @@ function setupToolbar() {
             }
             setGamePreviewNight(e.target.checked);
             setStatus(e.target.checked
-                ? 'Yötila päällä — kuunvalo, glow loistaa voimakkaammin'
-                : state.gamePreview ? '☀️ Päivä palautettu' : 'Yötila pois');
+                ? 'Night mode on — moonlight, glow shines brighter'
+                : state.gamePreview ? 'Day restored' : 'Night mode off');
         });
         setGamePreviewNight(false);
     }
@@ -2529,21 +2529,20 @@ function setupLibrary() {
     function createMobButton(mob) {
         const btn = document.createElement('button');
         btn.className = 'mob-btn';
-        const sizeLabels = { jatti: 'Jättiläinen', iso: 'Iso', keski: 'Keskikoko', pieni: 'Pieni' };
-        const sizeBadges = { jatti: 'Jätti', iso: 'Iso', keski: 'Keski', pieni: 'Pieni' };
+        const sizeLabels = { jatti: 'Giant', iso: 'Large', keski: 'Medium', pieni: 'Small' };
+        const sizeBadges = { jatti: 'Giant', iso: 'Large', keski: 'Medium', pieni: 'Small' };
         btn.title = (mob.description || '') +
-            (mob.size ? ` — ${mob.size} lohkoa korkea` : '') +
-            ` — ${mob.tier === 'boss' ? 'BOSSI' : 'minioni'} (pisteet ${mob.score})` +
+            (mob.size ? ` — ${mob.size} blocks tall` : '') +
+            ` — ${mob.tier === 'boss' ? 'BOSS' : 'minion'} (score ${mob.score})` +
             ` — ${sizeLabels[mob.sizeClass] || ''}`;
-        btn.innerHTML = `<span class="mob-emoji-tile"><span class="mob-emoji">${mob.emoji}</span></span>` +
-            `<span class="mob-name">${mob.name}</span>` +
+        btn.innerHTML = `<span class="mob-name">${mob.name}</span>` +
             `<span class="mob-size-badge">${sizeBadges[mob.sizeClass] || ''}</span>`;
         btn.addEventListener('click', () => loadLibraryMob(mob));
         if (mob.category === 'deepvoid' && MOB_STATS[mob.id]) {
             const statsBtn = document.createElement('button');
             statsBtn.type = 'button';
             statsBtn.className = 'mob-stats-btn';
-            statsBtn.title = 'HP / kyvyt / kutsuminen — pelin bytecodesta';
+            statsBtn.title = 'HP / abilities / summoning — from the game bytecode';
             statsBtn.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M3 13V8"/><path d="M7 13V3"/><path d="M11 13v-6"/><path d="M15 13V6"/></svg>';
             statsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -2592,12 +2591,12 @@ function setupLibrary() {
         }
         const bosses = list.filter(m => m.tier === 'boss');
         const minions = list.filter(m => m.tier !== 'boss');
-        appendGroup('Bossit', bosses);
-        appendGroup('Minionit', minions);
+        appendGroup('Bosses', bosses);
+        appendGroup('Minions', minions);
         if (countEl) {
             countEl.textContent = list.length < LIBRARY_MOBS.length
-                ? `— ${list.length} / ${LIBRARY_MOBS.length} mobia`
-                : `— valmiit, klikkaa!`;
+                ? `— ${list.length} / ${LIBRARY_MOBS.length} mobs`
+                : `— click to load`;
         }
     }
 
@@ -2667,7 +2666,7 @@ function setupLibrary() {
             const btn = document.createElement('button');
             btn.className = 'mob-btn';
             btn.title = tpl.description;
-            btn.innerHTML = `<span class="mob-emoji">${tpl.emoji}</span><span>${tpl.name}</span>`;
+            btn.innerHTML = `<span>${tpl.name}</span>`;
             btn.addEventListener('click', () => openNewMobDialog(tpl.id));
             tplContainer.appendChild(btn);
         }
@@ -2686,8 +2685,8 @@ function setupLibrary() {
             for (const part of parts) {
                 const btn = document.createElement('button');
                 btn.className = 'mob-btn part-btn';
-                btn.title = part.name + (part.symmetric ? ' — peilautuu molemmille puolille' : '');
-                btn.innerHTML = `<span class="mob-emoji">${part.emoji}</span><span>${part.name}</span>`;
+                btn.title = part.name + (part.symmetric ? ' — mirrored to both sides' : '');
+                btn.innerHTML = `<span>${part.name}</span>`;
                 btn.addEventListener('click', () => {
                     // Avaa kiinnitysvalikko: luu + pinta valittavissa ennen kiinnitystä
                     openPartAttachDialog(part.id, { mirror: !mirrorChk || mirrorChk.checked });
@@ -2708,7 +2707,7 @@ function setupLibrary() {
             saveCurrentAnimation();
             loadAnimationData(state.projectAnimations[animSelect.value]);
             state.currentAnimName = animSelect.value;
-            setStatus(`Animaatio: ${animSelect.value} — paina ▶`);
+            setStatus(`Animation: ${animSelect.value} — press play`);
         });
     }
 
@@ -2723,13 +2722,13 @@ function setupLibrary() {
         state.currentAnimName = name;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[name]);
-        setStatus(`Uusi animaatio: ${name}`);
+        setStatus(`New animation: ${name}`);
     });
 
     document.getElementById('anim-dup').addEventListener('click', () => {
         saveCurrentAnimation();
         const src = state.currentAnimName;
-        if (!src || !state.projectAnimations[src]) { setStatus('Ei animaatiota kopioitavaksi'); return; }
+        if (!src || !state.projectAnimations[src]) { setStatus('No animation to duplicate'); return; }
         let name = src + '_copy';
         let n = 1;
         while (state.projectAnimations[name]) name = `${src}_copy_${n++}`;
@@ -2737,35 +2736,35 @@ function setupLibrary() {
         state.currentAnimName = name;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[name]);
-        setStatus(`Kopioitu: ${src} → ${name}`);
+        setStatus(`Duplicated: ${src} → ${name}`);
     });
 
     document.getElementById('anim-rename').addEventListener('click', () => {
-        if (!state.currentAnimName) { setStatus('Ei animaatiota nimettäväksi'); return; }
+        if (!state.currentAnimName) { setStatus('No animation to rename'); return; }
         saveCurrentAnimation();
         const old = state.currentAnimName;
         const name = (prompt('Animaation uusi nimi:', old) || '').trim();
         if (!name || name === old) return;
-        if (state.projectAnimations[name]) { setStatus(`Nimi varattu: ${name}`); return; }
+        if (state.projectAnimations[name]) { setStatus(`Name already taken: ${name}`); return; }
         state.projectAnimations[name] = state.projectAnimations[old];
         delete state.projectAnimations[old];
         state.currentAnimName = name;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[name]);
-        setStatus(`Nimetty: ${old} → ${name}`);
+        setStatus(`Renamed: ${old} → ${name}`);
     });
 
     document.getElementById('anim-del').addEventListener('click', () => {
         const names = Object.keys(state.projectAnimations);
-        if (names.length <= 1) { setStatus('Vähintään yksi animaatio pitää olla'); return; }
-        if (!confirm(`Poistetaanko animaatio "${state.currentAnimName}"?`)) return;
+        if (names.length <= 1) { setStatus('At least one animation is required'); return; }
+        if (!confirm(`Delete animation "${state.currentAnimName}"?`)) return;
         saveCurrentAnimation();
         delete state.projectAnimations[state.currentAnimName];
         const next = Object.keys(state.projectAnimations)[0];
         state.currentAnimName = next;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[next]);
-        setStatus(`Poistettu — nyt: ${next}`);
+        setStatus(`Deleted — now: ${next}`);
     });
 
     // 🕺 Auto: Spore-tyylinen animaatiogenerointi luurangosta
@@ -2782,7 +2781,7 @@ function generateAutoAnimations() {
     const { animations, analysis } = generateAutoAnimationsForModel(state.model);
     const names = Object.keys(animations);
     if (!names.length) {
-        setStatus('⚠️ Ei luurankoa — lisää kuutioita ensin');
+        setStatus('No skeleton — add cubes first');
         return;
     }
     state.projectAnimations = animations;
@@ -2790,13 +2789,13 @@ function generateAutoAnimations() {
     refreshAnimationSelect();
     loadAnimationData(animations[names[0]]);
     const parts = [];
-    if (analysis.body) parts.push('vartalo');
-    if (analysis.legs.length) parts.push(`${analysis.legs.length} jalkaa`);
-    if (analysis.arms.length) parts.push(`${analysis.arms.length} kättä`);
-    if (analysis.wings.length >= 2) parts.push('siivet');
-    if (analysis.tail) parts.push('häntä');
-    if (analysis.head) parts.push('pää');
-    setStatus(`Generoitu ${names.join(', ')} — luuranko: ${parts.join(', ')}. Muokkaa keyframejä tai vie paketissa.`);
+    if (analysis.body) parts.push('body');
+    if (analysis.legs.length) parts.push(`${analysis.legs.length} legs`);
+    if (analysis.arms.length) parts.push(`${analysis.arms.length} arms`);
+    if (analysis.wings.length >= 2) parts.push('wings');
+    if (analysis.tail) parts.push('tail');
+    if (analysis.head) parts.push('head');
+    setStatus(`Generated ${names.join(', ')} — skeleton: ${parts.join(', ')}. Edit keyframes or export in a pack.`);
     scheduleAutosave();
 }
 
@@ -2853,13 +2852,12 @@ function openMobStats(mob) {
     const modal = document.getElementById('mob-stats-modal');
     if (!modal) return;
 
-    document.getElementById('mstats-emoji').textContent = mob.emoji || '❓';
     document.getElementById('mstats-name').textContent = mob.name || mob.id;
     const bits = [];
-    if (mob.size) bits.push(`${mob.size} lohkoa korkea`);
-    if (stats.bossbar) bits.push('Bossbar-pomo');
-    if (mob.tier === 'boss') bits.push('BOSSI');
-    bits.push(`${mob.model.bones.length} luuta`);
+    if (mob.size) bits.push(`${mob.size} blocks tall`);
+    if (stats.bossbar) bits.push('Bossbar boss');
+    if (mob.tier === 'boss') bits.push('BOSS');
+    bits.push(`${mob.model.bones.length} bones`);
     document.getElementById('mstats-sub').textContent = bits.join(' · ');
 
     // ❤️ HP
@@ -2868,7 +2866,7 @@ function openMobStats(mob) {
     if (stats.hp != null) {
         const hearts = stats.hp / 2;
         const pct = Math.min(100, (stats.hp / 999) * 100);
-        hpEl.innerHTML = `${stats.hp} <small>HP = ${hearts} sydäntä</small>`;
+        hpEl.innerHTML = `${stats.hp} <small>HP = ${hearts} hearts</small>`;
         const bar = document.createElement('div');
         bar.className = 'mstats-hp-bar';
         const fill = document.createElement('i');
@@ -2884,19 +2882,19 @@ function openMobStats(mob) {
         if (hearts > show) html += ` <span class="empty">+${Math.round(hearts - show)}</span>`;
         heartsEl.innerHTML = html;
     } else {
-        hpEl.textContent = '— (ei entity-luokkaa tässä JAR-versiossa)';
+        hpEl.textContent = '— (no entity class in this JAR version)';
         heartsEl.innerHTML = '';
     }
 
     // 📊 ominaisuudet
     const rows = [
-        ['Panssari (armor)', stats.armor],
-        ['Panssarin kesto (toughness)', stats.toughness],
-        ['Liikenopeus', stats.speed != null ? stats.speed : null],
-        ['Lentonopeus', stats.flySpeed != null ? stats.flySpeed : null],
-        ['Seuraamisetäisyys', stats.follow != null ? `${stats.follow} lohkoa` : null],
-        ['Rekyyttömyys (knockback)', stats.knockback != null ? (stats.knockback >= 999 ? 'täysi (999)' : stats.knockback) : null],
-        ['Hyökkäysvahinko', stats.damage != null ? stats.damage : null],
+        ['Armor', stats.armor],
+        ['Armor toughness', stats.toughness],
+        ['Movement speed', stats.speed != null ? stats.speed : null],
+        ['Flight speed', stats.flySpeed != null ? stats.flySpeed : null],
+        ['Follow distance', stats.follow != null ? `${stats.follow} blocks` : null],
+        ['Knockback resistance', stats.knockback != null ? (stats.knockback >= 999 ? 'full (999)' : stats.knockback) : null],
+        ['Attack damage', stats.damage != null ? stats.damage : null],
     ].filter(([, v]) => v != null);
     const grid = document.getElementById('mstats-grid');
     grid.innerHTML = rows.map(([k, v]) => `<div class="k">${k}</div><div class="v">${v}</div>`).join('');
@@ -2914,7 +2912,7 @@ function openMobStats(mob) {
     const animNames = Object.keys(mob.animations || (mob.animation ? { animation: mob.animation } : {}) || {});
     animsEl.innerHTML = animNames.length
         ? animNames.map((n) => `<span class="mstats-anim-chip">${n}</span>`).join('')
-        : '<span class="modal-hint">Ei animaatioita</span>';
+        : '<span class="modal-hint">No animations</span>';
 
     // 🎮 kutsuminen
     document.getElementById('mstats-summon').textContent = stats.summon;
@@ -2995,10 +2993,10 @@ function setupVoxelDrop() {
         const hasGlb = list.some(f => /^.*\.glb$/i.test(f.name));
         const hasObj = list.some(f => /^.*\.obj$/i.test(f.name));
         if (!hasGlb && !hasObj) {
-            setStatus('⚠️ Vedä .glb- tai .obj-tiedosto (mukana voi olla .mtl + tekstuurikuva)', 'error');
+            setStatus('Drop a .glb or .obj file (may include .mtl + texture image)', 'error');
             return;
         }
-        setStatus('📦 Luetaan tiedostoja…');
+        setStatus('Reading files…');
         await tick();
         const buffers = new Map();
         for (const f of list) buffers.set(f.name, await f.arrayBuffer());
@@ -3006,7 +3004,7 @@ function setupVoxelDrop() {
         const baseName = primary.name.replace(/\.(glb|obj)$/i, '');
         const heightBlocks = Math.max(0.5, Math.min(20, parseFloat(heightInput.value) || 2));
         const voxel = parseInt(sizeSelect.value, 10) || 2;
-        setStatus('🧊 Vokseloidaan… (iso malli voi kestää hetken)');
+        setStatus('Voxelizing… (large models may take a moment)');
         await tick();
         try {
             const mob = await voxelizeModel(buffers, { name: baseName, heightBlocks, voxel });
@@ -3016,9 +3014,9 @@ function setupVoxelDrop() {
             if (refreshLibraryUI) refreshLibraryUI();
             loadLibraryMob(mob);
             const cubes = mob.model.bones.reduce((n, b) => n + b.cubes.length, 0);
-            setStatus(`✅ ${mob.name} vokseloitu — ${mob.model.bones.length} luuta, ${cubes} kuutiota, ${mob.size} lohkoa. Ladattu editoriin!`, 'ok');
+            setStatus(`${mob.name} voxelized — ${mob.model.bones.length} bones, ${cubes} cubes, ${mob.size} blocks. Loaded into the editor!`, 'ok');
         } catch (err) {
-            setStatus('❌ ' + (err && err.message ? err.message : String(err)), 'error');
+            setStatus(err && err.message ? err.message : String(err), 'error');
         }
     }
 }
@@ -3063,8 +3061,8 @@ function loadLibraryMob(mob) {
     fitCameraToMob(mob);
     applyGamePreviewDefault(); // Game Preview päälle latauksen jälkeen (oletus)
     scheduleAutosave();
-    const tierTxt = mob.tier === 'boss' ? 'BOSSI' : 'minioni';
-    setStatus(`✅ ${mob.name} (${tierTxt}, ${mob.size} lohkoa, pisteet ${mob.score}) ladattu — malli, tekstuuri ja animaatiot valmiina. Paina ▶ katsoaksesi!`);
+    const tierTxt = mob.tier === 'boss' ? 'BOSS' : 'minion';
+    setStatus(`${mob.name} (${tierTxt}, ${mob.size} blocks, score ${mob.score}) loaded — model, texture and animations ready. Press play to preview.`);
 }
 
 /** Uuden mobin aloittaminen pohjasta: malli + väripohjatekstuuri. */
@@ -3092,7 +3090,7 @@ function loadTemplate(tpl) {
     applyGamePreviewDefault(); // Game Preview päälle latauksen jälkeen (oletus)
     updateProjectNameLabel();
     scheduleAutosave();
-    setStatus(`🧱 ${tpl.name}-pohja luotu — muokkaa kuutioita, väritä UV-editorissa tai maalaa 3D:ssä`);
+    setStatus(`${tpl.name} template created — edit cubes, paint in the UV editor or in 3D`);
 }
 
 /**
@@ -3113,7 +3111,7 @@ function mirrorCopy() {
         target.push(...bd.cubes);
         mirrorName = bd.name;
     } else {
-        setStatus('Valitse ensin kuutio tai luu, jonka haluat peilata');
+        setStatus('Select a cube or bone to mirror first');
         return;
     }
     if (target.length === 0) return;
@@ -3145,7 +3143,7 @@ function mirrorCopy() {
         selectBone(state.selectedBone);
     }
     scheduleAutosave();
-    setStatus(`🪞 Peilattu ${created.length} kuutiota: ${mirrorName} → ${mirrorName}_mirror`);
+    setStatus(`Mirrored ${created.length} cubes: ${mirrorName} → ${mirrorName}_mirror`);
 }
 
 // ==================== OMIA OLENTOJA ('Omat olennot') ====================
@@ -3167,7 +3165,7 @@ function putMyCreatures(list) {
         localStorage.setItem(MY_CREATURES_KEY, JSON.stringify(list));
     } catch (e) {
         console.warn('Omat olennot -tallennus epäonnistui:', e);
-        setStatus('⚠️ Tallennus epäonnistui — selaimen muisti täynnä?');
+        setStatus('Save failed — is browser storage full?');
     }
 }
 
@@ -3248,7 +3246,7 @@ function saveCurrentCreature(name, emoji) {
     if (list.length > 60) list.length = 60;
     putMyCreatures(list);
     renderMyCreatures();
-    setStatus(`${entry.emoji} "${entry.name}" tallennettu Omat olennot -kirjastoon — ${entry.size} lohkoa, ${entry.bones} luuta, ${entry.cubes} kuutiota`);
+    setStatus(`"${entry.name}" saved to My Creatures — ${entry.size} blocks, ${entry.bones} bones, ${entry.cubes} cubes`);
 }
 
 /** Lataa tallennettu olento takaisin editoriin (malliksi kirjastolle). */
@@ -3277,7 +3275,7 @@ function loadMyCreature(id) {
     applyPreviewOptions(entry.previewOptions || null);
     state.sourceCategory = entry.sourceCategory || 'voxel';
     scheduleAutosave();
-    setStatus(`📂 ${mob.emoji} "${mob.name}" ladattu — ${mob.size} lohkoa, ❤️ HP ${state.packOptions.health}, ⚔️ ${state.packOptions.damage}`);
+    setStatus(`"${mob.name}" loaded — ${mob.size} blocks, HP ${state.packOptions.health}, damage ${state.packOptions.damage}`);
 }
 
 /** Poista tallennettu olento galleriasta. */
@@ -3285,7 +3283,7 @@ function deleteMyCreature(id) {
     const list = getMyCreatures().filter(e => e.id !== id);
     putMyCreatures(list);
     renderMyCreatures();
-    setStatus('🗑 Olento poistettu Omat olennot -kirjastosta');
+    setStatus('Creature deleted from My Creatures');
 }
 
 /** Piirrä 'Omat olennot' -ruudukko (kortti: emoji, nimi, koko, luut, statit). */
@@ -3296,15 +3294,15 @@ function renderMyCreatures() {
     const list = getMyCreatures();
     grid.innerHTML = '';
     if (empty) empty.style.display = list.length ? 'none' : '';
-    const sizeLabels = { jatti: 'Jättiläinen', iso: 'Iso', keski: 'Keskikoko', pieni: 'Pieni' };
+    const sizeLabels = { jatti: 'Giant', iso: 'Large', keski: 'Medium', pieni: 'Small' };
     for (const entry of list) {
         const card = document.createElement('div');
         card.className = 'my-creature-card';
         const stats = entry.packOptions || {};
         const chips = [
-            `${entry.bones} luuta`,
-            `${entry.cubes} kuutiota`,
-            `${entry.animCount || 0} animaatiota`
+            `${entry.bones} bones`,
+            `${entry.cubes} cubes`,
+            `${entry.animCount || 0} animations`
         ];
         if (stats.health) chips.push(`${stats.health} HP`);
         if (stats.damage) chips.push(`${stats.damage} vahinko`);
@@ -3321,7 +3319,7 @@ function renderMyCreatures() {
         strong.textContent = entry.name || 'Olento';
         const meta = document.createElement('span');
         meta.className = 'my-creature-meta';
-        meta.textContent = `${sizeLabels[entry.sizeClass] || ''} · ${entry.size} lohkoa`.replace(/^ · /, '');
+        meta.textContent = `${sizeLabels[entry.sizeClass] || ''} · ${entry.size} blocks`.replace(/^ · /, '');
         title.appendChild(strong);
         title.appendChild(meta);
         const del = document.createElement('button');
@@ -3505,14 +3503,14 @@ function setupNewMobDialog() {
     };
 
     // Pohjavaihtoehdot: Tyhjä + kaikki pohjat
-    const options = [{ id: 'empty', emoji: '⬜', name: 'Tyhjä' }, ...MOB_TEMPLATES];
+    const options = [{ id: 'empty', emoji: '⬜', name: 'Empty' }, ...MOB_TEMPLATES];
     for (const tpl of options) {
         const btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'modal-tpl-btn';
         btn.dataset.tpl = tpl.id;
         btn.title = tpl.description || '';
-        btn.innerHTML = `<span class="mob-emoji">${tpl.emoji}</span><span>${tpl.name}</span>`;
+        btn.innerHTML = `<span>${tpl.name}</span>`;
         btn.addEventListener('click', () => newMobDialog.selectTemplate(tpl.id));
         tplContainer.appendChild(btn);
     }
@@ -3561,7 +3559,7 @@ function setupNewMobDialog() {
         updateProjectNameLabel();
         closeNewMobDialog();
         scheduleAutosave();
-        setStatus(`🚀 ${name} luotu (${modelId}) — export: ${exportFileName(modelId, 'bedrock')}`);
+        setStatus(`${name} created (${modelId}) — export: ${exportFileName(modelId, 'bedrock')}`);
     };
 
     document.getElementById('new-mob-create').addEventListener('click', create);
@@ -3745,7 +3743,7 @@ function setupFileIO() {
         a.click();
         URL.revokeObjectURL(url);
         const cubeCount = state.model.bones.reduce((n, b) => n + (b.cubes ? b.cubes.length : 0), 0);
-        setStatus(`Blockbench-tiedosto ladattu (${id}.bbmodel) — ${cubeCount} kuutiota, ${animations ? Object.keys(animations).length + ' animaatiota' : 'ei animaatioita'}, tekstuuri ${textureDataURL ? 'mukana' : 'puuttuu'}`);
+        setStatus(`Blockbench file saved (${id}.bbmodel) — ${cubeCount} cubes, ${animations ? Object.keys(animations).length + ' animations' : 'no animations'}, texture ${textureDataURL ? 'included' : 'missing'}`);
     });
 
     document.getElementById('btn-import-bedrock').addEventListener('click', () => {
@@ -3840,10 +3838,10 @@ function setupFileIO() {
         const paths = previewPackFiles(currentPackFormats(), id, ns, hasAnims, hasGlow);
         packFileList.textContent = paths.join('\n');
         const notes = [];
-        if (!hasAnims) notes.push('ei animaatioita');
-        if (hasAnims && currentPackFormats().includes('bedrock')) notes.push('yksi animaatio soi pelissä (idle/kävely ensisijaisesti)');
-        if (!hasGlow) notes.push('ei glow-kerrosta');
-        if (hasGlow && currentPackFormats().includes('bedrock')) notes.push('glow hehkuu pelissä (entity_emissive_alpha)');
+        if (!hasAnims) notes.push('no animations');
+        if (hasAnims && currentPackFormats().includes('bedrock')) notes.push('one animation plays in game (idle/walk takes priority)');
+        if (!hasGlow) notes.push('no glow layer');
+        if (hasGlow && currentPackFormats().includes('bedrock')) notes.push('glow shines in game (entity_emissive_alpha)');
         packFileList.title = notes.length ? notes.join(', ') : '';
         // .mcaddon vain kun valittuna pelkkä Bedrock (Minecraft avaa sen suoraan)
         const isMcaddon = currentPackFormats().length === 1 && currentPackFormats()[0] === 'bedrock';
@@ -3864,7 +3862,7 @@ function setupFileIO() {
         packSpeedInput.value = Math.round(po.speed * 100);
         document.getElementById('pack-speed-val').textContent = po.speed.toFixed(2);
         packJumpInput.value = po.jump ? 1 : 0;
-        document.getElementById('pack-jump-val').textContent = po.jump ? 'päällä' : 'pois';
+        document.getElementById('pack-jump-val').textContent = po.jump ? 'on' : 'off';
         packFlyingInput.checked = !!po.flying;
         packDialog.style.display = 'flex';
         drawEggPreview();
@@ -3923,7 +3921,7 @@ function setupFileIO() {
     });
     packJumpInput.addEventListener('input', () => {
         const on = packJumpInput.value === '1';
-        document.getElementById('pack-jump-val').textContent = on ? 'päällä' : 'pois';
+        document.getElementById('pack-jump-val').textContent = on ? 'on' : 'off';
         if (state.packOptions) state.packOptions.jump = on ? 1 : 0;
         scheduleAutosave();
     });
@@ -3970,7 +3968,7 @@ function setupFileIO() {
         a.click();
         URL.revokeObjectURL(url);
         closePackDialog();
-        setStatus(`📦 ${formats.length === 2 ? 'Java + Bedrock' : formats[0] === 'java' ? 'Java (GeckoLib)' : 'Bedrock'} -paketti ladattu (${files.length} tiedostoa) — ${filename}${isMcaddon ? ' — avaa Minecraftilla asentaaksesi' : ''}`);
+        setStatus(`${formats.length === 2 ? 'Java + Bedrock' : formats[0] === 'java' ? 'Java (GeckoLib)' : 'Bedrock'} pack downloaded (${files.length} files) — ${filename}${isMcaddon ? ' — open with Minecraft to install' : ''}`);
     });
 
     document.getElementById('btn-screenshot').addEventListener('click', exportScreenshot);
@@ -3983,7 +3981,7 @@ function setupFileIO() {
  */
 function exportScreenshot() {
     if (!renderer) {
-        setStatus('⚠️ 3D-näkymä ei ole käytössä (WebGL pois) — PNG:tä ei voi ottaa');
+        setStatus('3D view is not available (WebGL off) — cannot take a PNG');
         return;
     }
 
@@ -4032,7 +4030,7 @@ function exportScreenshot() {
         document.body.appendChild(a);
         a.click();
         a.remove();
-        setStatus(`📸 PNG ladattu (${filename})`);
+        setStatus(`PNG saved (${filename})`);
     } finally {
         restores.forEach(f => f());
         overlay.style.display = overlayDisplay;
@@ -4350,7 +4348,7 @@ document.addEventListener('keydown', (e) => {
     // Ctrl+Z / Ctrl+Y — ensin maalausvedot (jos niitä on), sitten malli
     if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
         e.preventDefault();
-        if (undoPaint()) { setStatus('Undo maalaus'); return; }
+        if (undoPaint()) { setStatus('Undo paint'); return; }
         const prev = state.model;
         const restored = state.history.undo(prev);
         if (restored) {
@@ -4363,7 +4361,7 @@ document.addEventListener('keydown', (e) => {
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'y') {
         e.preventDefault();
-        if (redoPaint()) { setStatus('Redo maalaus'); return; }
+        if (redoPaint()) {            setStatus('Redo paint'); return; }
         const prev = state.model;
         const restored = state.history.redo(prev);
         if (restored) {
@@ -4408,7 +4406,7 @@ function cycleMenu(menuEl) {
     if (!menuEl.open) {
         menuEl.open = true;
         items[0].focus();
-        setStatus(menuEl === menuImportEl ? 'Tuo… — valitse muoto' : 'Vie… — valitse muoto');
+        setStatus(menuEl === menuImportEl ? 'Import… — choose format' : 'Export… — choose format');
         return;
     }
     const idx = items.indexOf(document.activeElement);
@@ -4487,7 +4485,7 @@ function setupUVEditor() {
             const cubeData = findCubeData(cubeIndex);
             if (cubeData && state.selectedCube === cubeIndex) {
                 showProperties(cubeData, findBoneForCube(cubeIndex));
-                setStatus(`📏 ${cubeData.name}: ${cubeData.size[0]} × ${cubeData.size[1]} × ${cubeData.size[2]}`);
+                setStatus(`${cubeData.name}: ${cubeData.size[0]} × ${cubeData.size[1]} × ${cubeData.size[2]}`);
             }
             checkRenderConsistency();
             scheduleAutosave();
@@ -4558,13 +4556,13 @@ function setupUVEditor() {
             const add = document.createElement('button');
             add.className = 'palette-swatch action';
             add.textContent = '+';
-            add.title = 'Lisää nykyinen maalausväri palettiin';
+            add.title = 'Add current paint color to palette';
             add.dataset.action = 'add';
             gridEl.appendChild(add);
             const clr = document.createElement('button');
             clr.className = 'palette-swatch action';
             clr.textContent = '🗑';
-            clr.title = 'Tyhjennä omat värit';
+            clr.title = 'Clear custom colors';
             clr.dataset.action = 'clear';
             gridEl.appendChild(clr);
         }
@@ -4672,7 +4670,7 @@ animate();
 if (!state.webgl) {
     // No WebGL: 3D viewport stays dark but everything else works.
     canvas.style.background = '#161b22';
-    setStatus('Editori toimii ilman 3D-näkymää (WebGL pois) — avaa se Chromessa, jossa WebGL on päällä');
+    setStatus('Editor works without the 3D view (WebGL off) — open it in a browser with WebGL enabled');
 } else {
     setStatus('Freebuff Mob Studio ready — Add cubes and bones to start building');
 }
@@ -4712,9 +4710,9 @@ if (URL_MOB_ID) {
     if (urlMob) {
         loadLibraryMob(urlMob);
         const txt = document.getElementById('status-text').textContent;
-        setStatus(txt + ' — avaa toinen mobi toiseen välilehteen vertaillaksesi (molemmat säilyvät tallessa)');
+        setStatus(txt + ' — open another mob in a second tab to compare (both stay saved)');
     } else {
-        setStatus(`⚠️ Mobi "${URL_MOB_ID}" ei löytynyt kirjastosta — valitse mobi vasemmalta`);
+        setStatus(`Mob "${URL_MOB_ID}" not found in the library — pick one from the left`);
     }
 }
 
@@ -4816,12 +4814,12 @@ let staleCleanupRemoved = 0;
             const bones = prev.model.bones.length;
             const cubes = prev.model.bones.reduce((n, b) => n + (b.cubes || []).length, 0);
             const size = mobHeightBlocks(prev.model, prev.sourceCategory || 'voxel');
-            const sizeLabel = size < 1.5 ? '🐜 Pieni' : size < 4 ? '🧍 Keskikoko' : size < 8.5 ? '🦍 Iso' : '🐘 Jättiläinen';
-            contMeta.textContent = `${name} — ${sizeLabel} (${size} lohkoa) · ${bones} luuta · ${cubes} kuutiota`;
+            const sizeLabel = size < 1.5 ? 'Small' : size < 4 ? 'Medium' : size < 8.5 ? 'Large' : 'Giant';
+            contMeta.textContent = `${name} — ${sizeLabel} (${size} blocks) · ${bones} bones · ${cubes} cubes`;
             contBtn.hidden = false;
             contBtn.addEventListener('click', () => {
                 close();
-                setStatus(`▶️ Jatketaan projektia "${name}" — viimeisin autosäilötty työ on ladattu`);
+                setStatus(`Continuing project "${name}" — latest autosaved work loaded`);
             });
         }
     }
@@ -4833,7 +4831,7 @@ let staleCleanupRemoved = 0;
         if (libTab) libTab.click();
         const search = document.getElementById('mob-search');
         if (search) search.focus();
-        setStatus('📚 Valitse mobi kirjastosta — klikkaa korttia ladataksesi');
+        setStatus('Pick a mob from the library — click a card to load it');
     });
     document.getElementById('start-empty').addEventListener('click', () => {
         close();
@@ -4856,24 +4854,24 @@ console.log('🧊 Freebuff Mob Studio initialized' + (state.webgl ? '' : ' (no W
 // Kattava lista kaikista editorin oikotieistä — data yhdessä taulukossa,
 // lista rakennetaan siitä (HTML:ää ei tarvitse täydentää käsin).
 const EDITOR_SHORTCUTS = [
-    { group: '🛠️ Työkalut', items: [
-        ['G', 'Siirrä (move)'],
-        ['R', 'Kierrä (rotate)'],
-        ['S', 'Valitse (select)'],
-        ['Del', 'Poista valittu']
+    { group: 'Tools', items: [
+        ['G', 'Move'],
+        ['R', 'Rotate'],
+        ['S', 'Select'],
+        ['Del', 'Delete selected']
     ] },
-    { group: '✏️ Muokkaus', items: [
-        ['⌘Z', 'Kumoa (myös maalaus)'],
-        ['⌘Y', 'Tee uudelleen'],
-        ['⌘D', 'Monista kuutio'],
-        ['⌘C', 'Kopioi asento'],
-        ['⌘V', 'Liitä asento']
+    { group: 'Editing', items: [
+        ['⌘Z', 'Undo (also painting)'],
+        ['⌘Y', 'Redo'],
+        ['⌘D', 'Duplicate cube'],
+        ['⌘C', 'Copy pose'],
+        ['⌘V', 'Paste pose']
     ] },
-    { group: '🗂️ Valikot & toisto', items: [
-        ['⌘I', 'Tuo…-valikko (kiertää kohtia)'],
-        ['⌘E', 'Vie…-valikko (kiertää kohtia)'],
-        ['Space', 'Toista / tauko'],
-        ['Esc', 'Sulje valikko tai dialogi']
+    { group: 'Menus & Playback', items: [
+        ['⌘I', 'Import… menu (cycles through formats)'],
+        ['⌘E', 'Export… menu (cycles through formats)'],
+        ['Space', 'Play / pause'],
+        ['Esc', 'Close menu or dialog']
     ] }
 ];
 
@@ -4939,5 +4937,5 @@ if (galleryLinkEl && galleryHintEl) {
 // milloin vanhoja tallennuksia siivottiin.
 if (staleCleanupRemoved > 0) {
     setStatus(document.getElementById('status-text').textContent
-        + ` 🧹 ${staleCleanupRemoved} vanhaa tallennusta siivottu (yli 30 pv)`);
+        + ` ${staleCleanupRemoved} old saves cleaned (over 30 days)`);
 }

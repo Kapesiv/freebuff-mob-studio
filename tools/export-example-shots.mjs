@@ -40,7 +40,7 @@ import { LIBRARY_MOBS } from '../js/mobs/library.js';
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEFAULT_IDS = ['stalker', 'false_hydra', 'weaver_of_souls', 'vox_dragon'];
 const SIZE = 900;
-const CATEGORY_LABELS = { deepvoid: 'Deep Void', vanilla: 'Vanilja', voxel: 'Voxel-eläimet', template: 'Pohja' };
+const CATEGORY_LABELS = { deepvoid: 'Deep Void', vanilla: 'Vanilla', voxel: 'Voxel Animals', template: 'Template' };
 
 const chromeCandidates = process.env.CHROME_PATH
     ? [process.env.CHROME_PATH]
@@ -100,7 +100,7 @@ function captureScript(emoji, name, night) {
             }
             const s = window.__MOB_STUDIO;
             if (!s || !s.renderer) { window.__SHOT_DONE = { ok: false, msg: 'studio not ready' }; return; }
-            const btn = [...document.querySelectorAll('.mob-btn')].find(b => b.textContent.startsWith(EMOJI + NAME));
+            const btn = [...document.querySelectorAll('.mob-btn')].find(b => b.textContent.startsWith(NAME));
             if (!btn) { window.__SHOT_DONE = { ok: false, msg: 'card not found: ' + NAME }; return; }
             btn.click();
             for (let i = 0; i < 400 && !s.texture; i++) await sleep(50);
@@ -308,7 +308,7 @@ async function runPool(tasks, jobs) {
 /** Generoi examples/gallery/index.html -galleriasivun. */
 function writeGalleryPage(renderedMobs, wantDay, wantNight, failed) {
     const outDir = path.join(root, 'examples', 'gallery');
-    const mobs = renderedMobs.slice().sort((a, b) => a.name.localeCompare(b.name, 'fi'));
+    const mobs = renderedMobs.slice().sort((a, b) => a.name.localeCompare(b.name, 'en'));
     const sections = Object.entries(CATEGORY_LABELS)
         .map(([cat, label]) => {
             const list = mobs.filter(m => m.category === cat);
@@ -316,19 +316,19 @@ function writeGalleryPage(renderedMobs, wantDay, wantNight, failed) {
             const cards = list.map(m => {
                 const id = mobId(m);
                 const hasNight = existsSync(path.join(outDir, `${id}_night.png`));
-                const tier = m.tier === 'boss' ? 'BOSSI' : '';
+                const tier = m.tier === 'boss' ? 'BOSS' : '';
                 const nightImg = hasNight
-                    ? `<img class="night" src="${id}_night.png" alt="${m.name} yöllä" loading="lazy" />`
+                    ? `<img class="night" src="${id}_night.png" alt="${m.name} at night" loading="lazy" />`
                     : '';
                 // Koko kortti on linkki editoriin: ../preview.html?mob=<id>
                 // data-size/data-name: haku- ja kokosuodattimille
                 return `<figure data-size="${m.sizeClass || ''}" data-name="${m.name.toLowerCase().replace(/"/g, '&quot;')}">
-                    <a class="frame" href="../preview.html?mob=${id}" title="Avaa ${m.name} editorissa">
+                    <a class="frame" href="../preview.html?mob=${id}" title="Open ${m.name} in editor">
                         <img class="day" src="${id}.png" alt="${m.name}" loading="lazy" />
                         ${nightImg}
                         ${tier ? `<span class="tier">${tier}</span>` : ''}
-                        <span class="edit">Muokkaa</span>
-                        <span class="badge">${m.size != null ? m.size.toFixed(1).replace('.', ',') + ' lohkoa' : ''}</span>
+                        <span class="edit">Edit</span>
+                        <span class="badge">${m.size != null ? m.size.toFixed(1) + ' blocks' : ''}</span>
                     </a>
                     <figcaption>${m.name}</figcaption>
                 </figure>`;
@@ -341,11 +341,11 @@ function writeGalleryPage(renderedMobs, wantDay, wantNight, failed) {
         ? `<p class="warn">${failed.length} mobia epäonnistui: ${failed.map(m => m.name).join(', ')}</p>`
         : '';
     const html = `<!doctype html>
-<html lang="fi">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mob-galleria — ${mobs.length} mobia</title>
+<title>Mob Gallery — ${mobs.length} mobs</title>
 <style>
   body { margin: 0; padding: 24px; background: #1b1e23; color: #e9eaec;
          font: 14px/1.45 system-ui, -apple-system, sans-serif; }
@@ -391,21 +391,21 @@ function writeGalleryPage(renderedMobs, wantDay, wantNight, failed) {
 </style>
 </head>
 <body>
-  <h1>Freebuff Mob Studio — kirjasto <a class="toplink" href="../preview.html">← Avaa editorissa</a></h1>
-  <p class="sub">${mobs.length} mobia · renderöity sovelluksen omalla renderöinnillä (${wantDay ? 'päivä' : ''}${wantDay && wantNight ? ' + ' : ''}${wantNight ? 'yö' : ''}) · klikkaa korttia avataksesi mobin editorissa</p>
+  <h1>Freebuff Mob Studio — Library <a class="toplink" href="../preview.html">← Open in editor</a></h1>
+  <p class="sub">${mobs.length} mobs · rendered with the app's own renderer (${wantDay ? 'day' : ''}${wantDay && wantNight ? ' + ' : ''}${wantNight ? 'night' : ''}) · click a card to open the mob in the editor</p>
   <div class="toolbar">
-    <input id="filter-search" type="search" placeholder="Hae mobia…" oninput="applyFilter()" autocomplete="off" />
-    <select id="filter-size" onchange="applyFilter()" title="Kokoluokka">
-      <option value="all">Kaikki koot</option>
-      <option value="jatti">Jättiläinen (≥8.5)</option>
-      <option value="iso">Iso (4–8.5)</option>
-      <option value="keski">Keskikoko (1.5–4)</option>
-      <option value="pieni">Pieni (&lt;1.5)</option>
+    <input id="filter-search" type="search" placeholder="Search mobs…" oninput="applyFilter()" autocomplete="off" />
+    <select id="filter-size" onchange="applyFilter()" title="Size">
+      <option value="all">All sizes</option>
+      <option value="jatti">Giant (≥8.5)</option>
+      <option value="iso">Large (4–8.5)</option>
+      <option value="keski">Medium (1.5–4)</option>
+      <option value="pieni">Small (&lt;1.5)</option>
     </select>
-    ${wantDay && wantNight ? `<button id="btn-day" class="active" onclick="document.body.classList.remove('night');this.classList.add('active');document.getElementById('btn-night').classList.remove('active')">Päivä</button>
-    <button id="btn-night" onclick="document.body.classList.add('night');this.classList.add('active');document.getElementById('btn-day').classList.remove('active')">Yö</button>` : ''}
+    ${wantDay && wantNight ? `<button id="btn-day" class="active" onclick="document.body.classList.remove('night');this.classList.add('active');document.getElementById('btn-night').classList.remove('active')">Day</button>
+    <button id="btn-night" onclick="document.body.classList.add('night');this.classList.add('active');document.getElementById('btn-day').classList.remove('active')">Night</button>` : ''}
   </div>
-  <p id="no-results" class="no-results" hidden>Ei tuloksia — kokeile toista hakua tai poista suodattimet.</p>
+  <p id="no-results" class="no-results" hidden>No results — try a different search or clear the filters.</p>
   ${failNote}
   ${sections}
 <script>

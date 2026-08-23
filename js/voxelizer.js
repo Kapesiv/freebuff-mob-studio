@@ -312,7 +312,7 @@ function parseMTL(text) {
 async function trisFromOBJ(objBytes, aux) {
     const text = new TextDecoder().decode(objBytes);
     const parsed = parseOBJ(text);
-    if (!parsed.verts.length || !parsed.faces.length) throw new Error('OBJ:ssä ei ole geometriaa (v/f-rivejä)');
+    if (!parsed.verts.length || !parsed.faces.length) throw new Error('OBJ has no geometry (v/f rows)');
     // aux: { name -> bytes }; find .mtl referenced by mtllib
     let mtlText = null, imgBytes = null, imgName = null;
     const m = text.match(/^mtllib\s+(.+)$/mi);
@@ -356,7 +356,7 @@ async function trisFromOBJ(objBytes, aux) {
         }
         tris.push({ a: va, b: vb, c: vc, color });
     }
-    if (!tris.length) throw new Error('OBJ:ssä ei ole kolmioita');
+    if (!tris.length) throw new Error('OBJ has no triangles');
     return tris;
 }
 
@@ -823,7 +823,7 @@ export async function voxelizeModel(files, opts = {}) {
         const aux = entries.map(([fn, b]) => ({ name: fn, bytes: new Uint8Array(b) }));
         tris = await trisFromOBJ(new Uint8Array(obj[1]), aux);
     } else {
-        throw new Error('Tiedostojen joukossa ei ole .glb- eikä .obj-tiedostoa');
+        throw new Error('No .glb or .obj file in the selection');
     }
     if (!tris.length) throw new Error('Mallissa ei ole kolmioita');
 

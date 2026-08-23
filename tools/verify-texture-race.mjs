@@ -240,7 +240,7 @@ function scenarioScript(scenario) {
             const s = window.__MOB_STUDIO;
             if (!s || !s.renderer) { window.__SHOT_DONE = { ok: false, msg: 'studio not ready' }; return; }
             const click = () => {
-                const b = [...document.querySelectorAll('.mob-btn')].find(x => x.textContent.startsWith(EMOJI + NAME));
+                const b = [...document.querySelectorAll('.mob-btn')].find(x => x.textContent.startsWith(NAME));
                 if (!b) throw new Error('card not found: ' + NAME);
                 b.click();
             };

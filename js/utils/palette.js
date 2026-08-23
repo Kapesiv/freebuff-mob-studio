@@ -6,7 +6,7 @@
 export const PALETTE_CATEGORIES = [
     {
         id: 'skin',
-        name: 'Ihonsävyt',
+        name: 'Skin Tones',
         colors: [
             '#FFF0E1', '#FFDDB8', '#F1C27D', '#E0AC69',
             '#C68642', '#A5662D', '#8D5524', '#6B4226',
@@ -15,7 +15,7 @@ export const PALETTE_CATEGORIES = [
     },
     {
         id: 'wool',
-        name: 'Villa',
+        name: 'Wool',
         colors: [
             '#E9ECEC', '#F07613', '#BD44B3', '#3AAFD9',
             '#F8C627', '#70B919', '#ED8DAC', '#3E4447',
@@ -25,7 +25,7 @@ export const PALETTE_CATEGORIES = [
     },
     {
         id: 'nature',
-        name: 'Luonto',
+        name: 'Nature',
         colors: [
             '#7CBD4B', '#3D8B37', '#2F6B2F', '#8B5A2B',
             '#6B4F2F', '#E8D9A0', '#7E7E7E', '#3F76E4',

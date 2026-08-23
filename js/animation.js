@@ -44,7 +44,7 @@ export function initAnimation(state, callbacks) {
         if (on) {
             anim.playing = false;
             el.play.textContent = '▶';
-            if (callbacks.onMessage) callbacks.onMessage('Asentotila: klikkaa osaa 3D:ssä ja kääntele luuta — pose tallentuu keyframeksi automaattisesti');
+            if (callbacks.onMessage) callbacks.onMessage('Pose mode: click a part in 3D and rotate the bone — the pose saves as a keyframe automatically');
         } else {
             if (callbacks.onMessage) callbacks.onMessage('Asentotila pois');
         }
@@ -306,7 +306,7 @@ export function initAnimation(state, callbacks) {
             poseClipboard[boneData.name] = capturePoseValue(boneData, group);
             count++;
         }
-        if (callbacks.onMessage) callbacks.onMessage(`Copy Pose: ${count} luun asento (+ positio) tallennettu leikepöydälle (frame ${Math.round(anim.time)})`);
+        if (callbacks.onMessage) callbacks.onMessage(`Copy Pose: pose of ${count} bones (+ position) copied (frame ${Math.round(anim.time)})`);
         return count;
     }
 
@@ -329,7 +329,7 @@ export function initAnimation(state, callbacks) {
 
     function pastePose() {
         if (!poseClipboard || Object.keys(poseClipboard).length === 0) {
-            if (callbacks.onMessage) callbacks.onMessage('Copy Pose ensin — leikepöytä on tyhjä');
+            if (callbacks.onMessage) callbacks.onMessage('Copy Pose first — clipboard is empty');
             return 0;
         }
         const frame = Math.round(anim.time);
@@ -353,7 +353,7 @@ export function initAnimation(state, callbacks) {
             if (selectedBone && count === 1) {
                 callbacks.onMessage(`Paste Pose: ${selectedBone} liimattu frameen ${frame}`);
             } else {
-                callbacks.onMessage(`Paste Pose: ${count} luun keyframe lisätty frameen ${frame}`);
+                callbacks.onMessage(`Paste Pose: keyframe added for ${count} bones at frame ${frame}`);
             }
         }
         if (callbacks.onAnimationChange) callbacks.onAnimationChange();
@@ -451,7 +451,7 @@ export function initAnimation(state, callbacks) {
         }
         redrawKeys();
         applyPose();
-        if (callbacks.onMessage) callbacks.onMessage(`Mirror Pose: ${count} luuta peilattu frameen ${frame}`);
+        if (callbacks.onMessage) callbacks.onMessage(`Mirror Pose: ${count} bones mirrored at frame ${frame}`);
         if (callbacks.onAnimationChange) callbacks.onAnimationChange();
         return count;
     }

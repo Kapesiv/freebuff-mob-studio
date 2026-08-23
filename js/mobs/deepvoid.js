@@ -10,7 +10,7 @@ export const DEEP_VOID_MOBS = [
         "id": "weaver_of_souls",
         "name": "Weaver of Souls",
         "emoji": "🧵",
-        "description": "Deep Voidin oikea pääbossi — oikea malli, tekstuuri ja animaatiot (MIT-lisenssi, The Deep Void -modista)",
+        "description": "Deep Void's true main boss — real model, textures and animations (MIT license, from The Deep Void mod)",
         "model": {
             "modelId": "geometry.weaver_of_souls",
             "textureWidth": 256,
@@ -8737,7 +8737,7 @@ export const DEEP_VOID_MOBS = [
         "id": "chained_weaver",
         "name": "Chained Weaver",
         "emoji": "⛓️",
-        "description": "Weaver Of Souls kahlittuna Sepulcheriin — roikkuu kahleissa (9 osumaa rikkoo kahleet)",
+        "description": "Weaver of Souls chained in the Sepulcher — hangs in chains (9 hits break the chains)",
         "model": {
             "modelId": "geometry.chained_weaver",
             "textureWidth": 256,
@@ -13217,7 +13217,7 @@ export const DEEP_VOID_MOBS = [
         "id": "stalker",
         "name": "Stalker",
         "emoji": "👁️",
-        "description": "Deep Voidin ikoninen Stalker — pitkä tumma luurankohumanoidi, hehkuvat valkoiset silmät, siipimäiset raajat (oikeat assetit modin JARista, MIT)",
+        "description": "Deep Void's iconic Stalker — tall dark skeletal humanoid, glowing white eyes, wing-like limbs (real assets from the mod's JAR, MIT)",
         "model": {
             "modelId": "geometry.stalker_animated",
             "textureWidth": 128,
@@ -17836,7 +17836,7 @@ export const DEEP_VOID_MOBS = [
         "id": "stalker_new",
         "name": "Stalker (New)",
         "emoji": "🕷️",
-        "description": "Modin nykyinen Stalker-versio — kyykkivä metsästäjä kynsiraajoineen (oikeat assetit modin JARista, MIT)",
+        "description": "The mod's current Stalker version — a crouching hunter with claw limbs (real assets from the mod's JAR, MIT)",
         "model": {
             "modelId": "geometry.stalker_new",
             "textureWidth": 128,
@@ -26086,7 +26086,7 @@ export const DEEP_VOID_MOBS = [
         "id": "primordial_bone_crawler",
         "name": "Primordial Bone Crawler",
         "emoji": "🦴",
-        "description": "Jättiläinen luinen raato — Deep Voidin uumenien alkukantainen metsästäjä (14 animaatiota, lentää)",
+        "description": "Giant bone carcass — the primordial hunter of Deep Void's depths (14 animations, flies)",
         "model": {
             "modelId": "geometry.primordialBoneCrawler",
             "textureWidth": 256,
@@ -39364,7 +39364,7 @@ export const DEEP_VOID_MOBS = [
         "id": "false_hydra",
         "name": "False Hydra",
         "emoji": "🐍",
-        "description": "Kauhuklassikko: valtava monipäinen hydra, jonka laulu pyyhkii muistot (107 luuta)",
+        "description": "Horror classic: a huge multi-headed hydra whose song erases memories (107 bones)",
         "model": {
             "modelId": "geometry.falseHydra",
             "textureWidth": 256,
@@ -62809,7 +62809,7 @@ export const DEEP_VOID_MOBS = [
         "id": "bringer_of_despair",
         "name": "Bringer of Despair",
         "emoji": "💀",
-        "description": "Epätoivon tuoja — 64 luun bossi, jolla on omat guard/attack-asennot",
+        "description": "Bringer of Despair — a 64-bone boss with its own guard/attack poses",
         "model": {
             "modelId": "geometry.bringerOfDespair",
             "textureWidth": 128,
@@ -77154,7 +77154,7 @@ export const DEEP_VOID_MOBS = [
         "id": "apostle_of_catastrophe",
         "name": "Apostle of Catastrophe",
         "emoji": "⚔️",
-        "description": "Katastrofin apostoli — veitsiä heittelevä bossi, 23 animaatiota (block/pierce/spin/teleport…)",
+        "description": "Apostle of Catastrophe — a knife-throwing boss, 23 animations (block/pierce/spin/teleport…)",
         "model": {
             "modelId": "geometry.apostleOfCatastrophe",
             "textureWidth": 128,
@@ -95715,7 +95715,7 @@ export const DEEP_VOID_MOBS = [
         "id": "executioner",
         "name": "Executioner",
         "emoji": "🪓",
-        "description": "Pyöveli — iso kirvestä heiluttava teloittaja (grab/slash/stunned)",
+        "description": "Executioner — a big axe-wielding executioner (grab/slash/stunned)",
         "model": {
             "modelId": "geometry.executioner",
             "textureWidth": 128,
@@ -100916,7 +100916,7 @@ export const DEEP_VOID_MOBS = [
         "id": "maniac",
         "name": "Maniac",
         "emoji": "🔪",
-        "description": "Maniakki — juokseva veitsimies, hehkuvat silmät (6 animaatiota)",
+        "description": "Maniac — a running knifeman with glowing eyes (6 animations)",
         "model": {
             "modelId": "geometry.maniac",
             "textureWidth": 128,
@@ -106499,7 +106499,7 @@ export const DEEP_VOID_MOBS = [
         "id": "hive_watcher",
         "name": "Hive Watcher",
         "emoji": "🐝",
-        "description": "Pesän vartija — 56 luuta, liitää ja pyörii (spin/glide/spawn)",
+        "description": "Hive Watcher — 56 bones, glides and spins (spin/glide/spawn)",
         "model": {
             "modelId": "geometry.hiveWatcher",
             "textureWidth": 256,
@@ -114024,7 +114024,7 @@ export const DEEP_VOID_MOBS = [
         "id": "eye_centipede",
         "name": "Eye Centipede",
         "emoji": "🐛",
-        "description": "Silmätuhatjalkainen — 66 luuta, kaivautuu ja käy kimppuun (idle/walk/aggressive/hidden/crawlOut)",
+        "description": "Eye Centipede — 66 bones, burrows and attacks (idle/walk/aggressive/hidden/crawlOut)",
         "model": {
             "modelId": "geometry.eyeCentipede",
             "textureWidth": 256,
@@ -127458,7 +127458,7 @@ export const DEEP_VOID_MOBS = [
         "id": "cave_nightmare",
         "name": "Cave Nightmare",
         "emoji": "👁️",
-        "description": "Luolan painajainen — varjoissa hiipivä peto stealth-idlellä (10 animaatiota)",
+        "description": "Cave Nightmare — a beast stalking in the shadows with a stealth idle (10 animations)",
         "model": {
             "modelId": "geometry.caveNightmare",
             "textureWidth": 128,
@@ -133797,7 +133797,7 @@ export const DEEP_VOID_MOBS = [
         "id": "hunter",
         "name": "Hunter",
         "emoji": "🏹",
-        "description": "Metsästäjä — jousella varustettu vainooja (52 luuta, shoot/jump/walk/aggressive)",
+        "description": "Hunter — a bow-wielding stalker (52 bones, shoot/jump/walk/aggressive)",
         "model": {
             "modelId": "geometry.hunterTrue",
             "textureWidth": 256,
@@ -142042,7 +142042,7 @@ export const DEEP_VOID_MOBS = [
         "id": "abductor",
         "name": "Abductor",
         "emoji": "👽",
-        "description": "Sieppaaja — nappaa uhrinsa ja kuljettaa pois (walk/idle)",
+        "description": "Abductor — grabs its victim and carries them away (walk/idle)",
         "model": {
             "modelId": "geometry.abductor",
             "textureWidth": 64,
@@ -143542,7 +143542,7 @@ export const DEEP_VOID_MOBS = [
         "id": "alpha_bone_crawler",
         "name": "Alpha Bone Crawler",
         "emoji": "🐲",
-        "description": "Alpha Bone Crawler — luurankopedin alfa (idle/walk/attack, 256×256)",
+        "description": "Alpha Bone Crawler — the alpha of the bone pack (idle/walk/attack, 256×256)",
         "model": {
             "modelId": "geometry.alphaCrawlerRemodel",
             "textureWidth": 256,
@@ -146955,7 +146955,7 @@ export const DEEP_VOID_MOBS = [
         "id": "beholder",
         "name": "Beholder",
         "emoji": "👁️",
-        "description": "Beholder — leijuva silmäpallo (idle)",
+        "description": "Beholder — a floating eyeball (idle)",
         "model": {
             "modelId": "geometry.beholder",
             "textureWidth": 64,
@@ -147291,7 +147291,7 @@ export const DEEP_VOID_MOBS = [
         "id": "big_eye",
         "name": "Big Eye",
         "emoji": "👀",
-        "description": "Big Eye — jättiläissilmä (spawn/idle)",
+        "description": "Big Eye — a giant eye (spawn/idle)",
         "model": {
             "modelId": "geometry.bigEye",
             "textureWidth": 64,
@@ -148029,7 +148029,7 @@ export const DEEP_VOID_MOBS = [
         "id": "bog_walker",
         "name": "Bog Walker",
         "emoji": "🧟",
-        "description": "Bog Walker — suon kulkija (idle/walk)",
+        "description": "Bog Walker — a bog wanderer (idle/walk)",
         "model": {
             "modelId": "geometry.bogWalker",
             "textureWidth": 256,
@@ -150634,7 +150634,7 @@ export const DEEP_VOID_MOBS = [
         "id": "bone_cage",
         "name": "Bone Cage",
         "emoji": "🦴",
-        "description": "Bone Cage — luinen häkki, joka nappaa uhrinsa (open/catch/close)",
+        "description": "Bone Cage — a bone cage that traps its victim (open/catch/close)",
         "model": {
             "modelId": "geometry.boneCage",
             "textureWidth": 64,
@@ -151188,7 +151188,7 @@ export const DEEP_VOID_MOBS = [
         "id": "bone_crawler",
         "name": "Bone Crawler",
         "emoji": "🦴",
-        "description": "Bone Crawler — luinen ryömijä (idle/walk/attack/dig/out)",
+        "description": "Bone Crawler — a bone crawler (idle/walk/attack/dig/out)",
         "model": {
             "modelId": "geometry.boneCrawlerRemodel",
             "textureWidth": 64,
@@ -154724,7 +154724,7 @@ export const DEEP_VOID_MOBS = [
         "id": "cross_eyes",
         "name": "Cross Eyes",
         "emoji": "👁️",
-        "description": "Cross Eyes — ristisilmä (spawn/idle)",
+        "description": "Cross Eyes — cross-eyed (spawn/idle)",
         "model": {
             "modelId": "geometry.crossEyes",
             "textureWidth": 64,
@@ -156126,7 +156126,7 @@ export const DEEP_VOID_MOBS = [
         "id": "damned",
         "name": "Damned",
         "emoji": "😵",
-        "description": "Damned — tuomittu (spawn/idle)",
+        "description": "Damned — condemned (spawn/idle)",
         "model": {
             "modelId": "geometry.damned",
             "textureWidth": 64,
@@ -157352,7 +157352,7 @@ export const DEEP_VOID_MOBS = [
         "id": "death_maw",
         "name": "Death Maw",
         "emoji": "🦷",
-        "description": "Death Maw — kuoleman kita, hehkuva kita (idle/attack/walk/aggressive)",
+        "description": "Death Maw — the maw of death, glowing maw (idle/attack/walk/aggressive)",
         "model": {
             "modelId": "geometry.deathMaw",
             "textureWidth": 256,
@@ -160573,7 +160573,7 @@ export const DEEP_VOID_MOBS = [
         "id": "devourer",
         "name": "Devourer",
         "emoji": "🐲",
-        "description": "Devourer — ahnas nielijä (idle/walk/attack)",
+        "description": "Devourer — a voracious swallower (idle/walk/attack)",
         "model": {
             "modelId": "geometry.devourer",
             "textureWidth": 128,
@@ -162228,7 +162228,7 @@ export const DEEP_VOID_MOBS = [
         "id": "everhunger",
         "name": "Everhunger",
         "emoji": "🫦",
-        "description": "Everhunger — ikuinen nälkä (idle/walk/attack)",
+        "description": "Everhunger — eternal hunger (idle/walk/attack)",
         "model": {
             "modelId": "geometry.everhunger",
             "textureWidth": 128,
@@ -163899,7 +163899,7 @@ export const DEEP_VOID_MOBS = [
         "id": "flesh_cube",
         "name": "Flesh Cube",
         "emoji": "🟥",
-        "description": "Flesh Cube — lihakuutio (idle/walk)",
+        "description": "Flesh Cube — a cube of flesh (idle/walk)",
         "model": {
             "modelId": "geometry.fleshCube",
             "textureWidth": 128,
@@ -164156,7 +164156,7 @@ export const DEEP_VOID_MOBS = [
         "id": "flesh_fangs",
         "name": "Flesh Fangs",
         "emoji": "🦷",
-        "description": "Flesh Fangs — lihahampaat (appear/idle/caught/death)",
+        "description": "Flesh Fangs — flesh fangs (appear/idle/caught/death)",
         "model": {
             "modelId": "geometry.fleshFangs",
             "textureWidth": 64,
@@ -164469,7 +164469,7 @@ export const DEEP_VOID_MOBS = [
         "id": "flesh_lamprey",
         "name": "Flesh Lamprey",
         "emoji": "🐟",
-        "description": "Flesh Lamprey — lihanahkiainen (walk/swim/agressive/attack)",
+        "description": "Flesh Lamprey — a flesh lamprey (walk/swim/agressive/attack)",
         "model": {
             "modelId": "geometry.fleshLamprey",
             "textureWidth": 128,
@@ -165176,7 +165176,7 @@ export const DEEP_VOID_MOBS = [
         "id": "flesh_worm",
         "name": "Flesh Worm",
         "emoji": "🪱",
-        "description": "Flesh Worm — lihamato (10 animaatiota: eat/tail/swipe/air/dig)",
+        "description": "Flesh Worm — a flesh worm (10 animations: eat/tail/swipe/air/dig)",
         "model": {
             "modelId": "geometry.fleshWorm",
             "textureWidth": 256,
@@ -171957,7 +171957,7 @@ export const DEEP_VOID_MOBS = [
         "id": "fool_eater",
         "name": "Fool Eater",
         "emoji": "😈",
-        "description": "Fool Eater — houkkien syöjä, hehkuvat silmät (idle/walk/attack)",
+        "description": "Fool Eater — eater of fools, glowing eyes (idle/walk/attack)",
         "model": {
             "modelId": "geometry.foolEater",
             "textureWidth": 256,
@@ -174067,7 +174067,7 @@ export const DEEP_VOID_MOBS = [
         "id": "forsaken",
         "name": "Forsaken",
         "emoji": "👤",
-        "description": "Forsaken — hylätty, hehkuva (8 animaatiota: block/run/hide/dig)",
+        "description": "Forsaken — abandoned, glowing (8 animations: block/run/hide/dig)",
         "model": {
             "modelId": "geometry.forsaken",
             "textureWidth": 128,
@@ -180138,7 +180138,7 @@ export const DEEP_VOID_MOBS = [
         "id": "four_eyes",
         "name": "Four Eyes",
         "emoji": "👁️",
-        "description": "Four Eyes — nelisilmä (spawn/idle)",
+        "description": "Four Eyes — four-eyed (spawn/idle)",
         "model": {
             "modelId": "geometry.fourEyes",
             "textureWidth": 64,
@@ -182455,7 +182455,7 @@ export const DEEP_VOID_MOBS = [
         "id": "gaoler",
         "name": "Gaoler",
         "emoji": "⛓️",
-        "description": "Gaoler — vanginvartija (idle/attackCage/attack/walk/agressive)",
+        "description": "Gaoler — a jailer (idle/attackCage/attack/walk/agressive)",
         "model": {
             "modelId": "geometry.gaoler",
             "textureWidth": 128,
@@ -185253,7 +185253,7 @@ export const DEEP_VOID_MOBS = [
         "id": "giant_shadow_hand",
         "name": "Giant Shadow Hand",
         "emoji": "🖐️",
-        "description": "Giant Shadow Hand — jättiläiskäsi varjoista (beforeSpawn/spawn/despawn/idle/attack)",
+        "description": "Giant Shadow Hand — a giant hand from the shadows (beforeSpawn/spawn/despawn/idle/attack)",
         "model": {
             "modelId": "geometry.giantShadowHand",
             "textureWidth": 256,
@@ -185945,7 +185945,7 @@ export const DEEP_VOID_MOBS = [
         "id": "gore_spitter",
         "name": "Gore Spitter",
         "emoji": "🤮",
-        "description": "Gore Spitter — kaaoksen sylkijä (aggressive/walk/idle)",
+        "description": "Gore Spitter — spitter of chaos (aggressive/walk/idle)",
         "model": {
             "modelId": "geometry.goreSpitter",
             "textureWidth": 128,
@@ -187450,7 +187450,7 @@ export const DEEP_VOID_MOBS = [
         "id": "gravekeeper",
         "name": "Gravekeeper",
         "emoji": "⚰️",
-        "description": "Gravekeeper — haudanvartija (idle/walk/run/eat/dash/attack)",
+        "description": "Gravekeeper — a grave warden (idle/walk/run/eat/dash/attack)",
         "model": {
             "modelId": "geometry.gravekeeper",
             "textureWidth": 128,
@@ -190293,7 +190293,7 @@ export const DEEP_VOID_MOBS = [
         "id": "harvestmen",
         "name": "Harvestmen",
         "emoji": "🕷️",
-        "description": "Harvestmen — pitkäjalkainen peto, myös ylösalaisin (7 animaatiota)",
+        "description": "Harvestmen — a long-legged beast, also upside down (7 animations)",
         "model": {
             "modelId": "geometry.harvestmen",
             "textureWidth": 256,
@@ -198505,7 +198505,7 @@ export const DEEP_VOID_MOBS = [
         "id": "hive_brain",
         "name": "Hive Brain",
         "emoji": "🧠",
-        "description": "Hive Brain — pesän aivot (idle/death)",
+        "description": "Hive Brain — the hive's brain (idle/death)",
         "model": {
             "modelId": "geometry.hiveBrain",
             "textureWidth": 128,
@@ -199025,7 +199025,7 @@ export const DEEP_VOID_MOBS = [
         "id": "hive_fangs",
         "name": "Hive Fangs",
         "emoji": "🐝",
-        "description": "Hive Fangs — pesän hampaat (spawn/idle)",
+        "description": "Hive Fangs — the hive's fangs (spawn/idle)",
         "model": {
             "modelId": "geometry.hiveFangs",
             "textureWidth": 128,
@@ -199443,7 +199443,7 @@ export const DEEP_VOID_MOBS = [
         "id": "hivemind",
         "name": "Hivemind",
         "emoji": "🧠",
-        "description": "Hivemind — yhteismieli (9 animaatiota: suck/digest/emerge/projectile)",
+        "description": "Hivemind — a collective mind (9 animations: suck/digest/emerge/projectile)",
         "model": {
             "modelId": "geometry.hivemindRework",
             "textureWidth": 256,
@@ -204222,7 +204222,7 @@ export const DEEP_VOID_MOBS = [
         "id": "hollowed",
         "name": "Hollowed",
         "emoji": "🕳️",
-        "description": "Hollowed — onttoutunut (idle/walk/attack/summonVines/scream)",
+        "description": "Hollowed — hollowed out (idle/walk/attack/summonVines/scream)",
         "model": {
             "modelId": "geometry.hollowed",
             "textureWidth": 128,
@@ -207902,7 +207902,7 @@ export const DEEP_VOID_MOBS = [
         "id": "licker",
         "name": "Licker",
         "emoji": "👅",
-        "description": "Licker — nuolija (idle/stun/pull/eat)",
+        "description": "Licker — a licker (idle/stun/pull/eat)",
         "model": {
             "modelId": "geometry.lickerRemodeled",
             "textureWidth": 128,
@@ -208560,7 +208560,7 @@ export const DEEP_VOID_MOBS = [
         "id": "lurker",
         "name": "Lurker",
         "emoji": "🐾",
-        "description": "Lurker — väijyjä (idle/attack/passive)",
+        "description": "Lurker — an ambusher (idle/attack/passive)",
         "model": {
             "modelId": "geometry.lurker",
             "textureWidth": 128,
@@ -211931,7 +211931,7 @@ export const DEEP_VOID_MOBS = [
         "id": "mad_cultist",
         "name": "Mad Cultist",
         "emoji": "🔮",
-        "description": "Mad Cultist — hullu kultisti (10 animaatiota: slash/stab/block/shoot)",
+        "description": "Mad Cultist — a mad cultist (10 animations: slash/stab/block/shoot)",
         "model": {
             "modelId": "geometry.madCultist",
             "textureWidth": 128,
@@ -215069,7 +215069,7 @@ export const DEEP_VOID_MOBS = [
         "id": "void_fly_maggot",
         "name": "Void Fly Maggot",
         "emoji": "🪱",
-        "description": "Void Fly Maggot — toukka (idle/walk/attack)",
+        "description": "Void Fly Maggot — a maggot (idle/walk/attack)",
         "model": {
             "modelId": "geometry.maggot",
             "textureWidth": 32,
@@ -215349,7 +215349,7 @@ export const DEEP_VOID_MOBS = [
         "id": "mother_bone_crawler",
         "name": "Mother Bone Crawler",
         "emoji": "🦴",
-        "description": "Mother Bone Crawler — luurankoemo (idle/walk/attack/hatch)",
+        "description": "Mother Bone Crawler — the bone mother (idle/walk/attack/hatch)",
         "model": {
             "modelId": "geometry.motherCrawlerRemodel",
             "textureWidth": 256,
@@ -219456,7 +219456,7 @@ export const DEEP_VOID_MOBS = [
         "id": "mourner",
         "name": "Mourner",
         "emoji": "🥀",
-        "description": "Mourner — sureja (walk/idle)",
+        "description": "Mourner — a mourner (walk/idle)",
         "model": {
             "modelId": "geometry.mourner",
             "textureWidth": 128,
@@ -220614,7 +220614,7 @@ export const DEEP_VOID_MOBS = [
         "id": "multiple_eyes",
         "name": "Multiple Eyes",
         "emoji": "👁️",
-        "description": "Multiple Eyes — silmäkimppu (spawn/idle)",
+        "description": "Multiple Eyes — a cluster of eyes (spawn/idle)",
         "model": {
             "modelId": "geometry.multipleEyes",
             "textureWidth": 64,
@@ -223719,7 +223719,7 @@ export const DEEP_VOID_MOBS = [
         "id": "overseer",
         "name": "Overseer",
         "emoji": "👁️",
-        "description": "Overseer — valvoja (idle/walk/aggressive/attack)",
+        "description": "Overseer — a watcher (idle/walk/aggressive/attack)",
         "model": {
             "modelId": "geometry.overseer",
             "textureWidth": 128,
@@ -226133,7 +226133,7 @@ export const DEEP_VOID_MOBS = [
         "id": "penitent",
         "name": "Penitent",
         "emoji": "🙏",
-        "description": "Penitent — katumuksentekijä (idle/agressive/walk/slash/pray)",
+        "description": "Penitent — a penitent (idle/agressive/walk/slash/pray)",
         "model": {
             "modelId": "geometry.penitent",
             "textureWidth": 128,
@@ -230129,7 +230129,7 @@ export const DEEP_VOID_MOBS = [
         "id": "preserver",
         "name": "Preserver",
         "emoji": "🧪",
-        "description": "Preserver — säilöjä (idle/walk/aggressive/attackBlock/cling)",
+        "description": "Preserver — a preserver (idle/walk/aggressive/attackBlock/cling)",
         "model": {
             "modelId": "geometry.preserver",
             "textureWidth": 128,
@@ -234400,7 +234400,7 @@ export const DEEP_VOID_MOBS = [
         "id": "prison_guard",
         "name": "Prison Guard",
         "emoji": "🪖",
-        "description": "Prison Guard — vankilan vartija (9 animaatiota: dodge/lunge/roll/attack/push)",
+        "description": "Prison Guard — a prison warden (9 animations: dodge/lunge/roll/attack/push)",
         "model": {
             "modelId": "geometry.prisonGuard",
             "textureWidth": 74,
@@ -239752,7 +239752,7 @@ export const DEEP_VOID_MOBS = [
         "id": "rooted",
         "name": "Rooted",
         "emoji": "🌿",
-        "description": "Rooted — juurtunut, hehkuva (idle/walk/attack)",
+        "description": "Rooted — rooted, glowing (idle/walk/attack)",
         "model": {
             "modelId": "geometry.rooted",
             "textureWidth": 128,
@@ -240887,7 +240887,7 @@ export const DEEP_VOID_MOBS = [
         "id": "rotten_corpse",
         "name": "Rotten Corpse",
         "emoji": "🧟",
-        "description": "Rotten Corpse — mätä ruumis (idle/attack/walk)",
+        "description": "Rotten Corpse — a rotten corpse (idle/attack/walk)",
         "model": {
             "modelId": "geometry.rottenCorpse",
             "textureWidth": 64,
@@ -242024,7 +242024,7 @@ export const DEEP_VOID_MOBS = [
         "id": "saw_thrower",
         "name": "Saw Thrower",
         "emoji": "🪚",
-        "description": "Saw Thrower — sahanheittäjä (idle/spin/teleport/out/walk/shoot)",
+        "description": "Saw Thrower — a saw thrower (idle/spin/teleport/out/walk/shoot)",
         "model": {
             "modelId": "geometry.sawThrower",
             "textureWidth": 64,
@@ -245910,7 +245910,7 @@ export const DEEP_VOID_MOBS = [
         "id": "scarecrow",
         "name": "Scarecrow",
         "emoji": "🧑‍🌾",
-        "description": "Scarecrow — variksenpelätin (idle/walk/aggressive)",
+        "description": "Scarecrow — a scarecrow (idle/walk/aggressive)",
         "model": {
             "modelId": "geometry.scarecrow",
             "textureWidth": 128,
@@ -247319,7 +247319,7 @@ export const DEEP_VOID_MOBS = [
         "id": "soulseeker",
         "name": "Soulseeker (Seeker)",
         "emoji": "🪽",
-        "description": "Soulseeker — siipinen sielunmetsästäjä, hehkuvat silmät (idle/walk/attack/aggressive/hidden/out)",
+        "description": "Soulseeker — a winged soul hunter with glowing eyes (idle/walk/attack/aggressive/hidden/out)",
         "model": {
             "modelId": "geometry.seeker",
             "textureWidth": 64,
@@ -249040,7 +249040,7 @@ export const DEEP_VOID_MOBS = [
         "id": "shadow_hand",
         "name": "Shadow Hand",
         "emoji": "✋",
-        "description": "Shadow Hand — varjokäsi (idle/attack/exit/enter)",
+        "description": "Shadow Hand — a shadow hand (idle/attack/exit/enter)",
         "model": {
             "modelId": "geometry.shadowHand",
             "textureWidth": 64,
@@ -249614,7 +249614,7 @@ export const DEEP_VOID_MOBS = [
         "id": "skull_smasher",
         "name": "Skull Smasher",
         "emoji": "💀",
-        "description": "Skull Smasher — kallionmurskaaja (idle/walk/dash/attack/slash/out)",
+        "description": "Skull Smasher — a skull crusher (idle/walk/dash/attack/slash/out)",
         "model": {
             "modelId": "geometry.skullSmasher",
             "textureWidth": 128,
@@ -252095,7 +252095,7 @@ export const DEEP_VOID_MOBS = [
         "id": "small_flesh_cube",
         "name": "Small Flesh Cube",
         "emoji": "🟫",
-        "description": "Small Flesh Cube — pieni lihakuutio (idle/walk)",
+        "description": "Small Flesh Cube — a small cube of flesh (idle/walk)",
         "model": {
             "modelId": "geometry.smallFleshCube",
             "textureWidth": 64,
@@ -252362,7 +252362,7 @@ export const DEEP_VOID_MOBS = [
         "id": "spore_spewer",
         "name": "Spore Spewer",
         "emoji": "🍄",
-        "description": "Spore Spewer — itiöiden sylkijä (idle/walk/spew/attack)",
+        "description": "Spore Spewer — a spore spitter (idle/walk/spew/attack)",
         "model": {
             "modelId": "geometry.sporeSpewer",
             "textureWidth": 64,
@@ -254233,7 +254233,7 @@ export const DEEP_VOID_MOBS = [
         "id": "spitter_crawler",
         "name": "Spitter Crawler",
         "emoji": "🦴",
-        "description": "Spitter Crawler — sylkijäryömijä (idle/walk/attack/dig/out)",
+        "description": "Spitter Crawler — a spitting crawler (idle/walk/attack/dig/out)",
         "model": {
             "modelId": "geometry.spitterCrawlerRemodel",
             "textureWidth": 64,
@@ -257829,7 +257829,7 @@ export const DEEP_VOID_MOBS = [
         "id": "swarmer",
         "name": "Swarmer",
         "emoji": "🦟",
-        "description": "Swarmer — parviötökkä (fly)",
+        "description": "Swarmer — a swarm bug (fly)",
         "model": {
             "modelId": "geometry.swarmer",
             "textureWidth": 128,
@@ -258445,7 +258445,7 @@ export const DEEP_VOID_MOBS = [
         "id": "thumper",
         "name": "Thumper",
         "emoji": "🐘",
-        "description": "Thumper — jyskyttäjä (idle)",
+        "description": "Thumper — a thumper (idle)",
         "model": {
             "modelId": "geometry.thumper",
             "textureWidth": 64,
@@ -258717,7 +258717,7 @@ export const DEEP_VOID_MOBS = [
         "id": "tombstone",
         "name": "Dooming Tombstone",
         "emoji": "🪦",
-        "description": "Dooming Tombstone — tuomitseva hautakivi, hehkuva (despawn/fall/idle)",
+        "description": "Dooming Tombstone — a condemning tombstone, glowing (despawn/fall/idle)",
         "model": {
             "modelId": "geometry.tombstone",
             "textureWidth": 64,
@@ -260269,7 +260269,7 @@ export const DEEP_VOID_MOBS = [
         "id": "void_tentacle",
         "name": "Void Tentacle",
         "emoji": "🐙",
-        "description": "Void Tentacle — tyhjyyden lonkero (idle/aggressive/attack)",
+        "description": "Void Tentacle — a tentacle of the void (idle/aggressive/attack)",
         "model": {
             "modelId": "geometry.voidTentacle",
             "textureWidth": 128,
@@ -261281,7 +261281,7 @@ export const DEEP_VOID_MOBS = [
         "id": "voidborn_tentacles",
         "name": "Voidborn Tentacles",
         "emoji": "🦑",
-        "description": "Voidborn Tentacles — tyhjyyssyntyiset lonkerot (spawn/despawn/idle)",
+        "description": "Voidborn Tentacles — tentacles born of the void (spawn/despawn/idle)",
         "model": {
             "modelId": "geometry.voidbornTentacles",
             "textureWidth": 32,
@@ -262951,7 +262951,7 @@ export const DEEP_VOID_MOBS = [
         "id": "void_fly",
         "name": "Void Fly",
         "emoji": "🪰",
-        "description": "Void Fly — tyhjyyskärpänen (idle/attack/land)",
+        "description": "Void Fly — a void fly (idle/attack/land)",
         "model": {
             "modelId": "geometry.voidFly",
             "textureWidth": 64,
@@ -265571,7 +265571,7 @@ export const DEEP_VOID_MOBS = [
         "id": "void_watcher",
         "name": "Void Watcher",
         "emoji": "👁️",
-        "description": "Void Watcher — tyhjyyden tarkkailija (idle/walk/attack)",
+        "description": "Void Watcher — a watcher of the void (idle/walk/attack)",
         "model": {
             "modelId": "geometry.voidWatcher",
             "textureWidth": 64,
@@ -267003,7 +267003,7 @@ export const DEEP_VOID_MOBS = [
         "id": "death_vulture",
         "name": "Death Vulture",
         "emoji": "🦅",
-        "description": "Death Vulture — kuolonkorppikotka, hehkuva (idle/walk/aggressive/attack/dash)",
+        "description": "Death Vulture — a death vulture, glowing (idle/walk/aggressive/attack/dash)",
         "model": {
             "modelId": "geometry.deathVulture",
             "textureWidth": 128,
@@ -269466,7 +269466,7 @@ export const DEEP_VOID_MOBS = [
         "id": "wanderer",
         "name": "Wanderer",
         "emoji": "🥾",
-        "description": "Wanderer — vaeltaja (idle/walk/die)",
+        "description": "Wanderer — a wanderer (idle/walk/die)",
         "model": {
             "modelId": "geometry.wanderer",
             "textureWidth": 128,
