@@ -838,12 +838,13 @@ function readTextureColor(tx, ty) {
 // näkyvään kahvaan (ylä = korkeus, kylki = leveys, taka = pituus).
 // Skaalaus tapahtuu koko mallille (luut + kuutiot), joten osat pysyvät
 // kiinni pinnoissa. Kahvojen veto näyttää live-koot blokkeina.
-const RESHAPE_HANDLE_COLORS = { x: '#f44336', y: '#4caf50', z: '#2196f3' };
+const RESHAPE_HANDLE_COLORS = { x: '#f44336', y: '#4caf50', z: '#2196f3', center: '#ffeb3b' };
 let reshapeActive = false;
 let reshapeStart = null;      // kopio vedon alusta (undo + palautus)
 let reshapeLastXY = null;
-let reshapeAxis = null;       // 'x' | 'y' | 'z' | null (kahva vs vapaa veto)
+let reshapeAxis = null;       // 'x' | 'y' | 'z' | 'center' | null
 let reshapeHandleGroup = null;
+let reshapeTranslateOrigin = null; // [x, y, z] keskipisteen alkupositio
 
 function scaleModelAxis(axis, factor, pivot) {
     for (const bone of state.model.bones) {
@@ -899,6 +900,16 @@ function ensureReshapeHandles() {
         g.add(stem, grip);
         group.add(g);
     }
+    // Keskipiste-kahva (keltainen kuutio) — vedä liikuttaa koko olentoa
+    const centerG = new THREE.Group();
+    centerG.userData.axis = 'center';
+    const centerMesh = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshStandardMaterial({ color: RESHAPE_HANDLE_COLORS.center, emissive: RESHAPE_HANDLE_COLORS.center, emissiveIntensity: 0.8, roughness: 0.3, transparent: true, opacity: 0.85 })
+    );
+    centerMesh.userData.axis = 'center';
+    centerG.add(centerMesh);
+    group.add(centerG);
     reshapeHandleGroup = group;
     return group;
 }
@@ -932,6 +943,13 @@ function updateReshapeHandles() {
     hz.position.set(cx, cy, bb.mx[2] + off);
     hz.scale.setScalar(hs);
     hz.children[0].scale.set(0.35, 0.35, 1.6); // varsi
+    // Center (siirto): mallin keskellä
+    const hc = h('center');
+    if (hc) {
+        hc.position.set(cx, cy, cz);
+        const cs = Math.max(0.8, Math.min(3, diag * 0.02));
+        hc.scale.setScalar(cs);
+    }
 }
 
 function showReshapeHandles(on) {
@@ -953,9 +971,14 @@ function reshapeHitHandle(e) {
     mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
     const hits = raycaster.intersectObjects(reshapeHandleGroup.children, true);
+    // Keskipiste (center) on etusijalla
     for (const hit of hits) {
         const axis = hit.object.userData.axis || (hit.object.parent && hit.object.parent.userData.axis);
-        if (axis) return axis;
+        if (axis === 'center') return 'center';
+    }
+    for (const hit of hits) {
+        const axis = hit.object.userData.axis || (hit.object.parent && hit.object.parent.userData.axis);
+        if (axis && axis !== 'center') return axis;
     }
     return null;
 }
@@ -966,8 +989,16 @@ function reshapeBegin(e, axis) {
     reshapeStart = JSON.parse(JSON.stringify(state.model));
     state.history.push(JSON.parse(JSON.stringify(state.model)));
     reshapeLastXY = [e.clientX, e.clientY];
-    const s = reshapeBlockSize();
-    reshapeSetReadout(`${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks`);
+    if (axis === 'center') {
+        // Tallenna keskipiste alkuperäisistä luupivoista
+        const bb = modelBBox();
+        reshapeTranslateOrigin = [(bb.mn[0] + bb.mx[0]) / 2, (bb.mn[1] + bb.mx[1]) / 2, (bb.mn[2] + bb.mx[2]) / 2];
+        reshapeSetReadout('Move (drag to translate)');
+    } else {
+        reshapeTranslateOrigin = null;
+        const s = reshapeBlockSize();
+        reshapeSetReadout(`${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks`);
+    }
 }
 
 function reshapeMove(e) {
@@ -975,8 +1006,34 @@ function reshapeMove(e) {
     const dx = e.clientX - reshapeLastXY[0];
     const dy = e.clientY - reshapeLastXY[1];
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-    const clampF = (v) => Math.max(0.35, Math.min(2.5, v));
+    reshapeLastXY = [e.clientX, e.clientY];
     const axis = reshapeAxis;
+
+    // Keskipiste = siirto (translate)
+    if (axis === 'center' && reshapeTranslateOrigin) {
+        state.model = JSON.parse(JSON.stringify(reshapeStart));
+        // Projisoi hiiren liike kamera-tasolta X/Z-akseleille + Y suoraan
+        const camRight = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+        camRight.y = 0; camRight.normalize();
+        const moveScale = 0.15;
+        const worldDX = -dx * moveScale;
+        const worldDY = dy * moveScale;
+        const offX = worldDX * camRight.x;
+        const offZ = worldDX * camRight.z;
+        const offY = worldDY;
+        for (const bone of state.model.bones) {
+            bone.pivot[0] += offX;
+            bone.pivot[1] += offY;
+            bone.pivot[2] += offZ;
+        }
+        rebuildModel();
+        updateReshapeHandles();
+        const bb = modelBBox();
+        reshapeSetReadout(`Move — ${offX.toFixed(2)}, ${offY.toFixed(2)}, ${offZ.toFixed(2)}`);
+        return;
+    }
+
+    const clampF = (v) => Math.max(0.35, Math.min(2.5, v));
     // Ylös-veto (dy < 0) kasvattaa korkeutta → miinusmerkki y-akselilla
     const fx = (axis === 'x') ? clampF(1 + dx * 0.012) : ((axis === null) ? clampF(1 + dx * 0.012) : 1);
     const fy = (axis === 'y') ? clampF(1 - dy * 0.012) : ((axis === null) ? clampF(1 - dy * 0.012) : 1);
@@ -1003,6 +1060,7 @@ function reshapeEnd() {
     reshapeStart = null;
     reshapeLastXY = null;
     reshapeAxis = null;
+    reshapeTranslateOrigin = null;
     // Pyöristä luvut siisteiksi ja tallenna
     for (const bone of state.model.bones) {
         bone.pivot = bone.pivot.map(v => round2(v));
@@ -1015,7 +1073,7 @@ function reshapeEnd() {
     checkRenderConsistency();
     updateReshapeHandles();
     const s = reshapeBlockSize();
-    setStatus(`Reshaped — now ${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks. Drag the green/red/blue handles or free-drag on the model (Shift = length)`);
+    setStatus(`Reshaped — now ${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks. Drag handles (green/red/blue = scale, yellow = move) or free-drag (Shift = length)`);
     reshapeReadoutTimer = setTimeout(() => reshapeSetReadout(null), 900);
 }
 
@@ -2895,7 +2953,7 @@ function setTool(tool) {
         }
         if (tool === 'reshape') {
             showReshapeHandles(true);
-            setStatus('Reshape — drag the handles (top = height · side = width · back = length) or drag on the model: up/down = height · left/right = width · Shift = length');
+            setStatus('Reshape — drag handles (green = height · red = width · blue = length · yellow center = move) or free-drag on the model: up/down = height · left/right = width · Shift = length');
         } else if (tool === 'face') {
             setStatus('Face details — click an eye / mouth / snout part, then drag to slide it across the head surface');
         }
