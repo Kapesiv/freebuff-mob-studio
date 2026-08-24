@@ -39,6 +39,7 @@ const state = {
     projectName: 'My Mob',
     selectedBone: null,
     selectedCube: null,
+    selectedCubes: [],         // monivalinta: globaalit kuutioindeksit (shift+klikkaa)
     selectedFace: null,
     selectedPart: null,        // Spore-osa (luuryhmä) valittuna — koko osan muokkaus
     partRootGroup: null,       // osan juuriluun THREE.Group (gizmo kohde)
@@ -46,6 +47,7 @@ const state = {
     tool: 'select',
     bones: [],       // THREE.Group per bone
     cubes: [],       // THREE.Mesh per cube
+    locatorMeshes: [], // THREE.Mesh per locator (kiinnityspisteen merkit)
     texture: null,       // THREE.Texture (nullable)
     textureCanvas: null, // 2D canvas — source of truth for painting
     textureDataURL: null,
@@ -453,8 +455,8 @@ function onMouseClick(event) {
                 return;
             }
         }
-        selectCube(mesh);
-    } else {
+        selectCube(mesh, event.shiftKey);
+    } else if (!event.shiftKey) {
         deselectAll();
     }
 }
@@ -892,12 +894,15 @@ function ensureReshapeHandles() {
             new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.7 })
         );
         stem.userData.axis = axis;
+        stem.userData.baseEmissive = 0.7;
         const grip = new THREE.Mesh(
             new THREE.OctahedronGeometry(1, 0),
             new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.9, roughness: 0.3 })
         );
         grip.userData.axis = axis;
+        grip.userData.baseEmissive = 0.9;
         g.add(stem, grip);
+        g.userData.baseScale = null; // asetetaan updateReshapeHandles:ssa
         group.add(g);
     }
     // Keskipiste-kahva (keltainen kuutio) — vedä liikuttaa koko olentoa
@@ -908,7 +913,9 @@ function ensureReshapeHandles() {
         new THREE.MeshStandardMaterial({ color: RESHAPE_HANDLE_COLORS.center, emissive: RESHAPE_HANDLE_COLORS.center, emissiveIntensity: 0.8, roughness: 0.3, transparent: true, opacity: 0.85 })
     );
     centerMesh.userData.axis = 'center';
+    centerMesh.userData.baseEmissive = 0.8;
     centerG.add(centerMesh);
+    centerG.userData.baseScale = null; // asetetaan updateReshapeHandles:ssa
     group.add(centerG);
     reshapeHandleGroup = group;
     return group;
@@ -932,16 +939,19 @@ function updateReshapeHandles() {
     const hy = h('y');
     hy.position.set(cx, bb.mx[1] + off, cz);
     hy.scale.setScalar(hs);
+    hy.userData.baseScale = hs;
     hy.children[0].scale.set(0.35, 1.6, 0.35); // varsi
     // X (leveys): oikealla kyljellä
     const hx = h('x');
     hx.position.set(bb.mx[0] + off, cy, cz);
     hx.scale.setScalar(hs);
+    hx.userData.baseScale = hs;
     hx.children[0].scale.set(1.6, 0.35, 0.35); // varsi
     // Z (pituus): takana keskellä
     const hz = h('z');
     hz.position.set(cx, cy, bb.mx[2] + off);
     hz.scale.setScalar(hs);
+    hz.userData.baseScale = hs;
     hz.children[0].scale.set(0.35, 0.35, 1.6); // varsi
     // Center (siirto): mallin keskellä
     const hc = h('center');
@@ -949,6 +959,7 @@ function updateReshapeHandles() {
         hc.position.set(cx, cy, cz);
         const cs = Math.max(0.8, Math.min(3, diag * 0.02));
         hc.scale.setScalar(cs);
+        hc.userData.baseScale = cs;
     }
 }
 
@@ -961,6 +972,43 @@ function showReshapeHandles(on) {
         scene.remove(group);
     }
     if (!on) reshapeSetReadout(null);
+    reshapeSetHover(null);
+}
+
+let reshapeHoverAxis = null;   // 'x' | 'y' | 'z' | 'center' | null
+
+/** Hover-korostus: pienennä ja kirkasta kahvaa, vaihda kursori. */
+function reshapeSetHover(axis) {
+    const group = reshapeHandleGroup;
+    // Nollaa edellinen korostus
+    if (reshapeHoverAxis && reshapeHoverAxis !== axis && group) {
+        const prev = group.children.find(c => c.userData.axis === reshapeHoverAxis);
+        if (prev) {
+            const bs = prev.userData.baseScale;
+            if (bs) prev.scale.setScalar(bs);
+            prev.traverse(o => {
+                if (o.userData && o.userData.baseEmissive != null && o.material) {
+                    o.material.emissiveIntensity = o.userData.baseEmissive;
+                }
+            });
+        }
+    }
+    reshapeHoverAxis = axis;
+    if (axis && group) {
+        const cur = group.children.find(c => c.userData.axis === axis);
+        if (cur) {
+            const bs = cur.userData.baseScale;
+            if (bs) cur.scale.setScalar(bs * 0.8); // pienennä hoverissa
+            cur.traverse(o => {
+                if (o.userData && o.userData.baseEmissive != null && o.material) {
+                    o.material.emissiveIntensity = o.userData.baseEmissive * 1.8;
+                }
+            });
+        }
+        canvas.style.cursor = 'pointer';
+    } else {
+        canvas.style.cursor = (state && state.tool === 'reshape') ? 'move' : '';
+    }
 }
 
 /** Osuuko veto kahvaan? Palauttaa akselin ('x'|'y'|'z') tai null. */
@@ -989,6 +1037,7 @@ function reshapeBegin(e, axis) {
     reshapeStart = JSON.parse(JSON.stringify(state.model));
     state.history.push(JSON.parse(JSON.stringify(state.model)));
     reshapeLastXY = [e.clientX, e.clientY];
+    canvas.style.cursor = 'grabbing';
     if (axis === 'center') {
         // Tallenna keskipiste alkuperäisistä luupivoista
         const bb = modelBBox();
@@ -1072,6 +1121,8 @@ function reshapeEnd() {
     scheduleAutosave();
     checkRenderConsistency();
     updateReshapeHandles();
+    // Kursori takaisin: jos hover jää päälle, palauta pointer (tai move)
+    canvas.style.cursor = (reshapeHoverAxis && reshapeHandleGroup) ? 'pointer' : 'move';
     const s = reshapeBlockSize();
     setStatus(`Reshaped — now ${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks. Drag handles (green/red/blue = scale, yellow = move) or free-drag (Shift = length)`);
     reshapeReadoutTimer = setTimeout(() => reshapeSetReadout(null), 900);
@@ -1252,34 +1303,92 @@ canvas.addEventListener('mousedown', (e) => {
 });
 canvas.addEventListener('mousemove', (e) => {
     if (state.tool === 'face') { faceDragMove(e); return; }
-    if (state.tool === 'reshape') { reshapeMove(e); return; }
+    if (state.tool === 'reshape') {
+        if (!reshapeActive) {
+            // Hover-tarkistus: korosta kahvaa ja vaihda kursori
+            reshapeSetHover(reshapeHitHandle(e));
+        } else {
+            canvas.style.cursor = 'grabbing';
+        }
+        reshapeMove(e);
+        return;
+    }
     if (!paint3D || state.tool !== 'paint') return;
     const p = paint3DAt(e);
     paint3DLine(paintLast, p);
     paintLast = p;
 });
 window.addEventListener('mouseup', () => { paint3D = false; paintLast = null; reshapeEnd(); faceDragEnd(); });
+canvas.addEventListener('mouseleave', () => { reshapeSetHover(null); });
 
 // ==================== SELECTION ====================
-function selectCube(mesh) {
+function selectCube(mesh, multi) {
     const idx = state.cubes.indexOf(mesh);
     if (idx === -1) return;
     const boneData = findBoneForCube(idx);
     // Spore-tyyli: klikkaus osan kuutioon valitsee KOKO osan (luuryhmän).
     // Kuutiotilassa (partFineTune) klikkaus valitsee yksittäisen kuution.
-    if (boneData && !state.partFineTune) {
+    // Shift+klikkaa ohittaa osan sieppauksen (monivalinta kuutioilla).
+    if (boneData && !state.partFineTune && !multi) {
         const inst = getPartInstanceForBone(boneData);
         if (inst) { selectPart(inst); return; }
     }
-    doSelectCube(idx);
+    doSelectCube(idx, multi);
 }
 
 /** Varsinainen yksittäiskuution valinta (ei osan sieppausta). */
-function doSelectCube(idx) {
+function doSelectCube(idx, multi) {
     const mesh = state.cubes[idx];
-    deselectAll();
     if (idx === -1 || !mesh) return;
 
+    const clearHighlight = () => {
+        for (const m of state.cubes) {
+            if (state.emissiveTexture) {
+                m.material.emissive.set(0xffffff);
+                m.material.emissiveIntensity = 1.0;
+            } else {
+                m.material.emissive.set(0x000000);
+                m.material.emissiveIntensity = 0;
+            }
+        }
+    };
+
+    if (multi) {
+        // Shift+klikkaa: lisää/poista monivalinnasta
+        const arr = state.selectedCubes || [];
+        const has = arr.includes(idx);
+        if (has) {
+            state.selectedCubes = arr.filter(i => i !== idx);
+        } else {
+            state.selectedCubes = [...arr, idx];
+        }
+        if (state.selectedCubes.length === 0) {
+            deselectAll();
+            return;
+        }
+        state.selectedCube = state.selectedCubes[0];
+        clearHighlight();
+        for (const i of state.selectedCubes) {
+            if (state.cubes[i]) {
+                state.cubes[i].material.emissive.set(0x2266aa);
+                state.cubes[i].material.emissiveIntensity = 0.3;
+            }
+        }
+        transformControls.attach(state.cubes[state.selectedCube]);
+        const cubeData = findCubeData(state.selectedCube);
+        const boneData = findBoneForCube(state.selectedCube);
+        if (boneData) {
+            state.selectedBone = state.model.bones.indexOf(boneData);
+            highlightBoneTree();
+        }
+        if (cubeData) showProperties(cubeData, boneData);
+        setStatus(`Selected ${state.selectedCubes.length} cubes — properties apply to all (Shift+click to toggle)`);
+        if (state.uvEditor) state.uvEditor.draw();
+        return;
+    }
+
+    state.selectedCubes = [];
+    deselectAll();
     state.selectedCube = idx;
     mesh.material.emissive.set(0x2266aa);
     mesh.material.emissiveIntensity = 0.3;
@@ -1369,6 +1478,7 @@ function updateBoneFromObject(group) {
 
 function deselectAll() {
     state.selectedCube = null;
+    state.selectedCubes = [];
     state.selectedBone = null;
     state.selectedFace = null;
     state.selectedPart = null;
@@ -1873,8 +1983,12 @@ function rebuildModel() {
     for (const group of state.bones) {
         scene.remove(group);
     }
+    for (const lm of state.locatorMeshes) {
+        scene.remove(lm);
+    }
     state.bones = [];
     state.cubes = [];
+    state.locatorMeshes = [];
 
     let cubeIdx = 0;
 
@@ -1902,18 +2016,26 @@ function rebuildModel() {
             // hehkuttaa valaistuksesta riippumatta — kuten pelin
             // glowRenderType-kerros. Ilman karttaa emissive on musta.
             const hasEmissive = !!state.emissiveTexture;
+            // Per-kuutio materiaali (Fase 6): opacity 0..1 ja emissive 0..3
+            // menevät kuutiodatasta materiaaliin. Oletus: teksturoitu = 1.0,
+            // väripohjainen = 0.85 (editorin vanha käytäntö).
+            const cubeOpacity = (typeof cubeData.opacity === 'number')
+                ? Math.max(0.05, Math.min(1, cubeData.opacity))
+                : (state.textureDataURL ? 1.0 : 0.85);
+            const cubeEmissive = (typeof cubeData.emissive === 'number')
+                ? Math.max(0, Math.min(3, cubeData.emissive))
+                : 0;
             const mat = new THREE.MeshStandardMaterial({
                 color: 0xffffff,
                 map: state.texture,
                 roughness: 0.7,
                 metalness: 0.1,
                 transparent: true,
-                // Teksturoidut mobit täysin läpinäkymättömiä (oikea ulkonäkö),
-                // väripohjaiset saavat hieman läpikuultavuutta editorissa.
-                opacity: state.textureDataURL ? 1.0 : 0.85,
-                emissive: hasEmissive ? 0xffffff : 0x000000,
+                opacity: cubeOpacity,
+                // Kuution oma emissive-kerros lisätään mobin glow-tekstuuriin
+                emissive: (hasEmissive || cubeEmissive > 0) ? 0xffffff : 0x000000,
                 emissiveMap: hasEmissive ? state.emissiveTexture : null,
-                emissiveIntensity: hasEmissive ? 1.0 : 0
+                emissiveIntensity: Math.max(hasEmissive ? 1.0 : 0, cubeEmissive)
             });
             applyBoxTextureUVs(geo, cubeData, state.model.textureWidth, state.model.textureHeight);
 
@@ -1965,6 +2087,37 @@ function rebuildModel() {
         }
         group.userData.basePosition = base;
         group.position.set(base[0], base[1], base[2]);
+    }
+
+    // Päivitä locator-lista (nimet voivat muuttua)
+    if (typeof renderLocatorList === 'function') renderLocatorList();
+
+    // 3) Locatorit: näkyvät kiinnityspisteen merkit (pieni kartio/kuutio)
+    const locGeo = new THREE.ConeGeometry(0.35, 0.8, 4);
+    const locMat = new THREE.MeshStandardMaterial({
+        color: 0x00bcd4,
+        emissive: 0x00bcd4,
+        emissiveIntensity: 0.8,
+        roughness: 0.4,
+        transparent: true,
+        opacity: 0.9
+    });
+    for (const loc of state.model.locators || []) {
+        const mesh = new THREE.Mesh(locGeo, locMat);
+        const boneIdx = state.model.bones.findIndex(b => b.name === (loc.bone || 'root'));
+        const pivot = boneIdx >= 0 ? state.model.bones[boneIdx].pivot : [0, 0, 0];
+        const pos = loc.position || [0, 0, 0];
+        // Locatorin positio on luun avaruudessa (bone-local) — renderöidään
+        // luun pivotista siirrettynä, jotta se osuu maailmassa oikein.
+        mesh.position.set(
+            pos[0] + pivot[0],
+            pos[1] + pivot[1],
+            pos[2] + pivot[2]
+        );
+        mesh.name = `locator_${loc.name}`;
+        mesh.userData.locatorName = loc.name;
+        scene.add(mesh);
+        state.locatorMeshes.push(mesh);
     }
 
     updateBoneTree();
@@ -2593,18 +2746,28 @@ function deleteSelected() {
         setStatus('Part deleted' + (names.size > inst.bones.length ? ` (${names.size / inst.bones.length} copies removed)` : ''));
         return;
     }
+    const multiIdx = (state.selectedCubes && state.selectedCubes.length) ? state.selectedCubes : null;
     if (state.selectedCube !== null) {
         state.history.push(state.model);
-        const cubeData = findCubeData(state.selectedCube);
-        const boneData = findBoneForCube(state.selectedBone);
-        if (boneData && cubeData) {
-            const cubeLocalIdx = boneData.cubes.indexOf(cubeData);
-            if (cubeLocalIdx !== -1) boneData.cubes.splice(cubeLocalIdx, 1);
+        const targets = multiIdx ? multiIdx : [state.selectedCube];
+        const byBone = new Map(); // boneData → [cubeData]
+        for (const idx of targets) {
+            const cd = findCubeData(idx);
+            const bd = findBoneForCube(idx);
+            if (!cd || !bd) continue;
+            if (!byBone.has(bd)) byBone.set(bd, []);
+            byBone.get(bd).push(cd);
+        }
+        for (const [boneData, cds] of byBone) {
+            for (const cd of cds) {
+                const cubeLocalIdx = boneData.cubes.indexOf(cd);
+                if (cubeLocalIdx !== -1) boneData.cubes.splice(cubeLocalIdx, 1);
+            }
         }
         deselectAll();
         rebuildModel();
         scheduleAutosave();
-        setStatus('Cube deleted');
+        setStatus(targets.length > 1 ? `${targets.length} cubes deleted` : 'Cube deleted');
     } else if (state.selectedBone !== null) {
         state.history.push(state.model);
         if (state.model.bones.length > 1) {
@@ -2724,6 +2887,17 @@ function showProperties(cubeData, boneData) {
     document.getElementById('prop-origin-z').value = boneData ? boneData.pivot[2] : 0;
     document.getElementById('prop-name').value = cubeData.name;
     document.getElementById('prop-color').value = cubeData.color || '#ffffff';
+    // Materiaali: näytä valitun kuution arvot (monivalinnassa ensimmäisen)
+    const opacity = (typeof cubeData.opacity === 'number') ? cubeData.opacity : 1;
+    const emissive = (typeof cubeData.emissive === 'number') ? cubeData.emissive : 0;
+    const oInp = document.getElementById('prop-opacity');
+    const oNum = document.getElementById('prop-opacity-num');
+    if (oInp) oInp.value = opacity;
+    if (oNum) oNum.value = opacity;
+    const eInp = document.getElementById('prop-emissive');
+    const eNum = document.getElementById('prop-emissive-num');
+    if (eInp) eInp.value = emissive;
+    if (eNum) eNum.value = emissive;
 }
 
 function updatePropertiesFromObject(mesh) {
@@ -2892,39 +3066,155 @@ function setupPropertyInputs() {
         'prop-name': (v, cd) => cd.name = v,
     };
 
+    /** Kaikki valitut kuutiot (monivalinta tai yksittäinen). */
+    function selectedCubeDatas() {
+        const list = [];
+        if (state.selectedCubes && state.selectedCubes.length) {
+            for (const idx of state.selectedCubes) {
+                const cd = findCubeData(idx);
+                if (cd) list.push(cd);
+            }
+        } else if (state.selectedCube !== null) {
+            const cd = findCubeData(state.selectedCube);
+            if (cd) list.push(cd);
+        }
+        return list;
+    }
+
     for (const [id, setter] of Object.entries(props)) {
         document.getElementById(id).addEventListener('change', (e) => {
-            if (state.selectedCube === null) return;
+            if (state.selectedCube === null && !(state.selectedCubes && state.selectedCubes.length)) return;
             state.history.push(state.model);
-            const cubeData = findCubeData(state.selectedCube);
-            if (cubeData) {
-                setter(e.target.value, cubeData);
-                rebuildModel();
-                // Kiinnitä gizmo uudelleen uuteen mesh-objektiin samalla indeksillä
-                if (state.selectedCube !== null && state.cubes[state.selectedCube]) {
-                    transformControls.attach(state.cubes[state.selectedCube]);
-                } else if (state.selectedBone !== null && state.bones[state.selectedBone]) {
-                    transformControls.attach(state.bones[state.selectedBone]);
-                }
-                scheduleAutosave();
+            const datas = selectedCubeDatas();
+            for (const cd of datas) setter(e.target.value, cd);
+            rebuildModel();
+            // Kiinnitä gizmo uudelleen uuteen mesh-objektiin samalla indeksillä
+            const focusIdx = (state.selectedCubes && state.selectedCubes.length) ? state.selectedCubes[0] : state.selectedCube;
+            if (focusIdx !== null && state.cubes[focusIdx]) {
+                transformControls.attach(state.cubes[focusIdx]);
+            } else if (state.selectedBone !== null && state.bones[state.selectedBone]) {
+                transformControls.attach(state.bones[state.selectedBone]);
             }
+            scheduleAutosave();
         });
     }
 
     // Cube color — refills the cube's face regions on the texture so the
     // color change is immediately visible in both UV editor and 3D view.
     document.getElementById('prop-color').addEventListener('input', (e) => {
-        if (state.selectedCube === null) return;
-        const cubeData = findCubeData(state.selectedCube);
-        if (cubeData) {
+        if (state.selectedCube === null && !(state.selectedCubes && state.selectedCubes.length)) return;
+        const datas = selectedCubeDatas();
+        for (const cubeData of datas) {
             cubeData.color = e.target.value;
             ensureTexture();
             fillCubeFaces(state.textureCanvas.getContext('2d'), cubeData, cubeData.color);
-            state.texture.needsUpdate = true;
-            if (state.uvEditor) state.uvEditor.draw();
-            scheduleAutosave();
         }
+        state.texture.needsUpdate = true;
+        if (state.uvEditor) state.uvEditor.draw();
+        scheduleAutosave();
     });
+
+    // Materiaali: läpinäkyvyys (opacity) + hehku (emissive) — live-päivitys
+    function bindMaterialInput(rangeId, numId, apply) {
+        const range = document.getElementById(rangeId);
+        const num = document.getElementById(numId);
+        if (!range || !num) return;
+        const commit = () => {
+            if (state.selectedCube === null && !(state.selectedCubes && state.selectedCubes.length)) return;
+            state.history.push(state.model);
+            const v = parseFloat(range.value);
+            for (const cd of selectedCubeDatas()) apply(cd, v);
+            num.value = v;
+            rebuildModel();
+            scheduleAutosave();
+        };
+        range.addEventListener('input', () => {
+            num.value = range.value;
+            const v = parseFloat(range.value);
+            for (const cd of selectedCubeDatas()) apply(cd, v);
+            if (state.uvEditor) state.uvEditor.draw();
+            rebuildModel();
+            scheduleAutosave();
+        });
+        range.addEventListener('change', commit);
+        num.addEventListener('change', () => {
+            const v = Math.max(parseFloat(num.value) || 0, 0.05);
+            range.value = v;
+            commit();
+        });
+    }
+    bindMaterialInput('prop-opacity', 'prop-opacity-num', (cd, v) => { cd.opacity = Math.max(0.05, Math.min(1, v)); });
+    bindMaterialInput('prop-emissive', 'prop-emissive-num', (cd, v) => { cd.emissive = Math.max(0, Math.min(3, v)); });
+}
+
+// ==================== LOCATORS (Blockbench-puoli) ====================
+// Kiinnityspisteet esineille/partikkeleille (esim. talutin, kädessä
+// pidettävä esine). Tallennetaan model.locators: [{ name, bone, position }]
+// ja viedään Bedrock-geometriaan per-luu `locators`-kenttään sekä
+// bbmodel-outlineriin locator-solmuina.
+function setupLocatorPanel() {
+    const list = document.getElementById('locator-list');
+    const addBtn = document.getElementById('btn-add-locator');
+    if (!list || !addBtn) return;
+
+    addBtn.addEventListener('click', () => {
+        state.history.push(state.model);
+        if (!Array.isArray(state.model.locators)) state.model.locators = [];
+        const bone = state.selectedBone !== null ? state.model.bones[state.selectedBone] : state.model.bones[0];
+        const pivot = bone ? bone.pivot : [0, 0, 0];
+        const n = state.model.locators.length + 1;
+        state.model.locators.push({
+            name: `locator_${n}`,
+            bone: bone ? bone.name : 'root',
+            // Oletus: luun pivot + pieni etäisyys eteenpäin (z-akseli),
+            // porrastettu sivusuunnassa jotta peräkkäiset eivät pinoudu
+            position: [pivot[0] + ((n - 1) % 3) * 2 - 2, pivot[1] + 4, pivot[2] - 4]
+        });
+        rebuildModel();
+        scheduleAutosave();
+        setStatus(`Added locator_${n} to ${bone ? bone.name : 'root'} — it follows the bone in animations`);
+    });
+
+    // Piirrä lista heti (rebuildModel kutsuu renderLocatorListia jatkossa)
+    renderLocatorList();
+}
+
+function renderLocatorList() {
+    const list = document.getElementById('locator-list');
+    if (!list) return;
+    const locs = state.model.locators || [];
+    list.querySelectorAll('.locator-row').forEach(el => el.remove());
+    for (let i = 0; i < locs.length; i++) {
+        const loc = locs[i];
+        const row = document.createElement('div');
+        row.className = 'locator-row';
+        row.style.cssText = 'display:flex;align-items:center;gap:4px;background:#232833;border:1px solid #3a4356;border-radius:6px;padding:3px 6px';
+        const name = document.createElement('input');
+        name.type = 'text';
+        name.value = loc.name;
+        name.style.cssText = 'flex:1;min-width:0;background:transparent;border:none;color:#eee;font-size:12px';
+        name.title = 'Locator name';
+        name.addEventListener('change', () => {
+            state.history.push(state.model);
+            loc.name = name.value.trim() || loc.name;
+            rebuildModel();
+            scheduleAutosave();
+        });
+        const del = document.createElement('button');
+        del.textContent = '✕';
+        del.title = 'Delete locator';
+        del.style.cssText = 'background:none;border:none;color:#f66;cursor:pointer;font-size:12px;padding:0 2px';
+        del.addEventListener('click', () => {
+            state.history.push(state.model);
+            state.model.locators.splice(i, 1);
+            rebuildModel();
+            scheduleAutosave();
+            renderLocatorList();
+        });
+        row.appendChild(name);
+        row.appendChild(del);
+        list.appendChild(row);
+    }
 }
 
 // ==================== TOOLBAR ====================
@@ -5583,6 +5873,7 @@ function setupUVEditor() {
 updateProjectNameLabel();
 setupToolbar();
 setupPropertyInputs();
+setupLocatorPanel();
 setupFileIO();
 setupLibrary();
 setupUVEditor();
@@ -5669,6 +5960,8 @@ window.__MOB_STUDIO.reshapeEnd = reshapeEnd;
 window.__MOB_STUDIO.reshapeHitHandle = reshapeHitHandle;
 window.__MOB_STUDIO.showReshapeHandles = showReshapeHandles;
 window.__MOB_STUDIO.updateReshapeHandles = updateReshapeHandles;
+window.__MOB_STUDIO.reshapeSetHover = reshapeSetHover;
+window.__MOB_STUDIO.reshapeHoverAxis = () => reshapeHoverAxis;
 window.__MOB_STUDIO.reshapeHandleGroup = null;
 window.__MOB_STUDIO.getReshapeHandleGroup = () => reshapeHandleGroup;
 window.__MOB_STUDIO.reshapeReadout = () => document.getElementById('reshape-readout');

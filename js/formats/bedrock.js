@@ -54,6 +54,17 @@ export function parseBedrockGeometry(json) {
         ?? (geometry.description && geometry.description.texture_height)
         ?? 64;
 
+    // Per-luu locatorit: { name: [x,y,z] } (myös rivinä [x,y,z] voi olla
+    // { offset: [x,y,z] } tai rivi [x,y,z,rot]). Yksinkertaistetaan riviin.
+    const locators = [];
+    for (const bone of (geometry.bones || [])) {
+        const ls = bone.locators || {};
+        for (const [name, raw] of Object.entries(ls)) {
+            const pos = Array.isArray(raw) ? raw.slice(0, 3) : (raw && raw.offset ? raw.offset.slice(0, 3) : [0, 0, 0]);
+            locators.push({ name, bone: bone.name, position: pos });
+        }
+    }
+
     const bones = (geometry.bones || []).map(bone => ({
         name: bone.name,
         parent: bone.parent || null,
@@ -86,6 +97,7 @@ export function parseBedrockGeometry(json) {
         visibleBoundsWidth: geometry.visible_bounds_width || 2,
         visibleBoundsHeight: geometry.visible_bounds_height || 2,
         visibleBoundsOffset: geometry.visible_bounds_offset || [0, 0, 0],
+        locators,
         bones
     };
 }
@@ -97,12 +109,22 @@ export function exportBedrockGeometry(model) {
         visible_bounds_width: model.visibleBoundsWidth || 2,
         visible_bounds_height: model.visibleBoundsHeight || 2,
         visible_bounds_offset: model.visibleBoundsOffset || [0, 0, 0],
-        bones: model.bones.map(bone => ({
-            name: bone.name,
-            ...(bone.parent ? { parent: bone.parent } : {}),
-            pivot: bone.pivot,
-            rotation: bone.rotation,
-            cubes: bone.cubes.map(cube => {
+        bones: model.bones.map(bone => {
+            const out = {
+                name: bone.name,
+                ...(bone.parent ? { parent: bone.parent } : {}),
+                pivot: bone.pivot,
+                rotation: bone.rotation
+            };
+            // Locatorit: ryhmitellään luun nimen mukaan
+            const boneLocators = (model.locators || []).filter(l => (l.bone || 'root') === bone.name);
+            if (boneLocators.length) {
+                out.locators = {};
+                for (const l of boneLocators) {
+                    out.locators[l.name] = [(l.position || [0, 0, 0])[0], (l.position || [0, 0, 0])[1], (l.position || [0, 0, 0])[2]];
+                }
+            }
+            out.cubes = bone.cubes.map(cube => {
                 const c = {
                     name: cube.name,
                     origin: cube.origin,       // absolute world coordinates
@@ -123,8 +145,9 @@ export function exportBedrockGeometry(model) {
                     c.uv = cube.uv;
                 }
                 return c;
-            })
-        }))
+            });
+            return out;
+        })
     };
 
     return {
@@ -140,6 +163,7 @@ export function createEmptyModel() {
         visibleBoundsWidth: 2,
         visibleBoundsHeight: 2,
         visibleBoundsOffset: [0, 0, 0],
+        locators: [],  // [{ name, bone, position: [x,y,z] }] — kiinnityspisteet
         bones: [
             {
                 name: 'root',

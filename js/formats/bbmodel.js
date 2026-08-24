@@ -46,6 +46,10 @@ function cubeToElement(cube) {
         type: 'cube',
         uuid: uuid(),
         mirror: !!cube.mirror,
+        // Materiaali: läpinäkyvyys + emissive (Blockbenchin color-kenttä + omat)
+        color: cube.color || '#ffffff',
+        ...(typeof cube.opacity === 'number' ? { opacity: cube.opacity } : {}),
+        ...(typeof cube.emissive === 'number' ? { emissive: cube.emissive } : {}),
     };
     const [u, v] = cubeUVOffset(cube);
     for (const f of ['north', 'east', 'south', 'west', 'up', 'down']) {
@@ -119,6 +123,17 @@ export function exportBBModel(model, opts = {}) {
         if (bone.rotation && bone.rotation.some((x) => x !== 0)) node.rotation = bone.rotation.map(round2);
         if (children.length) node.children = children;
         outliner.push(node);
+    }
+    // Locatorit: Blockbench-tyyliset outliner-solmut, joilla on pos/rot.
+    // Ne eivät ole elementtejä — vain nimetyt kiinnityspisteet.
+    for (const loc of model.locators || []) {
+        outliner.push({
+            name: loc.name,
+            uuid: uuid(),
+            origin: (loc.position || [0, 0, 0]).map(round2),
+            locator: true,
+            parent: loc.bone || 'root'
+        });
     }
     return {
         meta: { format_version: '4.9', model_format: 'bedrock', box_uv: true },
@@ -220,6 +235,19 @@ export function parseBBModel(json) {
         }
     }
 
+    // ---- locators ----------------------------------------------------
+    // Blockbench-tyyliset outliner-solmut { locator: true, origin, parent }
+    model.locators = [];
+    for (const node of (json.outliner || [])) {
+        if (node && node.locator) {
+            model.locators.push({
+                name: node.name || 'locator',
+                bone: node.parent || 'root',
+                position: Array.isArray(node.origin) ? node.origin.slice(0, 3) : [0, 0, 0]
+            });
+        }
+    }
+
     // ---- texture ------------------------------------------------------
     const texture = (json.textures || []).find(t => t.source);
     let textureDataURL = null;
@@ -295,8 +323,11 @@ function elementToCube(el, bonePivot) {
         size,
         rotation,
         uv: { offset: uvOffset },
-        mirror: !!el.mirror
+        mirror: !!el.mirror,
+        color: el.color || '#ffffff'
     };
+    if (typeof el.opacity === 'number') cube.opacity = Math.max(0.05, Math.min(1, el.opacity));
+    if (typeof el.emissive === 'number') cube.emissive = Math.max(0, Math.min(3, el.emissive));
     if (pivot) cube.pivot = pivot;
     return cube;
 }

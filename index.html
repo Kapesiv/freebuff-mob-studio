@@ -197,6 +197,26 @@
                             <label>Name</label>
                             <input type="text" id="prop-name" value="" placeholder="element_name">
                         </div>
+                        <div class="prop-group" id="prop-material-group">
+                            <label>Material</label>
+                            <div class="input-row">
+                                <label class="prop-mini">Opacity</label>
+                                <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="1" title="Transparency — lower is more see-through">
+                                <input type="number" id="prop-opacity-num" min="0.05" max="1" step="0.05" value="1" style="width:52px">
+                            </div>
+                            <div class="input-row">
+                                <label class="prop-mini">Glow</label>
+                                <input type="range" id="prop-emissive" min="0" max="3" step="0.1" value="0" title="Emissive intensity — glows independent of lighting">
+                                <input type="number" id="prop-emissive-num" min="0" max="3" step="0.1" value="0" style="width:52px">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel-section">
+                    <h3>Locators <button id="btn-add-locator" class="action-btn" style="float:right;padding:2px 8px" title="Add a locator (attachment point for items / particles)">+ Add</button></h3>
+                    <div id="locator-list" style="display:flex;flex-direction:column;gap:4px">
+                        <span style="opacity:.55;font-size:11px">Attachment points for items &amp; particles (e.g. leash, held items).</span>
                     </div>
                 </div>
 
