@@ -430,7 +430,7 @@ const mouse = new THREE.Vector2();
 
 function onMouseClick(event) {
     if (event.target !== canvas) return;
-    if (state.tool === 'paint' || state.tool === 'pipette') return; // ei valitse osia
+    if (state.tool === 'paint' || state.tool === 'pipette' || state.tool === 'face') return; // ei valitse osia
 
     const rect = canvas.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -834,11 +834,16 @@ function readTextureColor(tx, ty) {
 
 // ==================== RESHAPE (Spore-tyylinen vartalon muokkaus) ==========
 // Vedä muokataksesi koko olentoa: ylös/alas = korkeus (jalat pysyvät
-// maassa), vasen/oikea = leveys, Shift + veto = pituus. Skaalaus tapahtuu
-// koko mallille (luut + kuutiot), joten osat pysyvät kiinni pinnoissa.
+// maassa), vasen/oikea = leveys, Shift + veto = pituus — tai tartu
+// näkyvään kahvaan (ylä = korkeus, kylki = leveys, taka = pituus).
+// Skaalaus tapahtuu koko mallille (luut + kuutiot), joten osat pysyvät
+// kiinni pinnoissa. Kahvojen veto näyttää live-koot blokkeina.
+const RESHAPE_HANDLE_COLORS = { x: '#f44336', y: '#4caf50', z: '#2196f3' };
 let reshapeActive = false;
 let reshapeStart = null;      // kopio vedon alusta (undo + palautus)
 let reshapeLastXY = null;
+let reshapeAxis = null;       // 'x' | 'y' | 'z' | null (kahva vs vapaa veto)
+let reshapeHandleGroup = null;
 
 function scaleModelAxis(axis, factor, pivot) {
     for (const bone of state.model.bones) {
@@ -851,11 +856,118 @@ function scaleModelAxis(axis, factor, pivot) {
     }
 }
 
-function reshapeBegin(e) {
+function reshapeBlockSize() {
+    const bb = modelBBox();
+    return [
+        (bb.mx[0] - bb.mn[0]) / 16,
+        (bb.mx[1] - bb.mn[1]) / 16,
+        (bb.mx[2] - bb.mn[2]) / 16
+    ];
+}
+
+let reshapeReadoutTimer = null;
+function reshapeSetReadout(text) {
+    const el = document.getElementById('reshape-readout');
+    const span = document.getElementById('reshape-readout-text');
+    if (!el || !span) return;
+    if (reshapeReadoutTimer) { clearTimeout(reshapeReadoutTimer); reshapeReadoutTimer = null; }
+    span.textContent = text;
+    el.hidden = !text;
+}
+
+/** Luo kahvaryhmän (kerran): kolme tartuttavaa kahvaa mallin reunojen ulkopuolelle. */
+function ensureReshapeHandles() {
+    if (reshapeHandleGroup) return reshapeHandleGroup;
+    const group = new THREE.Group();
+    group.name = 'reshapeHandles';
+    group.renderOrder = 999;
+    for (const axis of ['y', 'x', 'z']) {
+        const color = RESHAPE_HANDLE_COLORS[axis];
+        const g = new THREE.Group();
+        g.userData.axis = axis;
+        // Varsi mallin reunasta kahvaan + tartuttava oktaedri päässä
+        const stem = new THREE.Mesh(
+            new THREE.BoxGeometry(0.4, 0.4, 0.4),
+            new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.7 })
+        );
+        stem.userData.axis = axis;
+        const grip = new THREE.Mesh(
+            new THREE.OctahedronGeometry(1, 0),
+            new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.9, roughness: 0.3 })
+        );
+        grip.userData.axis = axis;
+        g.add(stem, grip);
+        group.add(g);
+    }
+    reshapeHandleGroup = group;
+    return group;
+}
+
+/** Aseta kahvat mallin bbox-reunoille (kutsutaan aina kun malli muuttuu). */
+function updateReshapeHandles() {
+    const group = ensureReshapeHandles();
+    if (!scene.children.includes(group)) return;
+    const bb = modelBBox();
+    const cx = (bb.mn[0] + bb.mx[0]) / 2;
+    const cy = (bb.mn[1] + bb.mx[1]) / 2;
+    const cz = (bb.mn[2] + bb.mx[2]) / 2;
+    const diag = Math.sqrt(
+        (bb.mx[0] - bb.mn[0]) ** 2 + (bb.mx[1] - bb.mn[1]) ** 2 + (bb.mx[2] - bb.mn[2]) ** 2
+    ) || 1;
+    const hs = Math.max(1.2, Math.min(7, diag * 0.045)); // kahvan koko mallin mukaan
+    const off = hs * 1.9;                                 // etäisyys pinnasta
+    const h = (axis) => group.children.find(c => c.userData.axis === axis);
+    // Y (korkeus): ylhäällä keskellä
+    const hy = h('y');
+    hy.position.set(cx, bb.mx[1] + off, cz);
+    hy.scale.setScalar(hs);
+    hy.children[0].scale.set(0.35, 1.6, 0.35); // varsi
+    // X (leveys): oikealla kyljellä
+    const hx = h('x');
+    hx.position.set(bb.mx[0] + off, cy, cz);
+    hx.scale.setScalar(hs);
+    hx.children[0].scale.set(1.6, 0.35, 0.35); // varsi
+    // Z (pituus): takana keskellä
+    const hz = h('z');
+    hz.position.set(cx, cy, bb.mx[2] + off);
+    hz.scale.setScalar(hs);
+    hz.children[0].scale.set(0.35, 0.35, 1.6); // varsi
+}
+
+function showReshapeHandles(on) {
+    const group = ensureReshapeHandles();
+    if (on) {
+        if (!scene.children.includes(group)) scene.add(group);
+        updateReshapeHandles();
+    } else if (scene.children.includes(group)) {
+        scene.remove(group);
+    }
+    if (!on) reshapeSetReadout(null);
+}
+
+/** Osuuko veto kahvaan? Palauttaa akselin ('x'|'y'|'z') tai null. */
+function reshapeHitHandle(e) {
+    if (!reshapeHandleGroup || !scene.children.includes(reshapeHandleGroup)) return null;
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(reshapeHandleGroup.children, true);
+    for (const hit of hits) {
+        const axis = hit.object.userData.axis || (hit.object.parent && hit.object.parent.userData.axis);
+        if (axis) return axis;
+    }
+    return null;
+}
+
+function reshapeBegin(e, axis) {
     reshapeActive = true;
+    reshapeAxis = axis || null;
     reshapeStart = JSON.parse(JSON.stringify(state.model));
     state.history.push(JSON.parse(JSON.stringify(state.model)));
     reshapeLastXY = [e.clientX, e.clientY];
+    const s = reshapeBlockSize();
+    reshapeSetReadout(`${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks`);
 }
 
 function reshapeMove(e) {
@@ -864,10 +976,11 @@ function reshapeMove(e) {
     const dy = e.clientY - reshapeLastXY[1];
     if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
     const clampF = (v) => Math.max(0.35, Math.min(2.5, v));
+    const axis = reshapeAxis;
     // Ylös-veto (dy < 0) kasvattaa korkeutta → miinusmerkki y-akselilla
-    const fx = clampF(1 + dx * 0.012);
-    const fy = clampF(1 - dy * 0.012);
-    const fz = e.shiftKey ? clampF(1 + dx * 0.012) : 1;
+    const fx = (axis === 'x') ? clampF(1 + dx * 0.012) : ((axis === null) ? clampF(1 + dx * 0.012) : 1);
+    const fy = (axis === 'y') ? clampF(1 - dy * 0.012) : ((axis === null) ? clampF(1 - dy * 0.012) : 1);
+    const fz = (axis === 'z') ? clampF(1 + dx * 0.012) : ((axis === null && e.shiftKey) ? clampF(1 + dx * 0.012) : 1);
     // Palauta vedon alkutila ja sovella kumulatiiviset kertoimet
     state.model = JSON.parse(JSON.stringify(reshapeStart));
     const bb = modelBBox();
@@ -878,6 +991,10 @@ function reshapeMove(e) {
     if (fy !== 1) scaleModelAxis(1, fy, pivY);
     if (fz !== 1) scaleModelAxis(2, fz, pivZ);
     rebuildModel();
+    updateReshapeHandles();
+    const s = reshapeBlockSize();
+    const label = axis ? ` ${axis.toUpperCase()} ` : ' ';
+    reshapeSetReadout(`${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks${label ? ` — ${label.trim()}` : ''}`);
 }
 
 function reshapeEnd() {
@@ -885,6 +1002,7 @@ function reshapeEnd() {
     reshapeActive = false;
     reshapeStart = null;
     reshapeLastXY = null;
+    reshapeAxis = null;
     // Pyöristä luvut siisteiksi ja tallenna
     for (const bone of state.model.bones) {
         bone.pivot = bone.pivot.map(v => round2(v));
@@ -895,19 +1013,152 @@ function reshapeEnd() {
     }
     scheduleAutosave();
     checkRenderConsistency();
-    const bb = modelBBox();
-    setStatus(`Reshaped — now ${((bb.mx[0]-bb.mn[0])/16).toFixed(2)} × ${((bb.mx[1]-bb.mn[1])/16).toFixed(2)} × ${((bb.mx[2]-bb.mn[2])/16).toFixed(2)} blocks`);
+    updateReshapeHandles();
+    const s = reshapeBlockSize();
+    setStatus(`Reshaped — now ${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks. Drag the green/red/blue handles or free-drag on the model (Shift = length)`);
+    reshapeReadoutTimer = setTimeout(() => reshapeSetReadout(null), 900);
 }
 
 let paint3D = false;
 let paintLast = null;
+
+// ==================== FACE DETAILS (Spore-tyylinen kasvojen veto) ======
+// Face-tilassa silmä/suu-osa (kategoria 'päät', kiinnittyy head-luuhun)
+// valitaan klikkaamalla ja liu'utetaan hiirellä pitkin pään pintaa. Veto
+// tapahtuu kameran kanssa yhdensuuntaisella tasolla, liike projisoidaan
+// maailman X/Y-akseleille ja rajataan pään kasvojen rajoihin — osa ei
+// irtoa päästä eikä uppoa siihen (kuten Sporen kasvojen muokkaus).
+let faceDrag = null; // { inst, rootStart, appliedX, appliedY, ref, plane, moved }
+
+function isFaceDetail(inst) {
+    return !!inst && !!inst.part && inst.part.category === 'päät'
+        && inst.part.attach && inst.part.attach.bone === 'head';
+}
+
+function faceHeadRef() {
+    const bone = state.model.bones.find(b => /head/i.test(b.name));
+    if (!bone || !bone.cubes.length) return null;
+    return { bone, cube: bone.cubes[0] };
+}
+
+function partOffsetBounds(inst) {
+    // Osan kuutioiden minimi/maksimirajat PIVOTIN suhteen (origin − pivot).
+    // translatePartData siirtää originit pivotin mukana, joten suhteellinen
+    // geometria pysyy vakiona — näin osa pysyy pään sisällä myös kun se
+    // roikkuu pivotin yläpuolella (esim. silmät).
+    const b = { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity };
+    for (const bn of inst.bones) {
+        for (const c of bn.cubes) {
+            b.minX = Math.min(b.minX, c.origin[0] - bn.pivot[0]);
+            b.maxX = Math.max(b.maxX, c.origin[0] - bn.pivot[0] + c.size[0]);
+            b.minY = Math.min(b.minY, c.origin[1] - bn.pivot[1]);
+            b.maxY = Math.max(b.maxY, c.origin[1] - bn.pivot[1] + c.size[1]);
+        }
+    }
+    return b;
+}
+
+function faceDragBegin(e, inst) {
+    const ref = faceHeadRef();
+    if (!ref) { setStatus('Face details — this model has no head bone'); return; }
+    selectPart(inst);
+    const wpos = boneWorldPos(inst.root);
+    state.history.push(state.model);
+    faceDrag = {
+        inst, rootStart: wpos.slice(), appliedX: 0, appliedY: 0, ref,
+        startX: e.clientX, startY: e.clientY, moved: false
+    };
+}
+
+function faceDragMove(e) {
+    if (!faceDrag) return;
+    // Lineaarinen kamerakartoitus: pikseliveto → maailman siirtymä osan
+    // syvyydellä (2·tan(fov/2)·dist / korkeus). Ääretön taso vahvistaisi
+    // vinot säteet — tämä pysyy vakaana riippumatta vedon pituudesta.
+    const rect = canvas.getBoundingClientRect();
+    const s = faceDrag.rootStart;
+    const camPos = camera.position;
+    const dist = Math.sqrt(
+        (camPos.x - s[0]) ** 2 + (camPos.y - s[1]) ** 2 + (camPos.z - s[2]) ** 2
+    ) || 1;
+    const worldPerPx = (2 * Math.tan((camera.fov * Math.PI) / 360) * dist) / Math.max(1, rect.height);
+    const dxPx = e.clientX - faceDrag.startX;
+    const dyPx = e.clientY - faceDrag.startY;
+    const right = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1);
+    const dx = (right.x * dxPx - up.x * dyPx) * worldPerPx;
+    const dy = (right.y * dxPx - up.y * dyPx) * worldPerPx;
+    // dz (kameran syvyyssuunta) hylätään — osa liukuu vain pään pinnalla
+    const wp = faceDrag.rootStart;
+    // Rajaa pään kasvojen rajoihin (osan puolikkaan reunuksella). Kuution
+    // maailmarajat = luun maailmapositio + (origin − pivot) … + size.
+    const ref = faceDrag.ref;
+    const hb = boneWorldPos(ref.bone);
+    const bp = ref.bone.pivot;
+    const c = ref.cube;
+    const ob = partOffsetBounds(faceDrag.inst);
+    // Kuution maailmarajat = luun maailmapositio + (origin − pivot) … + size.
+    // Pivot clampataan niin, että osan kaikki kuutiot pysyvät pään sisällä:
+    //   pivot + osan_min ≥ pään_min  ja  pivot + osan_max ≤ pään_max
+    const bx = hb[0] + c.origin[0] - bp[0];
+    const by = hb[1] + c.origin[1] - bp[1];
+    const minX = bx - ob.minX;
+    const maxX = bx + c.size[0] - ob.maxX;
+    const minY = by - ob.minY;
+    const maxY = by + c.size[1] - ob.maxY;
+    let nx = wp[0] + dx;
+    let ny = wp[1] + dy;
+    if (maxX > minX) nx = Math.max(minX, Math.min(maxX, nx));
+    if (maxY > minY) ny = Math.max(minY, Math.min(maxY, ny));
+    const adx = nx - wp[0];
+    const ady = ny - wp[1];
+    if (Math.abs(adx - faceDrag.appliedX) < 1e-4 && Math.abs(ady - faceDrag.appliedY) < 1e-4) return;
+    faceDrag.moved = true;
+    // Palauta alku ja sovella kumulatiivinen siirtymä (kuten reshape)
+    const inst = faceDrag.inst;
+    translatePartData(inst, -faceDrag.appliedX, -faceDrag.appliedY, 0);
+    translatePartData(inst, adx, ady, 0);
+    faceDrag.appliedX = adx;
+    faceDrag.appliedY = ady;
+    syncPartToScene(inst);
+    scheduleAutosave();
+}
+
+function faceDragEnd() {
+    if (!faceDrag) return;
+    const moved = faceDrag.moved;
+    faceDrag = null;
+    if (moved) setStatus('Face detail repositioned — it stays on the head surface');
+}
+
 canvas.addEventListener('mousedown', (e) => {
     if (e.button !== 0) return;
-    // Reshape: koko malli venyy/pullistuu vedolla (kuten Sporen kehonmuokkaus)
+    // Face: klikkaus valitsee silmä/suu-osan ja veto liu'uttaa sitä pitkin pään pintaa
+    if (state.tool === 'face') {
+        e.preventDefault();
+        e.stopPropagation();
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(mouse, camera);
+        const hits = raycaster.intersectObjects(state.cubes, false);
+        if (hits.length) {
+            const boneData = findBoneForCube(state.cubes.indexOf(hits[0].object));
+            const inst = boneData ? getPartInstanceForBone(boneData) : null;
+            if (inst && isFaceDetail(inst)) {
+                faceDragBegin(e, inst);
+            } else if (boneData) {
+                setStatus('Face details — click an eye / mouth / snout part (Heads & Faces category) to move it');
+            }
+        }
+        return;
+    }
+    // Reshape: koko malli venyy/pullistuu vedolla (kuten Sporen kehonmuokkaus).
+    // Kahvaosumaan tartutaan akselikohtaisesti — muuten vapaa veto.
     if (state.tool === 'reshape') {
         e.preventDefault();
         e.stopPropagation();
-        reshapeBegin(e);
+        reshapeBegin(e, reshapeHitHandle(e));
         return;
     }
     // Väripipetti: yksi klikkaus poimii värin ja palaa maalaukseen
@@ -942,13 +1193,14 @@ canvas.addEventListener('mousedown', (e) => {
     paint3DSpot(paintLast);
 });
 canvas.addEventListener('mousemove', (e) => {
+    if (state.tool === 'face') { faceDragMove(e); return; }
     if (state.tool === 'reshape') { reshapeMove(e); return; }
     if (!paint3D || state.tool !== 'paint') return;
     const p = paint3DAt(e);
     paint3DLine(paintLast, p);
     paintLast = p;
 });
-window.addEventListener('mouseup', () => { paint3D = false; paintLast = null; reshapeEnd(); });
+window.addEventListener('mouseup', () => { paint3D = false; paintLast = null; reshapeEnd(); faceDragEnd(); });
 
 // ==================== SELECTION ====================
 function selectCube(mesh) {
@@ -1134,6 +1386,8 @@ function selectPart(inst) {
     if (state.partRootGroup) {
         if (state.tool === 'select') {
             setTool('scale'); // Spore-tyyli: osan valinta antaa heti skaalausgizmon
+        } else if (state.tool === 'face') {
+            // Face-tila: ei gizmoa — osaa vedetään hiirellä pitkin pään pintaa
         } else {
             transformControls.attach(state.partRootGroup);
         }
@@ -1678,6 +1932,10 @@ function rebuildModel() {
             state.partRootGroup = null;
             hidePartPanel();
         }
+    }
+    // Reshape-kahvat seuraavat mallia (vain kun työkalu on aktiivinen)
+    if (state.tool === 'reshape' && reshapeHandleGroup && scene.children.includes(reshapeHandleGroup)) {
+        updateReshapeHandles();
     }
     checkRenderConsistency();
 }
@@ -2626,19 +2884,23 @@ function setTool(tool) {
         transformControls.setMode('rotate');
     } else if (tool === 'scale') {
         transformControls.setMode('scale');
-    } else if (tool === 'paint' || tool === 'pipette' || tool === 'reshape') {
+    } else if (tool === 'paint' || tool === 'pipette' || tool === 'reshape' || tool === 'face') {
         transformControls.detach();
         canvas.style.cursor = tool === 'reshape' ? 'move' : 'crosshair';
-        // Näkymän pysäytys: maalaus-/pipetti-/reshape-tilassa kamera ei
+        // Näkymän pysäytys: maalaus-/pipetti-/reshape-/face-tilassa kamera ei
         // kierrä/zoomaa/panoroi — malli pysyy täysin paikallaan.
         if (orbitControls) {
             orbitControls.enabled = false;
             orbitControls.mouseButtons.LEFT = null;
         }
         if (tool === 'reshape') {
-            setStatus('Reshape — drag: up/down = height · left/right = width · Shift = length');
+            showReshapeHandles(true);
+            setStatus('Reshape — drag the handles (top = height · side = width · back = length) or drag on the model: up/down = height · left/right = width · Shift = length');
+        } else if (tool === 'face') {
+            setStatus('Face details — click an eye / mouth / snout part, then drag to slide it across the head surface');
         }
     } else {
+        showReshapeHandles(false);
         transformControls.detach();
         canvas.style.cursor = '';
         if (orbitControls) {
@@ -2740,6 +3002,14 @@ function setupToolbar() {
                 ? 'Mirror paint ON — also paint the mirror image (click to turn off)'
                 : 'Mirror paint — also paint the mirror image on the opposite side';
             setStatus(state.mirrorPaint ? 'Mirror paint on' : 'Mirror paint off');
+        });
+    }
+
+    // Pattern body -painike: koherentti kuvio koko vartalolle yhdellä klikkauksella
+    const patternBodyBtn = document.getElementById('btn-pattern-body');
+    if (patternBodyBtn) {
+        patternBodyBtn.addEventListener('click', () => {
+            applyBodyPatterns();
         });
     }
 
@@ -4538,33 +4808,72 @@ function fillCubeFaces(tctx, cube, color) {
  * always colored and paintable, even without an uploaded image.
  */
 /**
- * Maalaa kuution kasvoille kuvion (vaakaraidat tai täplät) olemassa olevan
- * perusvärin päälle. Käyttää samaa determinististä seediä kuin
- * fillCubeFaces, joten kuvio pysyy vakaana tekstuurin uudelleenluonnissa
- * (autosave/päivitys eivät vaihda sitä).
+ * Luun maailmapositio (lepopose): luuryhmä on scene-hierarkiassa
+ * vanhempansa sisällä paikassa pivot − parentPivot, joten ryhmän
+ * maailmapositio = oma pivot (ketjun pivotit kumoutuvat). Kuutioiden
+ * originit ja osien pivotit ovat mallikoordinaateissa (lepopose = maailma).
  */
-function paintCubePattern(tctx, cube, base, rand, kind) {
+function boneWorldPos(bone) {
+    return [bone.pivot[0], bone.pivot[1], bone.pivot[2]];
+}
+
+/** Kuution maailmakeskipiste (lepopose): origin + koko/2 — pivot-ketju kumoutuu. */
+function cubeWorldCenter(bone, cube) {
+    return [
+        cube.origin[0] + cube.size[0] / 2,
+        cube.origin[1] + cube.size[1] / 2,
+        cube.origin[2] + cube.size[2] / 2
+    ];
+}
+
+/**
+ * Maalaa kuution kasvoille kuvion (vaakaraidat tai täplät) olemassa olevan
+ * perusvärin päälle. Raidat ovat MAAILMANKOherentteja: nauhojen vaihe
+ * lasketaan kuution maailma-Y:stä, joten raidat jatkuvat saumattomasti
+ * kuutioiden yli (sama korkeus = sama raita — koko vartalon yli). bandH
+ * annetaan globaalina, jotta kaikki kuutiot käyttävät samaa rautaväliä.
+ */
+function paintCubePattern(tctx, cube, base, rand, kind, world, bandH) {
+    const wc = world || [
+        cube.origin[0] + cube.size[0] / 2,
+        cube.origin[1] + cube.size[1] / 2,
+        cube.origin[2] + cube.size[2] / 2
+    ];
     for (const r of computeFaceRects(cube)) {
         const shade = FACE_SHADE[r.face] || 1;
         const x = Math.round(r.x), y = Math.round(r.y);
         const w = Math.round(r.w), h = Math.round(r.h);
         if (w < 2 || h < 2) continue;
         if (kind === 'stripes') {
-            // Vaakaraidat: vuorotteleva vaalea/tumma nauha kasvon yli
-            const band = Math.max(1, Math.round(h / (2 + Math.floor(rand() * 4))));
-            for (let yy = 0; yy < h; yy += band) {
-                const on = Math.floor(yy / band) % 2 === 0;
+            if (r.face === 'up' || r.face === 'down') {
+                // Ylä-/alakasvot perussävyllä — raidat vain kyljissä, joten
+                // vaakaraidat piirtyvät yhtenäisinä ympäri vartaloa.
+                tctx.fillStyle = shadeHex(base, shade);
+                tctx.fillRect(x, y, w, h);
+                continue;
+            }
+            // Kylkikasvot: jokainen pikselirivi kartoittuu maailma-Y:hen
+            // (rectin korkeus = kuution Y-koko), joten raidan raja osuu
+            // samaan maailmankorkeuteen kuution reunasta riippumatta.
+            const band = bandH || (1.5 + rand() * 1.5);
+            for (let py = 0; py < h; py++) {
+                const wy = wc[1] + (py + 0.5 - h / 2) * (cube.size[1] / h);
+                const on = Math.floor(wy / band) % 2 === 0;
                 tctx.fillStyle = shadeHex(base, shade * (on ? 1.18 : 0.68));
-                tctx.fillRect(x, y + yy, w, Math.min(band, h - yy));
+                tctx.fillRect(x, y + py, w, 1);
             }
         } else if (kind === 'spots') {
-            // Täplät: muutama erisävyinen neliö kasvon alueella
+            // Täplät: maailmasoluun ankkuroitu seed, joten täplät pysyvät
+            // paikoillaan myös jos kuution nimi muuttuu.
+            const cellSeed = [Math.floor(wc[0] * 2), Math.floor(wc[1] * 2), Math.floor(wc[2] * 2), r.face]
+                .join('|').split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7);
+            const srand = seededRand(cellSeed);
             const n = Math.max(2, Math.round((w * h) / 22));
             for (let i = 0; i < n; i++) {
-                const s = Math.max(1, Math.round(rand() * 3));
-                const px = x + Math.floor(rand() * Math.max(1, w - s));
-                const py = y + Math.floor(rand() * Math.max(1, h - s));
-                tctx.fillStyle = shadeHex(base, shade * (rand() < 0.5 ? 0.55 : 1.3));
+                const s = Math.max(1, Math.round(srand() * 3));
+                const px = x + Math.floor(srand() * Math.max(1, w - s));
+                const py = y + Math.floor(srand() * Math.max(1, h - s));
+                tctx.fillStyle = shadeHex(base, shade * (srand() < 0.5 ? 0.55 : 1.3));
                 tctx.fillRect(px, py, s, s);
             }
         }
@@ -4573,13 +4882,18 @@ function paintCubePattern(tctx, cube, base, rand, kind) {
 
 /**
  * Satunnaiset mutta vakaat tekstuurikuviot (raidat/täplät) koko olennolle.
- * Valinta perustuu kuution nimen seediin — samasta mallista tulee aina sama
- * kuvio. Pienet kuutiot (alle 4px kasvot) saavat vain täpliä tai eivät
- * mitään, ettei kuvio muutu sotkuksi.
+ * Raidat ovat maailmankoherentteja (yhteinen rautaväli koko vartalolle),
+ * joten kuviot jatkuvat saumattomasti kuutioiden yli eivätkä näytä
+ * satunnaiselta kohinalta. Valinta perustuu kuution nimen seediin — samasta
+ * mallista tulee aina sama kuvio.
  */
 function applyRandomTexturePatterns() {
     if (!state.textureCanvas) ensureTexture();
     const tctx = state.textureCanvas.getContext('2d');
+    // Yhteinen rautaväli koko olennolle (projektin nimestä) → raidat
+    // kohdistuvat kuutioiden yli myös satunnaiskuvioissa.
+    const gseed = (state.projectName || 'body').split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7);
+    const bandH = 1.5 + seededRand(gseed)() * 1.5;
     let patterned = 0;
     for (const bone of state.model.bones) {
         for (const cube of bone.cubes) {
@@ -4592,7 +4906,7 @@ function applyRandomTexturePatterns() {
             if (maxDim >= 4 && roll < 0.3) kind = 'stripes';
             else if (maxDim >= 3 && roll < 0.55) kind = 'spots';
             if (kind) {
-                paintCubePattern(tctx, cube, cube.color || '#ffffff', rand, kind);
+                paintCubePattern(tctx, cube, cube.color || '#ffffff', rand, kind, cubeWorldCenter(bone, cube), bandH);
                 patterned++;
             }
         }
@@ -4602,6 +4916,39 @@ function applyRandomTexturePatterns() {
         if (state.uvEditor) state.uvEditor.draw();
     }
     return patterned;
+}
+
+/**
+ * Pattern body -työkalu: maalaa koko vartalolle yhden koherentin kuvion
+ * (raidat tai täplät projektin nimestä valittuna). Maalaa ensin puhtaat
+ * perussävyt, sitten kuvion — yhdellä klikkauksella koko olento saa
+ * yhtenäisen premium-kuvion.
+ */
+function applyBodyPatterns() {
+    if (!state.textureCanvas) ensureTexture();
+    const tctx = state.textureCanvas.getContext('2d');
+    const seed = (state.projectName || 'body').split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7);
+    const kind = seededRand(seed)() < 0.5 ? 'stripes' : 'spots';
+    const bandH = 1.5 + seededRand(seed + 1)() * 1.5;
+    let n = 0;
+    for (const bone of state.model.bones) {
+        for (const cube of bone.cubes) {
+            const base = cube.color || '#ffffff';
+            fillCubeFaces(tctx, cube, base);
+            const maxDim = Math.max(...computeFaceRects(cube).map(r => Math.max(r.w, r.h)));
+            if (kind === 'stripes' && maxDim < 4) continue;
+            if (kind === 'spots' && maxDim < 2) continue;
+            const cseed = (cube.name || 'cube').split('').reduce((a, c) => a * 31 + c.charCodeAt(0), 7) * 131
+                + ((cube.uv && cube.uv.offset) ? cube.uv.offset[0] * 13 + cube.uv.offset[1] * 7 : 1);
+            paintCubePattern(tctx, cube, base, seededRand(cseed), kind, cubeWorldCenter(bone, cube), bandH);
+            n++;
+        }
+    }
+    state.texture.needsUpdate = true;
+    if (state.uvEditor) state.uvEditor.draw();
+    setStatus(`Patterned ${n} cubes with ${kind} — the pattern flows coherently across the whole body.`);
+    scheduleAutosave();
+    return n;
 }
 
 /**
@@ -5229,6 +5576,7 @@ if (!state.webgl) {
 }
 window.__MOB_STUDIO = state;  // dev/debug handle
 window.__MOB_STUDIO.renderer = renderer;
+window.__MOB_STUDIO.camera = camera;
 window.__MOB_STUDIO.checkRenderConsistency = checkRenderConsistency;
 window.__MOB_STUDIO.applySymmetryEdit = applySymmetryEdit;
 window.__MOB_STUDIO.selectCube = selectCube;
@@ -5252,6 +5600,20 @@ window.__MOB_STUDIO.translatePartData = translatePartData;
 window.__MOB_STUDIO.paintPartColor = paintPartColor;
 window.__MOB_STUDIO.bakePartFromGroup = bakePartFromGroup;
 window.__MOB_STUDIO.handlePartGizmo = handlePartGizmo;
+window.__MOB_STUDIO.faceDragBegin = faceDragBegin;
+window.__MOB_STUDIO.faceDragMove = faceDragMove;
+window.__MOB_STUDIO.faceDragEnd = faceDragEnd;
+window.__MOB_STUDIO.isFaceDetail = isFaceDetail;
+window.__MOB_STUDIO.faceHeadRef = faceHeadRef;
+window.__MOB_STUDIO.reshapeBegin = reshapeBegin;
+window.__MOB_STUDIO.reshapeMove = reshapeMove;
+window.__MOB_STUDIO.reshapeEnd = reshapeEnd;
+window.__MOB_STUDIO.reshapeHitHandle = reshapeHitHandle;
+window.__MOB_STUDIO.showReshapeHandles = showReshapeHandles;
+window.__MOB_STUDIO.updateReshapeHandles = updateReshapeHandles;
+window.__MOB_STUDIO.reshapeHandleGroup = null;
+window.__MOB_STUDIO.getReshapeHandleGroup = () => reshapeHandleGroup;
+window.__MOB_STUDIO.reshapeReadout = () => document.getElementById('reshape-readout');
 
 // ==================== ?mob= DEEPLINK (galleriasta editoriin) ====================
 // Esim. preview.html?mob=stalker lataa Stalkerin suoraan — galleriasivun

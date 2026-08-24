@@ -1236,6 +1236,26 @@ input[type="checkbox"] { accent-color: var(--accent); }
     pointer-events: none;
 }
 
+/* Reshape live-lukema — näkyy kahvan vedon aikana (W × H × D blocks) */
+#reshape-readout {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(13, 17, 23, 0.88);
+    border: 1px solid var(--accent, #f0a53b);
+    color: #fff;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.3px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 30;
+}
+
 /* Render consistency warning — näkyy kun renderöity keskipiste ja data eroavat */
 #render-warning {
     position: absolute;
