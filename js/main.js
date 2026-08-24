@@ -7,7 +7,7 @@ import { exportBedrockAnimations, exportJavaAnimations } from './formats/animati
 import { createExampleMob } from './formats/example.js';
 import { History } from './utils/history.js';
 import { applyBoxTextureUVs, computeFaceRects } from './utils/boxuv.js';
-import { PALETTE_CATEGORIES, loadCustomColors, saveCustomColors, normalizeHex } from './utils/palette.js';
+import { PALETTE_CATEGORIES, loadCustomColors, saveCustomColors, normalizeHex, defaultColorName } from './utils/palette.js';
 import { zipFiles } from './utils/zip.js';
 import { buildResourcePack, previewPackFiles } from './utils/pack-export.js';
 import { renderPackIcon } from './utils/pack-icon.js';
@@ -3361,6 +3361,20 @@ function setupToolbar() {
         });
     }
 
+    // Monivalinnan UV-työkalut: kohdistus, skaalaus ja peilaus useille kuutioille
+    const uvAlignBtn = document.getElementById('btn-uv-align');
+    if (uvAlignBtn) {
+        uvAlignBtn.addEventListener('click', () => uvAlignSelected());
+    }
+    const uvScaleBtn = document.getElementById('btn-uv-scale');
+    if (uvScaleBtn) {
+        uvScaleBtn.addEventListener('click', (e) => uvScaleSelected(e.shiftKey ? 0.5 : 2));
+    }
+    const uvMirrorBtn = document.getElementById('btn-uv-mirror');
+    if (uvMirrorBtn) {
+        uvMirrorBtn.addEventListener('click', (e) => uvMirrorSelected(!!e.shiftKey));
+    }
+
     // Display settings
     document.getElementById('chk-wireframe').addEventListener('change', (e) => {
         state.cubes.forEach(m => m.material.wireframe = e.target.checked);
@@ -5299,6 +5313,147 @@ function applyBodyPatterns() {
     return n;
 }
 
+// ==================== MONIVALINNAN UV-TYÖKALUT ====================
+// Toimivat kaikille valituille kuutioille kerralla (shift+klikkaa
+// monivalintaan), tai yhdelle valitulle kuutiolle jos monivalintaa ei ole.
+
+/** Valittujen kuutioiden globaalit indeksit (monivalinta tai yksittäinen). */
+function uvSelectedIndices() {
+    if (state.selectedCubes && state.selectedCubes.length) return state.selectedCubes;
+    if (state.selectedCube !== null && state.selectedCube !== undefined) return [state.selectedCube];
+    return [];
+}
+
+/** Kuution tekstuurisaarekkeen (island) rajat atlasissa: [u0, v0, w, h]. */
+function uvIslandBounds(cube) {
+    const rs = computeFaceRects(cube);
+    if (!rs.length) return null;
+    const minX = Math.min(...rs.map(r => r.x));
+    const minY = Math.min(...rs.map(r => r.y));
+    const maxX = Math.max(...rs.map(r => r.x + r.w));
+    const maxY = Math.max(...rs.map(r => r.y + r.h));
+    return [minX, minY, maxX - minX, maxY - minY];
+}
+
+/**
+ * Kohdista UV:t: nappaa valittujen kuutioiden saarekkeet tekstuurin
+ * 4px-ruudukkoon (offset + kasvojen siirrot). Poistaa manuaalisten
+ * vetojen jättämät murto-osat ja kohdistaa saarekkeet samaan ruudukkoon,
+ * joten kuvioiden rajat jatkuvat kuutioiden yli.
+ */
+function uvAlignSelected() {
+    const idxs = uvSelectedIndices();
+    if (!idxs.length) {
+        setStatus('Select cubes first — Shift+click to multi-select');
+        return 0;
+    }
+    const GRID = 4;
+    let n = 0;
+    for (const i of idxs) {
+        const cube = findCubeData(i);
+        if (!cube) continue;
+        cube.uv = cube.uv || {};
+        if (Array.isArray(cube.uv.offset)) {
+            cube.uv.offset = [Math.round(cube.uv.offset[0] / GRID) * GRID, Math.round(cube.uv.offset[1] / GRID) * GRID];
+        }
+        if (cube.uv.faces) {
+            for (const f of Object.keys(cube.uv.faces)) {
+                const fo = cube.uv.faces[f];
+                cube.uv.faces[f] = [Math.round(fo[0]), Math.round(fo[1])];
+            }
+        }
+        n++;
+    }
+    applyAllBoxUVs();
+    if (state.uvEditor) state.uvEditor.draw();
+    scheduleAutosave();
+    setStatus(`Aligned ${n} cube UV${n === 1 ? '' : 's'} to the ${GRID}px texture grid — patterns line up across cubes.`);
+    return n;
+}
+
+/**
+ * Skaalaa UV:t: kasvattaa/pienentää valittujen kuutioiden tekstuuritiheyttä.
+ * Jokainen saareke skaalataan oman keskipisteensä ympäri, joten atlas-
+ * asettelu säilyy ja kaikki valitut saavat saman kertoimen (2× tai 0.5×).
+ */
+function uvScaleSelected(factor) {
+    const idxs = uvSelectedIndices();
+    if (!idxs.length) {
+        setStatus('Select cubes first — Shift+click to multi-select');
+        return 0;
+    }
+    const f = (factor === 0.5) ? 0.5 : 2;
+    let n = 0;
+    for (const i of idxs) {
+        const cube = findCubeData(i);
+        if (!cube) continue;
+        const b = uvIslandBounds(cube);
+        if (!b) continue;
+        const [u0, v0, w, h] = b;
+        cube.uv = cube.uv || {};
+        // Uusi offset pitää saarekkeen keskipisteen paikallaan: newU = c − W·f/2
+        cube.uv.offset = [
+            Math.round((u0 + w / 2 - w * f / 2) * 10) / 10,
+            Math.round((v0 + h / 2 - h * f / 2) * 10) / 10
+        ];
+        // uvSize määrää saarekkeen pikselikoon → tekstuuritiheys
+        const base = cube.uvSize ? cube.uvSize.slice() : cube.size.slice();
+        cube.uvSize = base.map(v => Math.round(v * f * 10) / 10);
+        if (cube.uv.faces) {
+            for (const face of Object.keys(cube.uv.faces)) {
+                cube.uv.faces[face] = cube.uv.faces[face].map(v => Math.round(v * f * 10) / 10);
+            }
+        }
+        n++;
+    }
+    applyAllBoxUVs();
+    if (state.uvEditor) state.uvEditor.draw();
+    scheduleAutosave();
+    setStatus(`Scaled ${n} cube UV${n === 1 ? '' : 's'} ×${f} — texture density ${f === 2 ? 'doubled' : 'halved'}.`);
+    return n;
+}
+
+/**
+ * Peilaa UV:t: kääntää valittujen kuutioiden saarekkeet tekstuurin
+ * keskilinjan yli (vaaka = U, pysty = V). Peilattu sijainti pysyy
+ * tekstuurin rajoissa, joten kasvot näyttävät peilikuvan alueesta.
+ */
+function uvMirrorSelected(vertical) {
+    const idxs = uvSelectedIndices();
+    if (!idxs.length) {
+        setStatus('Select cubes first — Shift+click to multi-select');
+        return 0;
+    }
+    const texW = state.model.textureWidth || 16;
+    const texH = state.model.textureHeight || 16;
+    let n = 0;
+    for (const i of idxs) {
+        const cube = findCubeData(i);
+        if (!cube) continue;
+        const b = uvIslandBounds(cube);
+        if (!b) continue;
+        const [u0, v0, w, h] = b;
+        cube.uv = cube.uv || {};
+        if (vertical) {
+            cube.uv.offset = [
+                Math.round(u0 * 10) / 10,
+                Math.round((texH - v0 - h) * 10) / 10
+            ];
+        } else {
+            cube.uv.offset = [
+                Math.round((texW - u0 - w) * 10) / 10,
+                Math.round(v0 * 10) / 10
+            ];
+        }
+        n++;
+    }
+    applyAllBoxUVs();
+    if (state.uvEditor) state.uvEditor.draw();
+    scheduleAutosave();
+    setStatus(`Mirrored ${n} cube UV${n === 1 ? '' : 's'} across the texture ${vertical ? 'vertical' : 'horizontal'} center.`);
+    return n;
+}
+
 /**
  * Satunnainen emissiivinen valonhehku (glow) randomisoiduille olennoille.
  * Noin 35 % olennoista hehkuu: silmät tai valitut kuutiot saavat kirkkaan
@@ -5770,17 +5925,17 @@ function setupUVEditor() {
     const gridEl = document.getElementById('palette-grid');
     const colorInput = document.getElementById('uv-paint-color');
     let paletteCat = 'skin';
-    let customColors = loadCustomColors();
+    let customColors = loadCustomColors(); // [{ hex, name }]
 
     function currentPalette() {
-        if (paletteCat === 'custom') return customColors;
+        if (paletteCat === 'custom') return customColors.map((c) => c.hex);
         const cat = PALETTE_CATEGORIES.find((c) => c.id === paletteCat);
         return cat ? cat.colors : [];
     }
 
     function renderPalette() {
         if (palettePanel.hidden) return;
-        const allCats = [...PALETTE_CATEGORIES, { id: 'custom',        name: 'Custom' }];
+        const allCats = [...PALETTE_CATEGORIES, { id: 'custom', name: 'Custom' }];
         catsEl.innerHTML = '';
         for (const cat of allCats) {
             const b = document.createElement('button');
@@ -5791,20 +5946,28 @@ function setupUVEditor() {
         }
         gridEl.innerHTML = '';
         const cur = normalizeHex(state.uvEditor.getPaintColor());
-        currentPalette().forEach((c, i) => {
-            const s = document.createElement('button');
-            s.className = 'palette-swatch' + (normalizeHex(c) === cur ? ' selected' : '');
-            s.style.background = c;
-            s.dataset.color = c;
-            s.dataset.idx = i;
-            s.title = c;
-            gridEl.appendChild(s);
-        });
         if (paletteCat === 'custom') {
+            // Nimetyt chipit: väripallo + nimi
+            customColors.forEach((c, i) => {
+                const s = document.createElement('button');
+                s.className = 'palette-swatch named' + (normalizeHex(c.hex) === cur ? ' selected' : '');
+                const dot = document.createElement('i');
+                dot.className = 'swatch-dot';
+                dot.style.background = c.hex;
+                const label = document.createElement('span');
+                label.className = 'swatch-label';
+                label.textContent = c.name || c.hex;
+                s.appendChild(dot);
+                s.appendChild(label);
+                s.dataset.color = c.hex;
+                s.dataset.idx = i;
+                s.title = (c.name || c.hex) + ' (' + c.hex + ') — click to use, double-click to rename, right-click to remove';
+                gridEl.appendChild(s);
+            });
             const add = document.createElement('button');
-            add.className = 'palette-swatch action';
-            add.textContent = '+';
-            add.title = 'Add current paint color to palette';
+            add.className = 'palette-swatch action wide';
+            add.textContent = '＋ Save color…';
+            add.title = 'Save the current paint color with a name';
             add.dataset.action = 'add';
             gridEl.appendChild(add);
             const clr = document.createElement('button');
@@ -5813,6 +5976,16 @@ function setupUVEditor() {
             clr.title = 'Clear custom colors';
             clr.dataset.action = 'clear';
             gridEl.appendChild(clr);
+        } else {
+            currentPalette().forEach((c, i) => {
+                const s = document.createElement('button');
+                s.className = 'palette-swatch' + (normalizeHex(c) === cur ? ' selected' : '');
+                s.style.background = c;
+                s.dataset.color = c;
+                s.dataset.idx = i;
+                s.title = c;
+                gridEl.appendChild(s);
+            });
         }
     }
 
@@ -5821,6 +5994,77 @@ function setupUVEditor() {
         colorInput.value = hex;
         renderPalette();
     }
+
+    // ---- tallenna / nimeä väri -dialogi ---------------------------
+    const colorDialog = document.getElementById('save-color-dialog');
+    const colorNameInput = document.getElementById('save-color-name');
+    const colorHexInput = document.getElementById('save-color-hex');
+    const colorPreview = document.getElementById('save-color-preview');
+    const colorTitle = document.getElementById('save-color-title');
+    let colorDialogMode = 'add'; // 'add' | 'rename'
+    let colorDialogIndex = -1;
+
+    function updateColorPreview() {
+        const h = normalizeHex(colorHexInput.value);
+        if (h) {
+            colorHexInput.value = h;
+            colorPreview.textContent = h;
+            colorPreview.style.background = h;
+        }
+    }
+
+    function openColorDialog(mode, index) {
+        colorDialogMode = mode;
+        colorDialogIndex = index;
+        if (mode === 'rename' && customColors[index]) {
+            colorTitle.textContent = 'Rename Color';
+            colorNameInput.value = customColors[index].name || '';
+            colorHexInput.value = customColors[index].hex;
+        } else {
+            colorTitle.textContent = 'Save Color to Palette';
+            colorNameInput.value = '';
+            colorHexInput.value = normalizeHex(state.uvEditor.getPaintColor()) || '#888888';
+        }
+        colorNameInput.placeholder = defaultColorName(colorHexInput.value);
+        updateColorPreview();
+        colorDialog.style.display = 'flex';
+        setTimeout(() => colorNameInput.focus(), 30);
+    }
+
+    function closeColorDialog() {
+        colorDialog.style.display = 'none';
+    }
+
+    function confirmColorDialog() {
+        const hex = normalizeHex(colorHexInput.value);
+        if (!hex) return;
+        let name = colorNameInput.value.trim();
+        if (!name) name = defaultColorName(hex);
+        if (colorDialogMode === 'rename' && colorDialogIndex >= 0 && customColors[colorDialogIndex]) {
+            customColors[colorDialogIndex] = { hex, name };
+        } else {
+            // dedupe: sama hex päivittää olemassa olevan nimen
+            const existing = customColors.findIndex((c) => c.hex === hex);
+            if (existing >= 0) customColors[existing] = { hex, name };
+            else customColors.push({ hex, name });
+        }
+        saveCustomColors(customColors);
+        pickColor(hex);
+        closeColorDialog();
+    }
+
+    colorHexInput.addEventListener('input', updateColorPreview);
+    colorNameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); confirmColorDialog(); }
+    });
+    colorDialog.addEventListener('click', (e) => {
+        if (e.target === colorDialog) closeColorDialog();
+    });
+    colorDialog.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeColorDialog();
+    });
+    document.getElementById('save-color-confirm').addEventListener('click', confirmColorDialog);
+    document.getElementById('save-color-cancel').addEventListener('click', closeColorDialog);
 
     catsEl.addEventListener('click', (e) => {
         const b = e.target.closest('.palette-cat');
@@ -5833,12 +6077,7 @@ function setupUVEditor() {
         const s = e.target.closest('.palette-swatch');
         if (!s) return;
         if (s.dataset.action === 'add') {
-            const cur = normalizeHex(state.uvEditor.getPaintColor());
-            if (cur && !customColors.includes(cur)) {
-                customColors.push(cur);
-                saveCustomColors(customColors);
-                renderPalette();
-            }
+            openColorDialog('add', -1);
             return;
         }
         if (s.dataset.action === 'clear') {
@@ -5848,6 +6087,12 @@ function setupUVEditor() {
             return;
         }
         pickColor(s.dataset.color);
+    });
+
+    gridEl.addEventListener('dblclick', (e) => {
+        const s = e.target.closest('.palette-swatch');
+        if (!s || paletteCat !== 'custom' || s.dataset.action) return;
+        openColorDialog('rename', parseInt(s.dataset.idx));
     });
 
     gridEl.addEventListener('contextmenu', (e) => {

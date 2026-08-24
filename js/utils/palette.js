@@ -37,11 +37,27 @@ export const PALETTE_CATEGORIES = [
 
 const STORAGE_KEY = 'fms_custom_palette';
 
+/**
+ * Omat värit: [{ hex, name }]. Vanhat tallennukset (pelkät hex-merkkijonot)
+ * migroidaan latauksen yhteydessä objekteiksi.
+ */
 export function loadCustomColors() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         const arr = raw ? JSON.parse(raw) : [];
-        return arr.filter((c) => typeof c === 'string' && /^#[0-9a-fA-F]{6}$/.test(c));
+        return arr
+            .map((c) => {
+                if (typeof c === 'string') {
+                    const hex = normalizeHex(c);
+                    return hex ? { hex, name: '' } : null;
+                }
+                if (c && typeof c === 'object' && typeof c.hex === 'string') {
+                    const hex = normalizeHex(c.hex);
+                    return hex ? { hex, name: typeof c.name === 'string' ? c.name : '' } : null;
+                }
+                return null;
+            })
+            .filter(Boolean);
     } catch {
         return [];
     }
@@ -53,6 +69,12 @@ export function saveCustomColors(colors) {
     } catch {
         // private mode / storage full — ignore
     }
+}
+
+/** Johda oletusnimi hex-väristä (esim. #4A7C2F -> 'Custom #4a7c2f'). */
+export function defaultColorName(hex) {
+    const h = normalizeHex(hex);
+    return h ? 'Custom ' + h : 'Custom color';
 }
 
 /** Normalisoi värin hex-muotoon (#rrggbb, pienaakkoset) tai null. */
