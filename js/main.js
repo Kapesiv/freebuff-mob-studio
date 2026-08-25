@@ -5777,6 +5777,12 @@ state.testMode = false;
 state.testRoot = null;
 state.testGroundY = 0;
 state.testVy = 0;
+// Harjoitusvihollinen: olento tavoittelee, hyökkää ja kaataa sen
+state.testTarget = null;          // THREE.Group (dummy + HP-baari)
+state.testTargetHp = 0;
+state.testTargetMaxHp = 0;
+state.testAttackCd = 0;           // hyökkäyscooldown (s)
+state.testTargetDeadT = 0;        // kuolema-aikaviive ennen respawnia
 let testLastT = 0;
 
 function setTestMode(on) {
@@ -5821,7 +5827,61 @@ function enterTestMode() {
         if (sel) { sel.value = pick; sel.dispatchEvent(new Event('change')); }
     }
     if (state.animation) state.animation.playing = true;
-    setStatus('Test Creature — it walks! Space = jump · click Test again to exit');
+    state.testTargetHp = 0;
+    state.testTargetDeadT = 0;
+    spawnTestTarget();
+    setStatus('Test Creature — it hunts! The creature walks to the dummy and attacks it. Space = jump · click Test again to exit');
+}
+
+/** Luo harjoitusvihollinen (dummy + HP-baari) olennon eteen. */
+function spawnTestTarget() {
+    const root = state.testRoot;
+    if (!root) return;
+    // Poista vanha vihollinen
+    if (state.testTarget) {
+        scene.remove(state.testTarget);
+        state.testTarget.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+        state.testTarget = null;
+    }
+    // Mallin koko määrittää etäisyyden ja vihollisen koon
+    const bb = modelBBox();
+    const h = bb ? Math.max(0.5, bb.mx[1] - bb.mn[1]) : 2;
+    const dist = Math.max(14, h * 5 + 8);
+    const th = Math.max(2, h * 0.9); // vihollisen korkeus
+    const thp = Math.round(30 + h * 8);
+
+    const g = new THREE.Group();
+    g.name = 'testTarget';
+    const mat = new THREE.MeshStandardMaterial({ color: 0xd4605a, roughness: 0.8 });
+    // Vartalo + pää + jalat (yksinkertainen harjoitusnukke)
+    const body = new THREE.Mesh(new THREE.BoxGeometry(th * 0.5, th * 0.55, th * 0.4), mat);
+    body.position.y = th * 0.35;
+    const head = new THREE.Mesh(new THREE.BoxGeometry(th * 0.28, th * 0.3, th * 0.28), mat);
+    head.position.y = th * 0.85;
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x8a4a45, roughness: 0.9 });
+    const leg1 = new THREE.Mesh(new THREE.BoxGeometry(th * 0.2, th * 0.25, th * 0.2), legMat);
+    leg1.position.set(-th * 0.14, th * 0.1, 0);
+    const leg2 = leg1.clone();
+    leg2.position.x = th * 0.14;
+    g.add(body, head, leg1, leg2);
+    // HP-baari pään yläpuolella (tausta + täyttö)
+    const bw = th * 0.7;
+    const bar = new THREE.Group();
+    const barBg = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.08, 0.04), new THREE.MeshBasicMaterial({ color: 0x1a1a1a }));
+    const barFill = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.06, 0.05), new THREE.MeshBasicMaterial({ color: 0x59d45c }));
+    barFill.position.z = 0.01;
+    bar.add(barBg, barFill);
+    bar.position.y = th * 1.15;
+    g.add(bar);
+    g.userData = { barFill, thp, th, dead: false, hitT: 0, mat, legMat, bw };
+    // Sijoitetaan olennon eteen (malli katsoo -Z:tä), hieman sivulle
+    g.position.set(root.position.x + (Math.random() - 0.5) * 4, state.testGroundY, root.position.z - dist);
+    scene.add(g);
+    state.testTarget = g;
+    state.testTargetHp = thp;
+    state.testTargetMaxHp = thp;
+    state.testAttackCd = 0;
+    state.testTargetDeadT = 0;
 }
 
 function exitTestMode() {
@@ -5829,6 +5889,13 @@ function exitTestMode() {
     state.testMode = false;
     state.testRoot = null;
     state.testVy = 0;
+    if (state.testTarget) {
+        scene.remove(state.testTarget);
+        state.testTarget.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+        state.testTarget = null;
+    }
+    state.testTargetHp = 0;
+    state.testTargetDeadT = 0;
     if (root) {
         // Palauta luut takaisin sceneen (applyPose palauttaa lepoposeen)
         state.model.bones.forEach((b, bi) => {
@@ -5848,18 +5915,93 @@ function exitTestMode() {
     setStatus('Test mode off — back to editing');
 }
 
-/** Liikuta olentoa eteenpäin, hyppää ja seuraa kameralla (joka frame). */
+/** Tavoittele, hyökkää ja liikuta olentoa; seuraa kameralla (joka frame). */
 function updateTestMode(dt) {
     const root = state.testRoot;
     if (!root) return;
-    // Kävely eteenpäin (malli katsoo -Z:tä) — vain kun animaatio pyörii.
-    // Nopeus skaalautuu mallin korkeuteen (isompi = nopeampi).
-    if (state.animation && state.animation.playing) {
-        const bb = modelBBox();
-        const h = bb ? bb.mx[1] - bb.mn[1] : 2;
-        const speed = Math.max(2, h * 0.8);
+    const bb = modelBBox();
+    const h = bb ? Math.max(0.5, bb.mx[1] - bb.mn[1]) : 2;
+    const speed = Math.max(2, h * 0.8);
+    const target = state.testTarget;
+    const anims = Object.keys(state.projectAnimations || {});
+    const hasAttack = anims.includes('attack');
+    const walkName = ['walk', 'crawl', 'fly', 'swim', 'idle'].find(n => anims.includes(n));
+
+    // --- Vihollinen: kuolema-aika (kaatuu) → respawn ---
+    if (state.testTargetDeadT > 0) {
+        state.testTargetDeadT -= dt;
+        if (target) target.rotation.z = Math.min(1.5, target.rotation.z + dt * 2.5);
+        if (state.testTargetDeadT <= 0) spawnTestTarget();
+    }
+
+    // --- Vihollinen: tavoittelu + hyökkäys ---
+    let animToPlay = walkName;
+    if (target && state.testTargetDeadT <= 0) {
+        const dx = target.position.x - root.position.x;
+        const dz = target.position.z - root.position.z;
+        const dist = Math.hypot(dx, dz);
+        const attackRange = Math.max(2.2, h * 0.9);
+        if (dist > attackRange) {
+            // Kävele kohti vihollista — malli katsoo -Z:tä, joten käännä ryhmä
+            // niin että -Z osoittaa viholliseen: forward = (-sin a, -cos a).
+            const ang = Math.atan2(-dx, -dz);
+            root.rotation.y = ang;
+            if (state.animation && state.animation.playing) {
+                const step = speed * dt;
+                root.position.x += (dx / dist) * step;
+                root.position.z += (dz / dist) * step;
+            }
+        } else {
+            // Hyökkää: isku cooldownin välein, vihollinen menettää elämää
+            root.rotation.y = Math.atan2(-dx, -dz);
+            if (hasAttack) animToPlay = 'attack';
+            state.testAttackCd -= dt;
+            if (state.testAttackCd <= 0) {
+                state.testAttackCd = Math.max(0.5, 1.1 - h * 0.05);
+                state.testTargetHp -= 10 + Math.round(h * 3);
+                const ud = target.userData || {};
+                ud.hitT = 0.15; // osumaefekti: välähdys
+                if (state.testTargetHp <= 0) {
+                    state.testTargetHp = 0;
+                    state.testTargetDeadT = 1.2;
+                    setStatus('Target defeated! A new dummy appears…');
+                } else {
+                    setStatus(`Test Creature — attacking! Target HP ${Math.max(0, state.testTargetHp)}/${state.testTargetMaxHp}`);
+                }
+            }
+        }
+    } else if (state.animation && state.animation.playing && !target) {
+        // Ei vihollista: kävele eteenpäin kuten ennen
         root.position.z -= speed * dt;
     }
+
+    // Vaihda animaatiota vain jos se muuttui (vältä turhat reloadit)
+    const sel = document.getElementById('anim-select');
+    if (sel && animToPlay && sel.value !== animToPlay && state.projectAnimations[animToPlay]) {
+        sel.value = animToPlay;
+        sel.dispatchEvent(new Event('change'));
+        if (state.animation) state.animation.playing = true;
+    }
+
+    // Vihollisen osumaefekti: välähdä vaaleana ja päivitä HP-baari
+    if (target && target.userData) {
+        const ud = target.userData;
+        if (ud.hitT > 0) {
+            ud.hitT -= dt;
+            const flash = ud.hitT > 0;
+            target.traverse(o => {
+                if (o.isMesh && o.material && o.material.color) {
+                    o.material.color.set(flash ? 0xfff0e0 : (o.material === ud.legMat ? 0x8a4a45 : 0xd4605a));
+                }
+            });
+        }
+        const ratio = Math.max(0, state.testTargetHp / state.testTargetMaxHp);
+        if (ud.barFill) {
+            ud.barFill.scale.x = Math.max(0.001, ratio);
+            ud.barFill.position.x = -(1 - ratio) * ud.bw / 2;
+        }
+    }
+
     // Hyppy + painovoima
     if (state.testVy !== 0 || root.position.y > state.testGroundY + 0.001) {
         state.testVy -= 28 * dt;
