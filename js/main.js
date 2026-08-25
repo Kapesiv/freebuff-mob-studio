@@ -5626,6 +5626,27 @@ document.addEventListener('keydown', (e) => {
     // Tool shortcuts
     if (document.activeElement.tagName === 'INPUT') return;
 
+    // UV-työkalut valituille kuutioille: A = kohdista, S = skaalaa (Shift = 0.5×),
+    // M = peilaa (Shift = pysty). S on myös Select-työkalu — kun kuutio on
+    // valittuna, S skaalaa UV:tä; muuten se vaihtaa Select-työkaluun.
+    if (e.key === 'a' || e.key === 'A') {
+        e.preventDefault();
+        uvAlignSelected();
+        return;
+    }
+    if (e.key === 's' || e.key === 'S') {
+        if (state.selectedCube !== null) {
+            e.preventDefault();
+            uvScaleSelected(e.shiftKey ? 0.5 : 2);
+            return;
+        }
+    }
+    if (e.key === 'm' || e.key === 'M') {
+        e.preventDefault();
+        uvMirrorSelected(!!e.shiftKey);
+        return;
+    }
+
     if (e.key === 'g') {
         setTool('move');
     } else if (e.key === 'r') {
@@ -6377,6 +6398,11 @@ const EDITOR_SHORTCUTS = [
         ['⌘D', 'Duplicate cube'],
         ['⌘C', 'Copy pose'],
         ['⌘V', 'Paste pose']
+    ] },
+    { group: 'UV Tools', items: [
+        ['A', 'Align UVs (selected cubes)'],
+        ['S', 'Scale UVs (Shift = 0.5×)'],
+        ['M', 'Mirror UVs (Shift = vertical)']
     ] },
     { group: 'Menus & Playback', items: [
         ['⌘I', 'Import… menu (cycles through formats)'],
