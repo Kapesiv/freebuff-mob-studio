@@ -563,11 +563,10 @@ function updateCubeMeshInPlace(ci) {
 }
 
 /** Blockbench-tyylinen liikutus (nudge): siirrä valittua kuutiota (tai kuutioita)
- *  nuolinäppäimillä. ←/→ = X, ↑/↓ = Z (Blockbenchissä nuolet liikuttavat valittua
- *  elementtiä XZ-tasossa), Shift suurentaa askeleen. Malli katsoo −Z:tä, joten
- *  ↑ = eteen (−Z) ja ↓ = taakse (+Z). Päivittää datan ja meshit pinnallisesti
- *  ilman täyttä rebuildia, ja tallentaa historyn (undo toimii). */
-function nudgeSelected(dx, dz, step) {
+ *  pikanäppäimillä. ←/→ = X, ↑/↓ = Z (mall katsoo −Z:tä), Q = +Y (ylös),
+ *  E = −Y (alas). Shift suurentaa askeleen (4×). Päivittää datan ja meshit
+ *  pinnallisesti ilman täyttä rebuildia, ja tallentaa historyn (undo toimii). */
+function nudgeSelected(dx, dy, dz, step) {
     const idxs = (state.selectedCubes && state.selectedCubes.length)
         ? state.selectedCubes
         : (state.selectedCube !== null ? [state.selectedCube] : []);
@@ -576,13 +575,14 @@ function nudgeSelected(dx, dz, step) {
     for (const ci of idxs) {
         const cd = findCubeData(ci);
         if (!cd) continue;
-        cd.origin[0] += dx * step;
-        cd.origin[2] += dz * step;
+        cd.origin[0] += (dx || 0) * step;
+        cd.origin[1] += (dy || 0) * step;
+        cd.origin[2] += (dz || 0) * step;
         updateCubeMeshInPlace(ci);
     }
     scheduleAutosave();
     const what = idxs.length > 1 ? `${idxs.length} cubes` : findCubeData(idxs[0]) && findCubeData(idxs[0]).name;
-    setStatus(`Nudge ${what} (${dx * step}, 0, ${dz * step})`);
+    setStatus(`Nudge ${what} (${(dx || 0) * step}, ${(dy || 0) * step}, ${(dz || 0) * step})`);
     return true;
 }
 
@@ -5641,10 +5641,11 @@ document.addEventListener('keydown', (e) => {
         }
         return;
     }
-    // Blockbench-tyylinen liikutus: nuolinäppäimet siirtävät valittua kuutiota
-    // (tai kuutioita) XZ-tasossa. Shift = isompi askel. Testitilassa ArrowUp on
-    // jo varattu hypylle. Ilman valintaa annetaan selaimen oletusskrolli.
-    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+    // Blockbench-tyylinen liikutus: pikanäppäimet siirtävät valittua kuutiota
+    // (tai kuutioita). ←/→ X, ↑/↓ Z, Q/E = Y (ylös/alas). Shift = isompi askel
+    // (4×). Testitilassa nuolet/ArrowUp on jo varattu liikutukselle ja hypylle,
+    // joten nudge ei aktiivoidu. Ilman valintaa annetaan selaimen oletustoiminto.
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'q', 'Q', 'e', 'E'].includes(e.key)) {
         if (state.testMode) return;
         const t = document.activeElement;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
@@ -5652,10 +5653,12 @@ document.addEventListener('keydown', (e) => {
         if (!hasSel) return;
         e.preventDefault();
         const step = e.shiftKey ? 4 : 1;
-        if (e.key === 'ArrowLeft') nudgeSelected(-1, 0, step);
-        else if (e.key === 'ArrowRight') nudgeSelected(1, 0, step);
-        else if (e.key === 'ArrowUp') nudgeSelected(0, -1, step);
-        else if (e.key === 'ArrowDown') nudgeSelected(0, 1, step);
+        if (e.key === 'ArrowLeft') nudgeSelected(-1, 0, 0, step);
+        else if (e.key === 'ArrowRight') nudgeSelected(1, 0, 0, step);
+        else if (e.key === 'ArrowUp') nudgeSelected(0, 0, -1, step);
+        else if (e.key === 'ArrowDown') nudgeSelected(0, 0, 1, step);
+        else if (e.key === 'q' || e.key === 'Q') nudgeSelected(0, 1, 0, step);
+        else if (e.key === 'e' || e.key === 'E') nudgeSelected(0, -1, 0, step);
         return;
     }
     // Delete selected
@@ -5667,20 +5670,24 @@ document.addEventListener('keydown', (e) => {
     // Tool shortcuts
     if (document.activeElement.tagName === 'INPUT') return;
 
-    // UV-työkalut valituille kuutioille: A = kohdista, S = skaalaa (Shift = 0.5×),
-    // M = peilaa (Shift = pysty). S on myös Select-työkalu — kun kuutio on
-    // valittuna, S skaalaa UV:tä; muuten se vaihtaa Select-työkaluun.
+    // UV-työkalut valituille kuutioille: A = kohdista, ] = skaalaa UV:tä 2×
+    // ([ = 0.5×), M = peilaa (Shift = pysty). S on vapautettu UV-skaalauksesta
+    // ja toimii nyt Blockbench-tyylisenä Resize-työkaluna (kuution koon
+    // venytys gizmon kautta) — siksi UV-mittakaava on siirretty hakasulkuihin.
     if (e.key === 'a' || e.key === 'A') {
         e.preventDefault();
         uvAlignSelected();
         return;
     }
-    if (e.key === 's' || e.key === 'S') {
-        if (state.selectedCube !== null) {
-            e.preventDefault();
-            uvScaleSelected(e.shiftKey ? 0.5 : 2);
-            return;
-        }
+    if (e.key === ']') {
+        e.preventDefault();
+        uvScaleSelected(2);
+        return;
+    }
+    if (e.key === '[') {
+        e.preventDefault();
+        uvScaleSelected(0.5);
+        return;
     }
     if (e.key === 'm' || e.key === 'M') {
         e.preventDefault();
@@ -5693,7 +5700,14 @@ document.addEventListener('keydown', (e) => {
     } else if (e.key === 'r') {
         setTool('rotate');
     } else if (e.key === 's' && !e.ctrlKey && !e.metaKey) {
-        setTool('select');
+        // Blockbench: S = Resize (kuution koon venytys) kun kuutio tai luu on
+        // valittuna; ilman valintaa S vaihtaa Select-työkaluun.
+        if (state.selectedCube !== null || state.selectedBone !== null) {
+            e.preventDefault();
+            setTool('scale');
+        } else {
+            setTool('select');
+        }
     }
 
     // Ctrl+Z / Ctrl+Y — ensin maalausvedot (jos niitä on), sitten malli
@@ -6576,7 +6590,9 @@ const EDITOR_SHORTCUTS = [
     { group: 'Tools', items: [
         ['G', 'Move'],
         ['R', 'Rotate'],
-        ['S', 'Select'],
+        ['S', 'Resize (selected) / Select'],
+        ['←↑↓→', 'Nudge selected cube (Shift = 4×)'],
+        ['Q / E', 'Nudge selected cube up / down (Y)'],
         ['Del', 'Delete selected']
     ] },
     { group: 'Editing', items: [
@@ -6588,7 +6604,8 @@ const EDITOR_SHORTCUTS = [
     ] },
     { group: 'UV Tools', items: [
         ['A', 'Align UVs (selected cubes)'],
-        ['S', 'Scale UVs (Shift = 0.5×)'],
+        [']', 'Scale UVs up 2× (selected cubes)'],
+        ['[', 'Scale UVs down 0.5× (selected cubes)'],
         ['M', 'Mirror UVs (Shift = vertical)']
     ] },
     { group: 'Menus & Playback', items: [
