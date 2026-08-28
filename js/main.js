@@ -562,6 +562,30 @@ function updateCubeMeshInPlace(ci) {
     );
 }
 
+/** Blockbench-tyylinen liikutus (nudge): siirrä valittua kuutiota (tai kuutioita)
+ *  nuolinäppäimillä. ←/→ = X, ↑/↓ = Z (Blockbenchissä nuolet liikuttavat valittua
+ *  elementtiä XZ-tasossa), Shift suurentaa askeleen. Malli katsoo −Z:tä, joten
+ *  ↑ = eteen (−Z) ja ↓ = taakse (+Z). Päivittää datan ja meshit pinnallisesti
+ *  ilman täyttä rebuildia, ja tallentaa historyn (undo toimii). */
+function nudgeSelected(dx, dz, step) {
+    const idxs = (state.selectedCubes && state.selectedCubes.length)
+        ? state.selectedCubes
+        : (state.selectedCube !== null ? [state.selectedCube] : []);
+    if (!idxs.length) return false;
+    state.history.push(state.model);
+    for (const ci of idxs) {
+        const cd = findCubeData(ci);
+        if (!cd) continue;
+        cd.origin[0] += dx * step;
+        cd.origin[2] += dz * step;
+        updateCubeMeshInPlace(ci);
+    }
+    scheduleAutosave();
+    const what = idxs.length > 1 ? `${idxs.length} cubes` : findCubeData(idxs[0]) && findCubeData(idxs[0]).name;
+    setStatus(`Nudge ${what} (${dx * step}, 0, ${dz * step})`);
+    return true;
+}
+
 /** Päivitä yhden luun ryhmä + sen kuutiot dataan ilman rebuildia. */
 function updateBoneGroupInPlace(bi) {
     const boneData = state.model.bones[bi];
@@ -5617,6 +5641,23 @@ document.addEventListener('keydown', (e) => {
         }
         return;
     }
+    // Blockbench-tyylinen liikutus: nuolinäppäimet siirtävät valittua kuutiota
+    // (tai kuutioita) XZ-tasossa. Shift = isompi askel. Testitilassa ArrowUp on
+    // jo varattu hypylle. Ilman valintaa annetaan selaimen oletusskrolli.
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+        if (state.testMode) return;
+        const t = document.activeElement;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+        const hasSel = state.selectedCube !== null || (state.selectedCubes && state.selectedCubes.length > 0);
+        if (!hasSel) return;
+        e.preventDefault();
+        const step = e.shiftKey ? 4 : 1;
+        if (e.key === 'ArrowLeft') nudgeSelected(-1, 0, step);
+        else if (e.key === 'ArrowRight') nudgeSelected(1, 0, step);
+        else if (e.key === 'ArrowUp') nudgeSelected(0, -1, step);
+        else if (e.key === 'ArrowDown') nudgeSelected(0, 1, step);
+        return;
+    }
     // Delete selected
     if (e.key === 'Delete' || e.key === 'Backspace') {
         if (document.activeElement.tagName === 'INPUT') return;
@@ -5843,11 +5884,13 @@ function spawnTestTarget() {
         state.testTarget.traverse(o => { if (o.geometry) o.geometry.dispose(); });
         state.testTarget = null;
     }
-    // Mallin koko määrittää etäisyyden ja vihollisen koon
+    // Etäisyys seuraa mallin kokoa, mutta nukki on aina kompakti harjoitusmaali:
+    // sen korkeus ei riipu lähes koko mallista (isolla mobilla 90 % korkeudesta
+    // näytti "toiselta halkeilevalta hahmolta" pelkän targetin sijaan).
     const bb = modelBBox();
     const h = bb ? Math.max(0.5, bb.mx[1] - bb.mn[1]) : 2;
-    const dist = Math.max(14, h * 5 + 8);
-    const th = Math.max(2, h * 0.9); // vihollisen korkeus
+    const dist = Math.max(18, h * 3 + 12);
+    const th = Math.min(3, Math.max(1.6, h * 0.3)); // kompakti, ihmismittainen nukki
     const thp = Math.round(30 + h * 8);
 
     const g = new THREE.Group();
@@ -5874,8 +5917,10 @@ function spawnTestTarget() {
     bar.position.y = th * 1.15;
     g.add(bar);
     g.userData = { barFill, thp, th, dead: false, hitT: 0, mat, legMat, bw };
-    // Sijoitetaan olennon eteen (malli katsoo -Z:tä), hieman sivulle
-    g.position.set(root.position.x + (Math.random() - 0.5) * 4, state.testGroundY, root.position.z - dist);
+    // Sijoitetaan olennon eteen (malli katsoo -Z:tä), hieman sivulle.
+    // Nostetaan nukki hieman niin että jalkaterät koskettavat maata (osien
+    // keskipisteet alkavat hiukan nollan alapuolelta).
+    g.position.set(root.position.x + (Math.random() - 0.5) * 4, state.testGroundY + th * 0.04, root.position.z - dist);
     scene.add(g);
     state.testTarget = g;
     state.testTargetHp = thp;
