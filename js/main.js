@@ -563,8 +563,8 @@ function updateCubeMeshInPlace(ci) {
 }
 
 /** Blockbench-tyylinen liikutus (nudge): siirrä valittua kuutiota (tai kuutioita)
- *  pikanäppäimillä. ←/→ = X, ↑/↓ = Z (mall katsoo −Z:tä), Q = +Y (ylös),
- *  E = −Y (alas). Shift suurentaa askeleen (4×). Päivittää datan ja meshit
+ *  pikanäppäimillä. ←/→ = X, ↑/↓ = Z (malli katsoo −Z:tä), Ctrl+↑/Ctrl+↓ =
+ *  Y (ylös/alas). Shift suurentaa askeleen (4×). Päivittää datan ja meshit
  *  pinnallisesti ilman täyttä rebuildia, ja tallentaa historyn (undo toimii). */
 function nudgeSelected(dx, dy, dz, step) {
     const idxs = (state.selectedCubes && state.selectedCubes.length)
@@ -2937,9 +2937,20 @@ function updatePropertiesFromObject(mesh) {
     // säilyy — vain koko ja UV:t päivittyvät.
     if (transformControls.getMode() === 'scale' &&
         (mesh.scale.x !== 1 || mesh.scale.y !== 1 || mesh.scale.z !== 1)) {
-        cubeData.size[0] = Math.max(0.25, Math.round(Math.abs(cubeData.size[0] * mesh.scale.x) * 100) / 100);
-        cubeData.size[1] = Math.max(0.25, Math.round(Math.abs(cubeData.size[1] * mesh.scale.y) * 100) / 100);
-        cubeData.size[2] = Math.max(0.25, Math.round(Math.abs(cubeData.size[2] * mesh.scale.z) * 100) / 100);
+        const sf = [Math.abs(mesh.scale.x), Math.abs(mesh.scale.y), Math.abs(mesh.scale.z)];
+        cubeData.size[0] = Math.max(0.25, Math.round(Math.abs(cubeData.size[0] * sf[0]) * 100) / 100);
+        cubeData.size[1] = Math.max(0.25, Math.round(Math.abs(cubeData.size[1] * sf[1]) * 100) / 100);
+        cubeData.size[2] = Math.max(0.25, Math.round(Math.abs(cubeData.size[2] * sf[2]) * 100) / 100);
+        // uvSize on kuution tekstuurisaarekkeen pikselikoko (Deep Void -mobeilla
+        // = size × 10). Kun koko muuttuu, uvSize on skaalattava samalla kertoimella
+        // että tekstuurin pikselitiheys pysyy: muuten rectit jäävät vanhoiksi ja
+        // tekstuuri venyy kuutiota suurennettaessa (mobeissa ilman uvSize:aa
+        // computeFaceRects käyttää size:ä, joten ne skaalautuvat jo oikein).
+        if (cubeData.uvSize) {
+            cubeData.uvSize[0] = Math.round(Math.max(1, cubeData.uvSize[0] * sf[0]) * 10) / 10;
+            cubeData.uvSize[1] = Math.round(Math.max(1, cubeData.uvSize[1] * sf[1]) * 10) / 10;
+            cubeData.uvSize[2] = Math.round(Math.max(1, cubeData.uvSize[2] * sf[2]) * 10) / 10;
+        }
         const geo = new THREE.BoxGeometry(cubeData.size[0], cubeData.size[1], cubeData.size[2]);
         applyBoxTextureUVs(geo, cubeData, state.model.textureWidth, state.model.textureHeight);
         mesh.geometry.dispose();
@@ -3077,6 +3088,21 @@ document.getElementById('render-warning').addEventListener('click', () => {
 
 // ==================== PROPERTY INPUT HANDLERS ====================
 function setupPropertyInputs() {
+    // Kokokentän asetus säilyttää tekstuurin pikselitiheyden: uvSize (Deep Void
+    // -saarekkeen pikselikoko, = size × 10) skaalataan samassa suhteessa kuin
+    // size, jotta UV-rectit pysyvät yhtä suurina kuin geometria (muuten
+    // tekstuuri venyy kun kuutiota suurennetaan). Kuutioilla ilman uvSize:aa
+    // computeFaceRects käyttää size:ä ja skaalautuu jo automaattisesti.
+    function setSizeAxis(cd, i, v) {
+        const n = parseFloat(v);
+        if (!isFinite(n) || !cd.size[i]) return;
+        const newVal = Math.max(0.25, n);
+        const sf = newVal / cd.size[i];
+        cd.size[i] = newVal;
+        if (cd.uvSize && sf > 0) {
+            cd.uvSize[i] = Math.round(Math.max(1, cd.uvSize[i] * sf) * 10) / 10;
+        }
+    }
     const props = {
         'prop-pos-x': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.origin[0] = n; },
         'prop-pos-y': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.origin[1] = n; },
@@ -3084,9 +3110,9 @@ function setupPropertyInputs() {
         'prop-rot-x': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.rotation[0] = n; },
         'prop-rot-y': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.rotation[1] = n; },
         'prop-rot-z': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.rotation[2] = n; },
-        'prop-size-x': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.size[0] = Math.max(0.25, n); },
-        'prop-size-y': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.size[1] = Math.max(0.25, n); },
-        'prop-size-z': (v, cd) => { const n = parseFloat(v); if (isFinite(n)) cd.size[2] = Math.max(0.25, n); },
+        'prop-size-x': (v, cd) => setSizeAxis(cd, 0, v),
+        'prop-size-y': (v, cd) => setSizeAxis(cd, 1, v),
+        'prop-size-z': (v, cd) => setSizeAxis(cd, 2, v),
         'prop-name': (v, cd) => cd.name = v,
     };
 
@@ -5642,23 +5668,33 @@ document.addEventListener('keydown', (e) => {
         return;
     }
     // Blockbench-tyylinen liikutus: pikanäppäimet siirtävät valittua kuutiota
-    // (tai kuutioita). ←/→ X, ↑/↓ Z, Q/E = Y (ylös/alas). Shift = isompi askel
-    // (4×). Testitilassa nuolet/ArrowUp on jo varattu liikutukselle ja hypylle,
-    // joten nudge ei aktiivoidu. Ilman valintaa annetaan selaimen oletustoiminto.
-    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'q', 'Q', 'e', 'E'].includes(e.key)) {
+    // (tai kuutioita). ←/→ X, ↑/↓ Z, Ctrl+↑/Ctrl+↓ = Y (ylös/alas). Shift =
+    // isompi askel (4×). Testitilassa nuolet/ArrowUp on jo varattu liikutukselle
+    // ja hypylle, joten nudge ei aktiivoidu. Ilman valintaa annetaan selaimen
+    // oletustoiminto.
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
         if (state.testMode) return;
         const t = document.activeElement;
         if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
         const hasSel = state.selectedCube !== null || (state.selectedCubes && state.selectedCubes.length > 0);
         if (!hasSel) return;
+        const isCtrl = e.ctrlKey || e.metaKey;
+        // Ctrl+↑ / Ctrl+↓ = pystysuuntainen liike (Y-akseli). Ctrl+← / Ctrl+→
+        // jätetään selaimelle (esim. sanan hyppy / ikkunan vaihto).
+        if (isCtrl && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            e.preventDefault();
+            const step = e.shiftKey ? 4 : 1;
+            if (e.key === 'ArrowUp') nudgeSelected(0, 1, 0, step);   // Ctrl+↑ = +Y (ylös)
+            else nudgeSelected(0, -1, 0, step);                       // Ctrl+↓ = −Y (alas)
+            return;
+        }
+        if (isCtrl) return; // muut Ctrl+nuoli → oletuskäyttäytyminen
         e.preventDefault();
         const step = e.shiftKey ? 4 : 1;
         if (e.key === 'ArrowLeft') nudgeSelected(-1, 0, 0, step);
         else if (e.key === 'ArrowRight') nudgeSelected(1, 0, 0, step);
         else if (e.key === 'ArrowUp') nudgeSelected(0, 0, -1, step);
         else if (e.key === 'ArrowDown') nudgeSelected(0, 0, 1, step);
-        else if (e.key === 'q' || e.key === 'Q') nudgeSelected(0, 1, 0, step);
-        else if (e.key === 'e' || e.key === 'E') nudgeSelected(0, -1, 0, step);
         return;
     }
     // Delete selected
@@ -6592,7 +6628,7 @@ const EDITOR_SHORTCUTS = [
         ['R', 'Rotate'],
         ['S', 'Resize (selected) / Select'],
         ['←↑↓→', 'Nudge selected cube (Shift = 4×)'],
-        ['Q / E', 'Nudge selected cube up / down (Y)'],
+        ['Ctrl+↑ / Ctrl+↓', 'Nudge selected cube up / down (Y)'],
         ['Del', 'Delete selected']
     ] },
     { group: 'Editing', items: [
