@@ -3469,7 +3469,7 @@ function setupToolbar() {
         state.symmetryEdit = !state.symmetryEdit;
         ctxSym.classList.toggle('active', state.symmetryEdit);
         ctxSym.title = state.symmetryEdit
-            ? 'Symmetry on — edit one side, the other mirrors live (click to turn off)'
+            ? 'Symmetria päällä — muokkaa toista puolta, toinen peilautuu livenä (klikkaa sammuttaaksesi)'
             : 'Symmetry edit — edit one side (move/rotate/scale), the other mirrors live';
         setStatus(state.symmetryEdit
             ? 'Symmetria päällä — valitse kuutio tai luu kummalta puolelta tahansa, peilikuva seuraa livenä'
@@ -3527,7 +3527,7 @@ function setupToolbar() {
             state.mirrorPaint = !state.mirrorPaint;
             mirrorPaintBtn.classList.toggle('active', state.mirrorPaint);
             mirrorPaintBtn.title = state.mirrorPaint
-                ? 'Mirror paint ON — also paint the mirror image (click to turn off)'
+                ? 'Peilimaalaus päällä — maalaa myös peilikuva (klikkaa sammuttaaksesi)'
                 : 'Mirror paint — also paint the mirror image on the opposite side';
             setStatus(state.mirrorPaint ? 'Peilattu maalaus päällä' : 'Peilattu maalaus pois');
         });
@@ -6401,7 +6401,7 @@ function setupUVEditor() {
 
     function renderPalette() {
         if (palettePanel.hidden) return;
-        const allCats = [...PALETTE_CATEGORIES, { id: 'custom', name: 'Custom' }];
+        const allCats = [...PALETTE_CATEGORIES, { id: 'custom', name: 'Omat' }];
         catsEl.innerHTML = '';
         for (const cat of allCats) {
             const b = document.createElement('button');
@@ -6427,19 +6427,19 @@ function setupUVEditor() {
                 s.appendChild(label);
                 s.dataset.color = c.hex;
                 s.dataset.idx = i;
-                s.title = (c.name || c.hex) + ' (' + c.hex + ') — click to use, double-click to rename, right-click to remove';
+                s.title = (c.name || c.hex) + ' (' + c.hex + ') — klikkaa käyttääksesi, kaksoisklikkaa nimetäksesi, oikea klikkaus poistaa';
                 gridEl.appendChild(s);
             });
             const add = document.createElement('button');
             add.className = 'palette-swatch action wide';
-            add.textContent = '＋ Save color…';
-            add.title = 'Save the current paint color with a name';
+            add.textContent = '＋ Tallenna väri…';
+            add.title = 'Tallenna nykyinen maalausväri nimellä';
             add.dataset.action = 'add';
             gridEl.appendChild(add);
             const clr = document.createElement('button');
             clr.className = 'palette-swatch action';
             clr.textContent = '🗑';
-            clr.title = 'Clear custom colors';
+            clr.title = 'Tyhjennä omat värit';
             clr.dataset.action = 'clear';
             gridEl.appendChild(clr);
         } else {
@@ -6483,11 +6483,11 @@ function setupUVEditor() {
         colorDialogMode = mode;
         colorDialogIndex = index;
         if (mode === 'rename' && customColors[index]) {
-            colorTitle.textContent = 'Rename Color';
+            colorTitle.textContent = 'Nimeä väri';
             colorNameInput.value = customColors[index].name || '';
             colorHexInput.value = customColors[index].hex;
         } else {
-            colorTitle.textContent = 'Save Color to Palette';
+            colorTitle.textContent = 'Tallenna väri palettiin';
             colorNameInput.value = '';
             colorHexInput.value = normalizeHex(state.uvEditor.getPaintColor()) || '#888888';
         }
