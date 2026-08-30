@@ -879,6 +879,14 @@ function scaleModelAxis(axis, factor, pivot) {
             const cy = c.origin[axis] + c.size[axis] / 2;
             c.size[axis] *= factor;
             c.origin[axis] = pivot + (cy - pivot) * factor - c.size[axis] / 2;
+            // uvSize on kuution tekstuurisaarekkeen pikselikoko (Deep Void -mobeilla
+            // = size × 10). Kun reshape venyttää kokoa, uvSize on skaalattava samalla
+            // kertoimella että tekstuurin pikselitiheys pysyy (computeFaceRects käyttää
+            // cube.uvSize || cube.size): muuten rectit jäävät vanhoiksi ja tekstuuri
+            // venyy mallia muokatessa. Pyöristys desimaaliin kuten gizmo-skaalauksessa.
+            if (c.uvSize) {
+                c.uvSize[axis] = Math.round(Math.max(1, c.uvSize[axis] * factor) * 10) / 10;
+            }
         }
     }
 }
@@ -1140,6 +1148,7 @@ function reshapeEnd() {
         for (const c of bone.cubes) {
             c.origin = c.origin.map(v => round2(v));
             c.size = c.size.map(v => round2(v));
+            if (c.uvSize) c.uvSize = c.uvSize.map(v => round2(v));
         }
     }
     scheduleAutosave();
