@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Web-based Blockbench-style 3D mob editor for Minecraft (Bedrock geometry + Java Edition export)",
   "type": "module",
+  "main": "app/main.cjs",
   "scripts": {
     "build:preview": "node build-preview.mjs",
     "verify:uv": "node tools/verify-uv.js",
@@ -11,13 +12,18 @@
     "verify:walk": "node tools/measure-walk.mjs",
     "verify:race": "node tools/verify-texture-race.mjs",
     "verify:cleanup": "node tools/verify-cleanup.mjs",
+    "verify:multidrag": "node tools/verify-multidrag.mjs",
     "fetch:vanilla": "node tools/fetch-vanilla.js",
     "start": "python3 -m http.server 8080",
+    "app": "node build-preview.mjs && electron .",
     "verify:shots-ubuntu": "node tools/verify-example-shots-ubuntu.mjs",
     "verify:shots": "node tools/verify-example-shots.mjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",
     "three": "^0.163.0"
+  },
+  "devDependencies": {
+    "electron": "^44.0.0"
   }
 }

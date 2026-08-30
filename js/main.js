@@ -44,6 +44,7 @@ const state = {
     selectedPart: null,        // Spore-osa (luuryhmä) valittuna — koko osan muokkaus
     partRootGroup: null,       // osan juuriluun THREE.Group (gizmo kohde)
     partFineTune: false,       // kuutiotila: klikkaukset valitsevat yksittäisiä kuutioita
+    boneMode: false,           // B-näppäin: klikkaus valitsee luun kuution sijaan (poseerausta varten)
     tool: 'select',
     bones: [],       // THREE.Group per bone
     cubes: [],       // THREE.Mesh per cube
@@ -377,13 +378,51 @@ state.scene = scene;
 state.buildResourcePack = buildResourcePack;
 state.zipFiles = zipFiles;
 
+// Monivalinta-gizmo: raahauksen alussa otetaan tilannekuva kaikista valituista
+// kuutioista, jotta siirto/kierto/skaalaus kohdistuu kaikkiin, ei vain
+// ensimmäiseen (johon gizmo on kiinnitetty).
+let multiDrag = null;
+
 transformControls.addEventListener('dragging-changed', (event) => {
     orbitControls.enabled = !event.value;
     state._dragActive = event.value;
+    if (event.value) {
+        // Raahaus alkaa: tilannekuva monivalinnasta
+        multiDrag = null;
+        const obj = transformControls.object;
+        if (obj && state.cubes.includes(obj) && state.selectedCubes && state.selectedCubes.length > 1) {
+            const focusIdx = state.cubes.indexOf(obj);
+            const others = [];
+            for (const ci of state.selectedCubes) {
+                if (ci === focusIdx) continue;
+                const m = state.cubes[ci];
+                if (!m) continue;
+                others.push({
+                    idx: ci,
+                    mesh: m,
+                    group: m.parent,
+                    startWorld: m.getWorldPosition(new THREE.Vector3()),
+                    cubeData: findCubeData(ci),
+                    boneData: findBoneForCube(ci)
+                });
+            }
+            if (others.length) {
+                multiDrag = {
+                    mode: transformControls.getMode(),
+                    focusMesh: obj,
+                    pivot: obj.getWorldPosition(new THREE.Vector3()),
+                    startFocusWorld: obj.getWorldPosition(new THREE.Vector3()),
+                    startFocusQuat: obj.getWorldQuaternion(new THREE.Quaternion()),
+                    others
+                };
+            }
+        }
+    }
     // Raahauksen lopussa varmistetaan, että render ja data ovat yhtä —
     // kesken raahauksen ei tarkisteta (data päivittyy joka tapahtumassa,
     // ja toistuva tarkistus hidastaisi suuria malleja).
     if (!event.value) {
+        multiDrag = null;
         // Spore-osa: gizmon skaalaus/siirto poltetaan dataan raahauksen lopussa
         if (state.selectedPart && state.partRootGroup) bakePartFromGroup(state.partRootGroup);
         checkRenderConsistency();
@@ -408,6 +447,8 @@ transformControls.addEventListener('objectChange', () => {
         }
     } else {
         updatePropertiesFromObject(obj);
+        // Monivalinta: sovella sama muutos myös muihin valittuihin kuutioihin
+        applyMultiTransform(obj);
     }
     // Symmetria-editointi: peilaa muokkaus vastakkaiselle puolelle livenä
     if (state.symmetryEdit && !state.selectedPart) applySymmetryEdit();
@@ -454,6 +495,20 @@ function onMouseClick(event) {
                 selectBone(bi);
                 return;
             }
+        }
+        if (state.boneMode) {
+            // B-tila (luutila): klikkaus valitsee kuution luun, jotta sitä voi
+            // poseerata suoraan 3D:ssä (sama kuin poseMode mutta aina päällä).
+            const idx = state.cubes.indexOf(mesh);
+            const boneData = findBoneForCube(idx);
+            if (boneData) {
+                const bi = state.model.bones.indexOf(boneData);
+                deselectAll();
+                selectBone(bi);
+                return;
+            }
+            setStatus('This cube has no bone — pick another');
+            return;
         }
         selectCube(mesh, event.shiftKey);
     } else if (!event.shiftKey) {
@@ -1465,7 +1520,7 @@ function selectBone(index) {
 
     highlightBoneTree();
     if (bone) {
-        setStatus(`Selected bone: ${bone.name} — press R to rotate, G to move`);
+        setStatus(`Selected bone: ${bone.name} — press R to rotate, V to move`);
     }
 }
 
@@ -2983,6 +3038,65 @@ function updatePropertiesFromObject(mesh) {
 
     showProperties(cubeData, boneData);
     if (state.uvEditor) state.uvEditor.draw(); // koon muutos päivittää kasvojen rectit
+}
+
+/**
+ * Monivalinta-gizmo: kohdista focus-kuution muutos (siirto/kierto/skaalaus)
+ * myös muihin valittuihin kuutioihin. Tilannekuva otetaan raahauksen alussa
+ * (dragging-changed → multiDrag). Muunnokset tehdään maailma-avaruudessa ja
+ * käännetään kunkin kuution oman luun paikalliseen avaruuteen, joten eri
+ * luissa olevat kuutiot liikkuvat yhdessä oikein.
+ */
+function applyMultiTransform(obj) {
+    if (!multiDrag || multiDrag.focusMesh !== obj) return;
+    const m = multiDrag;
+    const setOrigin = (o, local) => {
+        o.cubeData.origin[0] = Math.round((local.x + o.boneData.pivot[0] - o.cubeData.size[0] / 2) * 1000) / 1000;
+        o.cubeData.origin[1] = Math.round((local.y + o.boneData.pivot[1] - o.cubeData.size[1] / 2) * 1000) / 1000;
+        o.cubeData.origin[2] = Math.round((local.z + o.boneData.pivot[2] - o.cubeData.size[2] / 2) * 1000) / 1000;
+    };
+    if (m.mode === 'translate') {
+        const delta = obj.getWorldPosition(new THREE.Vector3()).sub(m.startFocusWorld);
+        const tmp = new THREE.Vector3();
+        for (const o of m.others) {
+            const local = o.group.worldToLocal(tmp.copy(o.startWorld).add(delta));
+            o.mesh.position.copy(local);
+            setOrigin(o, local);
+        }
+    } else if (m.mode === 'scale') {
+        const sf = [Math.abs(obj.scale.x), Math.abs(obj.scale.y), Math.abs(obj.scale.z)];
+        for (const o of m.others) {
+            o.cubeData.size[0] = Math.max(0.25, Math.round(Math.abs(o.cubeData.size[0] * sf[0]) * 100) / 100);
+            o.cubeData.size[1] = Math.max(0.25, Math.round(Math.abs(o.cubeData.size[1] * sf[1]) * 100) / 100);
+            o.cubeData.size[2] = Math.max(0.25, Math.round(Math.abs(o.cubeData.size[2] * sf[2]) * 100) / 100);
+            if (o.cubeData.uvSize) {
+                o.cubeData.uvSize[0] = Math.round(Math.max(1, o.cubeData.uvSize[0] * sf[0]) * 10) / 10;
+                o.cubeData.uvSize[1] = Math.round(Math.max(1, o.cubeData.uvSize[1] * sf[1]) * 10) / 10;
+                o.cubeData.uvSize[2] = Math.round(Math.max(1, o.cubeData.uvSize[2] * sf[2]) * 10) / 10;
+            }
+            updateCubeMeshInPlace(o.idx);
+        }
+    } else if (m.mode === 'rotate') {
+        const dq = new THREE.Quaternion();
+        obj.getWorldQuaternion(dq).multiply(m.startFocusQuat.clone().invert());
+        const tmp = new THREE.Vector3();
+        const q = new THREE.Quaternion();
+        for (const o of m.others) {
+            // Kierto gizmon keskipisteen ympäri (maailma-avaruudessa)
+            tmp.copy(o.startWorld).sub(m.pivot).applyQuaternion(dq).add(m.pivot);
+            const local = o.group.worldToLocal(tmp);
+            o.mesh.position.copy(local);
+            setOrigin(o, local);
+            // Sama kiertodelta luun paikallisessa avaruudessa
+            const boneQuat = o.group.getWorldQuaternion(new THREE.Quaternion());
+            const dqLocal = boneQuat.clone().invert().multiply(dq).multiply(boneQuat);
+            q.setFromEuler(o.mesh.rotation).premultiply(dqLocal);
+            o.mesh.rotation.setFromQuaternion(q);
+            o.cubeData.rotation[0] = Math.round(THREE.MathUtils.radToDeg(o.mesh.rotation.x));
+            o.cubeData.rotation[1] = Math.round(THREE.MathUtils.radToDeg(o.mesh.rotation.y));
+            o.cubeData.rotation[2] = Math.round(THREE.MathUtils.radToDeg(o.mesh.rotation.z));
+        }
+    }
 }
 
 function setStatus(text) {
@@ -5740,7 +5854,33 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.key === 'g') {
+    if (e.key === 'p' || e.key === 'P') {
+        if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setTool('paint'); }
+        return;
+    }
+    if (e.key === 'i' || e.key === 'I') {
+        if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); setTool('pipette'); }
+        return;
+    }
+    if (e.key === 'b' || e.key === 'B') {
+        if (e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        state.boneMode = !state.boneMode;
+        canvas.style.cursor = state.boneMode ? 'pointer' : '';
+        setStatus(state.boneMode
+            ? 'Bone mode ON — click a cube to select its bone for posing (B again to exit)'
+            : 'Bone mode OFF');
+        return;
+    }
+    if (e.key === 'f' || e.key === 'F') {
+        if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            fitCameraToMob({ fit: computeModelFit(state.model) });
+        }
+        return;
+    }
+    if (e.key === 'v' || e.key === 'V' || e.key === 'g') {
+        // Blockbench: V = Move-työkalu (G toimii myös vanhana pikanäppäimenä)
         setTool('move');
     } else if (e.key === 'r') {
         setTool('rotate');
