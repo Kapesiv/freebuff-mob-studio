@@ -3837,11 +3837,11 @@ function setupLibrary() {
         setStatus(`Monistettu: ${src} → ${name}`);
     });
 
-    document.getElementById('anim-rename').addEventListener('click', () => {
+    document.getElementById('anim-rename').addEventListener('click', async () => {
         if (!state.currentAnimName) { setStatus('Ei animaatiota nimeämättä uudelleen'); return; }
         saveCurrentAnimation();
         const old = state.currentAnimName;
-        const name = (prompt('New animation name:', old) || '').trim();
+        const name = (await askConfirm('Anna animaatiolle uusi nimi:', { prompt: true, title: 'Nimeä animaatio uudelleen', defaultValue: old, okLabel: 'Nimeä' })).trim();
         if (!name || name === old) return;
         if (state.projectAnimations[name]) { setStatus(`Nimi on jo käytössä: ${name}`); return; }
         state.projectAnimations[name] = state.projectAnimations[old];
@@ -3852,10 +3852,11 @@ function setupLibrary() {
         setStatus(`Nimetty uudelleen: ${old} → ${name}`);
     });
 
-    document.getElementById('anim-del').addEventListener('click', () => {
+    document.getElementById('anim-del').addEventListener('click', async () => {
         const names = Object.keys(state.projectAnimations);
         if (names.length <= 1) { setStatus('Vähintään yksi animaatio vaaditaan'); return; }
-        if (!confirm(`Delete animation "${state.currentAnimName}"?`)) return;
+        const ok = await askConfirm(`Poistetaanko animaatio "${state.currentAnimName}"?`, { title: 'Poista animaatio', okLabel: 'Poista' });
+        if (!ok) return;
         saveCurrentAnimation();
         delete state.projectAnimations[state.currentAnimName];
         const next = Object.keys(state.projectAnimations)[0];
@@ -4466,6 +4467,60 @@ function renderMyCreatures() {
     }
 }
 
+// ---- vahvistus/nimeä-dialogi (korvaa natiivin confirm/prompt, joka jumittaa webview'n) ----
+let confirmDialog = null;
+let confirmResolve = null;
+
+/** Näytä oma vahvistusdialogi (tai nimikentällä prompt). Palauttaa lupauksen. */
+function askConfirm(message, opts = {}) {
+    if (!confirmDialog) setupConfirmDialog();
+    const overlay = confirmDialog;
+    document.getElementById('app-confirm-title').textContent = opts.title || 'Vahvista';
+    document.getElementById('app-confirm-message').textContent = message;
+    const field = document.getElementById('app-confirm-field');
+    const input = document.getElementById('app-confirm-input');
+    field.style.display = opts.prompt ? 'block' : 'none';
+    if (opts.prompt) {
+        input.value = opts.defaultValue != null ? opts.defaultValue : '';
+        input.placeholder = opts.placeholder || '';
+        input.focus();
+        input.select();
+    }
+    const okBtn = document.getElementById('app-confirm-ok');
+    okBtn.textContent = opts.okLabel || 'OK';
+    overlay.style.display = 'flex';
+    return new Promise(resolve => {
+        confirmResolve = (value) => {
+            overlay.style.display = 'none';
+            confirmResolve = null;
+            resolve(value);
+        };
+    });
+}
+
+/** Näytä oma virheilmoitus (ei-natiivi alert). */
+async function showAlert(message, title = 'Virhe') {
+    await askConfirm(message, { title, okLabel: 'OK' });
+}
+
+function setupConfirmDialog() {
+    confirmDialog = document.getElementById('app-confirm-dialog');
+    document.getElementById('app-confirm-ok').addEventListener('click', () => {
+        if (!confirmResolve) return;
+        const input = document.getElementById('app-confirm-input');
+        const promptMode = document.getElementById('app-confirm-field').style.display !== 'none';
+        confirmResolve(promptMode ? input.value : true);
+    });
+    const cancel = () => { if (confirmResolve) confirmResolve(false); };
+    document.getElementById('app-confirm-cancel').addEventListener('click', cancel);
+    confirmDialog.addEventListener('click', (e) => { if (e.target === confirmDialog) cancel(); });
+    const input = document.getElementById('app-confirm-input');
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') document.getElementById('app-confirm-ok').click();
+        if (e.key === 'Escape') cancel();
+    });
+}
+
 // ---- tallennusdialogi (nimi + emoji) --------------------------------
 let saveCreatureDialog = null;
 
@@ -4754,10 +4809,10 @@ function setupFileIO() {
                     scheduleAutosave();
                     setStatus(`Avattu: ${file.name}`);
                 } else {
-                    alert('Not a valid Freebuff Mob Studio project file.');
+                    showAlert('Tämä ei ole kelvollinen Freebuff Mob Studio -projektitiedosto.');
                 }
             } catch (err) {
-                alert('Failed to open project: ' + err.message);
+                showAlert('Projektin avaaminen epäonnistui: ' + err.message);
             }
         };
         reader.readAsText(file);
@@ -4835,7 +4890,7 @@ function setupFileIO() {
                 scheduleAutosave();
                 setStatus(`Tuotu Blockbench-malli: ${file.name} (${parsed.model.bones.reduce((n, b) => n + b.cubes.length, 0)} kuutiota${parsed.animation ? ', animaatio mukana' : ''})`);
             } catch (err) {
-                alert('Failed to import .bbmodel: ' + err.message);
+                showAlert('Blockbench-mallin tuonti epäonnistui: ' + err.message);
             }
         };
         reader.readAsText(file);
@@ -4881,7 +4936,7 @@ function setupFileIO() {
                 rebuildModel();
                 setStatus(`Tuotu: ${file.name}`);
             } catch (err) {
-                alert('Failed to parse Bedrock geometry: ' + err.message);
+                showAlert('Bedrock-geometrian jäsennys epäonnistui: ' + err.message);
             }
         };
         reader.readAsText(file);
@@ -6682,7 +6737,13 @@ if (URL_MOB_ID) {
         const txt = document.getElementById('status-text').textContent;
         setStatus(txt + ' — open another mob in a second tab to compare (both stay saved)');
     } else {
-        setStatus(`Mob "${URL_MOB_ID}" not found in the library — pick one from the left`);
+        // Ei löytynyt kirjastosta — kokeile 'Omat olennot' -tallennusta (id: mine_*)
+        const mine = getMyCreatures().find(e => e.id === URL_MOB_ID || e.name === URL_MOB_ID);
+        if (mine) {
+            loadMyCreature(mine.id);
+        } else {
+            setStatus(`Mob "${URL_MOB_ID}" ei löytynyt kirjastosta — valitse vasemmalta`);
+        }
     }
 }
 
