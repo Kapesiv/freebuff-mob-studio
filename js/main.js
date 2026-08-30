@@ -332,7 +332,7 @@ function applyPreviewOptions(opts) {
         applyGamePreviewDefault();
         if (state.gamePreviewNight) {
             setGamePreviewNight(true);
-            setStatus('Night mode on — moonlight, glow shines brighter');
+            setStatus('Night-tila päällä — kuunvalo, hehku loistaa kirkkaammin');
         }
     } else {
         const chk = document.getElementById('chk-game-preview');
@@ -507,7 +507,7 @@ function onMouseClick(event) {
                 selectBone(bi);
                 return;
             }
-            setStatus('This cube has no bone — pick another');
+            setStatus('Tällä kuutiolla ei ole luuta — valitse toinen');
             return;
         }
         selectCube(mesh, event.shiftKey);
@@ -637,7 +637,7 @@ function nudgeSelected(dx, dy, dz, step) {
     }
     scheduleAutosave();
     const what = idxs.length > 1 ? `${idxs.length} cubes` : findCubeData(idxs[0]) && findCubeData(idxs[0]).name;
-    setStatus(`Nudge ${what} (${(dx || 0) * step}, ${(dy || 0) * step}, ${(dz || 0) * step})`);
+    setStatus(`Siirretty ${what} (${(dx || 0) * step}, ${(dy || 0) * step}, ${(dz || 0) * step})`);
     return true;
 }
 
@@ -1212,7 +1212,7 @@ function reshapeEnd() {
     // Kursori takaisin: jos hover jää päälle, palauta pointer (tai move)
     canvas.style.cursor = (reshapeHoverAxis && reshapeHandleGroup) ? 'pointer' : 'move';
     const s = reshapeBlockSize();
-    setStatus(`Reshaped — now ${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} blocks. Drag handles (green/red/blue = scale, yellow = move) or free-drag (Shift = length)`);
+    setStatus(`Muotoiltu — nyt ${s[0].toFixed(2)} × ${s[1].toFixed(2)} × ${s[2].toFixed(2)} lohkoa. Vedä kahvoja (vihreä/punainen/sininen = skaalaus, keltainen = siirto) tai vedä vapaasti (Shift = pituus)`);
     reshapeReadoutTimer = setTimeout(() => reshapeSetReadout(null), 900);
 }
 
@@ -1257,7 +1257,7 @@ function partOffsetBounds(inst) {
 
 function faceDragBegin(e, inst) {
     const ref = faceHeadRef();
-    if (!ref) { setStatus('Face details — this model has no head bone'); return; }
+    if (!ref) {        setStatus('Kasvojen yksityiskohdat — tässä mallissa ei ole pääluuta'); return; }
     selectPart(inst);
     const wpos = boneWorldPos(inst.root);
     state.history.push(state.model);
@@ -1325,7 +1325,7 @@ function faceDragEnd() {
     if (!faceDrag) return;
     const moved = faceDrag.moved;
     faceDrag = null;
-    if (moved) setStatus('Face detail repositioned — it stays on the head surface');
+    if (moved) setStatus('Kasvojen yksityiskohtaa siirretty — se pysyy pään pinnalla');
 }
 
 canvas.addEventListener('mousedown', (e) => {
@@ -1345,7 +1345,7 @@ canvas.addEventListener('mousedown', (e) => {
             if (inst && isFaceDetail(inst)) {
                 faceDragBegin(e, inst);
             } else if (boneData) {
-                setStatus('Face details — click an eye / mouth / snout part (Heads & Faces category) to move it');
+                setStatus('Kasvojen yksityiskohdat — klikkaa silmä-/suu-/kuono-osaa (Päät & kasvot -kategoria), jotta voit siirtää sitä');
             }
         }
         return;
@@ -1371,12 +1371,12 @@ canvas.addEventListener('mousedown', (e) => {
                     input.value = color;
                     input.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                setStatus(`Color picked: ${color} — continue painting`);
+                setStatus(`Väri poimittu: ${color} — jatka maalaamista`);
             } else {
-                setStatus('Hit was transparent — try another spot');
+                setStatus('Osuma oli läpinäkyvä — kokeile toista kohtaa');
             }
         } else {
-            setStatus('No hit on the model');
+            setStatus('Ei osumaa mallissa');
         }
         setTool('paint'); // palaa maalaukseen valitulla värillä
         return;
@@ -1470,7 +1470,7 @@ function doSelectCube(idx, multi) {
             highlightBoneTree();
         }
         if (cubeData) showProperties(cubeData, boneData);
-        setStatus(`Selected ${state.selectedCubes.length} cubes — properties apply to all (Shift+click to toggle)`);
+        setStatus(`Valittu ${state.selectedCubes.length} kuutiota — ominaisuudet koskevat kaikkia (Shift+klik lisää/poistaa)`);
         if (state.uvEditor) state.uvEditor.draw();
         return;
     }
@@ -1492,8 +1492,7 @@ function doSelectCube(idx, multi) {
 
     // Attach transform controls
     transformControls.attach(mesh);
-    showProperties(cubeData, boneData);
-    setStatus(`Selected: ${cubeData.name}`);
+    showProperties(cubeData, boneData);        setStatus(`Valittu: ${cubeData.name}`);
     if (state.uvEditor) state.uvEditor.draw(); // päivitä UV-editorin kasvovärit
 }
 
@@ -1520,7 +1519,7 @@ function selectBone(index) {
 
     highlightBoneTree();
     if (bone) {
-        setStatus(`Selected bone: ${bone.name} — press R to rotate, V to move`);
+        setStatus(`Valittu luu: ${bone.name} — paina R pyörittääksesi, V siirtääksesi`);
     }
 }
 
@@ -1588,7 +1587,7 @@ function deselectAll() {
     }
 
     highlightBoneTree();
-    setStatus('Ready');
+    setStatus('Valmis');
     if (state.uvEditor) state.uvEditor.draw(); // piilota kasvovärit kun ei valintaa
 }
 
@@ -1649,7 +1648,7 @@ function selectPart(inst) {
         }
     }
     highlightBoneTree();
-    showPartPanel(inst);        setStatus(`Part selected: ${inst.label} — drag with the gizmo (G move · R rotate · scale tool), color and scale on the right`);
+    showPartPanel(inst);        setStatus(`Osa valittu: ${inst.label} — vedä gizmolla (G siirto · R kierto · skaalaustyökalu), väri ja koko oikealla`);
 }
 
 /** Poistu osatilasta yksittäiskuutioiden hienosäätöön (kuutiotila). */
@@ -1668,7 +1667,7 @@ function exitPartMode() {
     if (ci !== null && state.cubes[ci]) {
         doSelectCube(ci);
         state.partFineTune = true; // kuutiotila: klikkaukset osuvat yksittäisiin kuutioihin
-        setStatus(`Cube mode: ${inst.label} — edit cubes one by one. Click the part in the left tree to return to part mode`);
+        setStatus(`Kuutiotila: ${inst.label} — muokkaa kuutioita yksitellen. Klikkaa osaa vasemmassa puussa palataksesi osatilaan`);
     } else {
         deselectAll();
     }
@@ -1701,7 +1700,7 @@ function bakePartFromGroup(obj) {
         inst.panelScale = abs;
         updatePartPanelScaleInputs();
         scheduleAutosave();
-        setStatus(`${inst.label} scaled — ${abs[0].toFixed(2)}× / ${abs[1].toFixed(2)}× / ${abs[2].toFixed(2)}×`);
+        setStatus(`${inst.label} skaalattu — ${abs[0].toFixed(2)}× / ${abs[1].toFixed(2)}× / ${abs[2].toFixed(2)}×`);
     } else if (mode === 'translate') {
         const worldPos = obj.getWorldPosition(new THREE.Vector3());
         const dx = worldPos.x - inst.root.pivot[0];
@@ -1712,7 +1711,7 @@ function bakePartFromGroup(obj) {
             translatePartData(inst, dx, dy, dz);
             syncPartToScene(inst);
             scheduleAutosave();
-            setStatus(`${inst.label} moved`);
+            setStatus(`${inst.label} siirretty`);
         }
     }
 }
@@ -1991,8 +1990,7 @@ function paintPartColor(inst, color) {
     }
     state.texture.needsUpdate = true;
     if (state.uvEditor) state.uvEditor.draw();
-    scheduleAutosave();
-    setStatus(`${inst.label} colored: ${color}`);
+    scheduleAutosave();        setStatus(`${inst.label} väritetty: ${color}`);
 }
 
 function hslToHex(h, s, l) {
@@ -2045,7 +2043,7 @@ function setupPartEditPanel() {
         setPartScale(inst, 1, 'z');
         updatePartPanelScaleInputs();
         scheduleAutosave();
-        setStatus(`${inst.label} reset to original size`);
+        setStatus(`${inst.label} palautettu alkuperäiseen kokoon`);
     });
 
     // Kierto: suhteellinen delta asteina
@@ -2283,7 +2281,7 @@ function addCube() {
         if (cd && cd.name === cubeName) {
             state.selectedCubes = [];
             doSelectCube(i, false);
-            setStatus(`Added ${cubeName} — drag it with V (Move), R rotates, S resizes`);
+            setStatus(`Lisätty ${cubeName} — vedä V:llä (siirto), R kääntää, S venyttää`);
             break;
         }
     }
@@ -2303,7 +2301,7 @@ function addBone() {
 
     rebuildModel();
     scheduleAutosave();
-    setStatus(`Added bone: ${name}`);
+    setStatus(`Lisätty luu: ${name}`);
 }
 
 // ==================== OSAN KIINNITYSVALIKKO ====================
@@ -2535,9 +2533,9 @@ function surfaceSecondaryAxis(at) {
  */
 function addPartToModel(partId, opts = {}) {
     const part = MOB_PARTS.find(p => p.id === partId);
-    if (!part) { setStatus('Part not found: ' + partId); return; }
+    if (!part) {        setStatus('Osaa ei löytynyt: ' + partId); return; }
     const target = findPartAttachBone(part, opts);
-    if (!target) { setStatus('No bone to attach to — start from a template (e.g. Humanoid)'); return; }
+    if (!target) { setStatus('Ei luuta johon kiinnittää — aloita pohjasta (esim. Humanoid)'); return; }
     const at = opts.at || part.attach.at;
     const off = partAttachOffset(part, target, at);
     // Kopioiden määrä: 1 / 2 (peilipari) / 4 (2×2). Epäsymmetriset → aina 1.
@@ -2623,7 +2621,7 @@ function addPartToModel(partId, opts = {}) {
     deselectAll(); // vanha valinta viittaisi poistettuun meshiin rebuildin jälkeen
     rebuildModel();
     scheduleAutosave();
-    setStatus(`Attached ${part.name} (${copies === 1 ? 'single' : copies + ' copies'}) → ${target.name}`);
+    setStatus(`Kiinnitettiin ${part.name} (${copies === 1 ? 'yksi' : copies + ' kappaletta'}) → ${target.name}`);
 }
 
 // ==================== 🎲 RANDOMIZE (Spore) ====================
@@ -2680,7 +2678,7 @@ function randomizeCreature() {
     // MOB_TEMPLATES-pohjat ovat yksiluisia, joten ne jaetaan moniluuiseksi
     // luurangoksi — osien kiinnitys ja animaatiot vaativat erilliset luut.
     const tpl = MOB_TEMPLATES[Math.floor(Math.random() * MOB_TEMPLATES.length)];
-    if (!tpl) { setStatus('No templates found'); return; }
+    if (!tpl) { setStatus('Ei pohjia löytynyt'); return; }
     // Jaetaan aina moniluuiseksi — myös spider-pohja (2 luuta, joissa useita
     // kuutioita) saa jokaiselle kuutiolle oman luun, jotta osat kiinnittyvät
     // oikeisiin luihin eivätkä kaikki body-luuhun.
@@ -2795,7 +2793,7 @@ function randomizeCreature() {
     applyGamePreviewDefault();
     updateProjectNameLabel();
     scheduleAutosave();
-    setStatus(`Randomize: "${state.projectName}" — ${attached} parts, ${state.model.bones.length} bones, ${cubes} cubes, ${tmp.size} blocks, ${patterned} patterned cubes, ${glow ? 'glowing, ' : ''}animations: ${animNames.join(', ') || 'none'}. Undo (⌘Z) restores the previous model — randomize again anytime.`);
+    setStatus(`Satunnaistus: "${state.projectName}" — ${attached} osaa, ${state.model.bones.length} luuta, ${cubes} kuutiota, ${tmp.size} lohkoa, ${patterned} kuviotettua kuutiota, ${glow ? 'hehkuu, ' : ''}animaatiot: ${animNames.join(', ') || 'ei yhtään'}. Kumoa (⌘Z) palauttaa edellisen mallin — satunnaista uudelleen milloin vain.`);
 }
 
 function deleteSelected() {
@@ -2840,7 +2838,7 @@ function deleteSelected() {
         deselectAll();
         rebuildModel();
         scheduleAutosave();
-        setStatus('Part deleted' + (names.size > inst.bones.length ? ` (${names.size / inst.bones.length} copies removed)` : ''));
+        setStatus('Osa poistettu' + (names.size > inst.bones.length ? ` (${names.size / inst.bones.length} kopiota poistettu)` : ''));
         return;
     }
     const multiIdx = (state.selectedCubes && state.selectedCubes.length) ? state.selectedCubes : null;
@@ -2864,7 +2862,7 @@ function deleteSelected() {
         deselectAll();
         rebuildModel();
         scheduleAutosave();
-        setStatus(targets.length > 1 ? `${targets.length} cubes deleted` : 'Cube deleted');
+        setStatus(targets.length > 1 ? `${targets.length} kuutiota poistettu` : 'Kuutio poistettu');
     } else if (state.selectedBone !== null) {
         state.history.push(state.model);
         if (state.model.bones.length > 1) {
@@ -2872,7 +2870,7 @@ function deleteSelected() {
             deselectAll();
             rebuildModel();
             scheduleAutosave();
-            setStatus('Bone deleted');
+            setStatus('Luu poistettu');
         }
     }
 }
@@ -3214,7 +3212,7 @@ document.getElementById('render-warning').addEventListener('click', () => {
     if (!Number.isNaN(idx) && state.cubes[idx]) {
         selectCube(state.cubes[idx]);
         const cubeData = findCubeData(idx);
-        setStatus(`${cubeData ? cubeData.name : 'cube'} selected — check its position/size`);
+        setStatus(`${cubeData ? cubeData.name : 'kuutio'} valittu — tarkista sen sijainti/koko`);
     }
 });
 
@@ -3354,7 +3352,7 @@ function setupLocatorPanel() {
         });
         rebuildModel();
         scheduleAutosave();
-        setStatus(`Added locator_${n} to ${bone ? bone.name : 'root'} — it follows the bone in animations`);
+        setStatus(`Lisätty kiinnityspiste locator_${n} luuhun ${bone ? bone.name : '(juuri)'} — se seuraa luuta animaatioissa`);
     });
 
     // Piirrä lista heti (rebuildModel kutsuu renderLocatorListia jatkossa)
@@ -3425,9 +3423,9 @@ function setTool(tool) {
         }
         if (tool === 'reshape') {
             showReshapeHandles(true);
-            setStatus('Reshape — drag handles (green = height · red = width · blue = length · yellow center = move) or free-drag on the model: up/down = height · left/right = width · Shift = length');
+            setStatus('Muotoile — vedä kahvoja (vihreä = korkeus · punainen = leveys · sininen = pituus · keltainen keskus = siirto) tai vedä mallia: ylös/alas = korkeus · vasen/oikea = leveys · Shift = pituus');
         } else if (tool === 'face') {
-            setStatus('Face details — click an eye / mouth / snout part, then drag to slide it across the head surface');
+            setStatus('Kasvojen yksityiskohdat — klikkaa silmä-/suu-/kuono-osaa ja vedä liu\'uttaaksesi sitä pään pinnalla');
         }
     } else {
         showReshapeHandles(false);
@@ -3474,8 +3472,8 @@ function setupToolbar() {
             ? 'Symmetry on — edit one side, the other mirrors live (click to turn off)'
             : 'Symmetry edit — edit one side (move/rotate/scale), the other mirrors live';
         setStatus(state.symmetryEdit
-            ? 'Symmetry on — select a cube or bone on either side and edit, the mirror follows live'
-            : 'Symmetry off');
+            ? 'Symmetria päällä — valitse kuutio tai luu kummalta puolelta tahansa, peilikuva seuraa livenä'
+            : 'Symmetria pois');
     }
 
     function openAddContextMenu(x, y) {
@@ -3531,7 +3529,7 @@ function setupToolbar() {
             mirrorPaintBtn.title = state.mirrorPaint
                 ? 'Mirror paint ON — also paint the mirror image (click to turn off)'
                 : 'Mirror paint — also paint the mirror image on the opposite side';
-            setStatus(state.mirrorPaint ? 'Mirror paint on' : 'Mirror paint off');
+            setStatus(state.mirrorPaint ? 'Peilattu maalaus päällä' : 'Peilattu maalaus pois');
         });
     }
 
@@ -3582,8 +3580,8 @@ function setupToolbar() {
             setGamePreview(e.target.checked);
             updateShadowBounds();
             setStatus(e.target.checked
-                ? 'Game preview on — Minecraft lighting, shadows and glow (editor lights off)'
-                : 'Editor view restored');
+                ? 'Peliesikatselu päällä — Minecraft-valaistus, varjot ja hehku (editorin valot pois)'
+                : 'Editorinäkymä palautettu');
         });
         // Pidä varjot editorissa pois päältä oletuksena — kevyempi
         setGamePreview(false);
@@ -3601,8 +3599,8 @@ function setupToolbar() {
             }
             setGamePreviewNight(e.target.checked);
             setStatus(e.target.checked
-                ? 'Night mode on — moonlight, glow shines brighter'
-                : state.gamePreview ? 'Day restored' : 'Night mode off');
+                ? 'Night-tila päällä — kuunvalo, hehku loistaa kirkkaammin'
+                : state.gamePreview ? 'Päivä palautettu' : 'Night-tila pois');
         });
         setGamePreviewNight(false);
     }
@@ -3629,11 +3627,11 @@ function setupLibrary() {
     function createMobButton(mob) {
         const btn = document.createElement('button');
         btn.className = 'mob-btn';
-        const sizeLabels = { jatti: 'Giant', iso: 'Large', keski: 'Medium', pieni: 'Small' };
-        const sizeBadges = { jatti: 'Giant', iso: 'Large', keski: 'Medium', pieni: 'Small' };
+        const sizeLabels = { jatti: 'Jätti', iso: 'Suuri', keski: 'Keskikoko', pieni: 'Pieni' };
+        const sizeBadges = { jatti: 'Jätti', iso: 'Suuri', keski: 'Keskikoko', pieni: 'Pieni' };
         btn.title = (mob.description || '') +
-            (mob.size ? ` — ${mob.size} blocks tall` : '') +
-            ` — ${mob.tier === 'boss' ? 'BOSS' : 'minion'} (score ${mob.score})` +
+            (mob.size ? ` — ${mob.size} lohkoa korkea` : '') +
+            ` — ${mob.tier === 'boss' ? 'BOSS' : 'minion'} (pisteet ${mob.score})` +
             ` — ${sizeLabels[mob.sizeClass] || ''}`;
         btn.innerHTML = `<span class="mob-name">${mob.name}</span>` +
             `<span class="mob-size-badge">${sizeBadges[mob.sizeClass] || ''}</span>`;
@@ -3642,7 +3640,7 @@ function setupLibrary() {
             const statsBtn = document.createElement('button');
             statsBtn.type = 'button';
             statsBtn.className = 'mob-stats-btn';
-            statsBtn.title = 'HP / abilities / summoning — from the game bytecode';
+            statsBtn.title = 'HP / kyvyt / kutsuminen — pelin bytecodesta';
             statsBtn.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M3 13V8"/><path d="M7 13V3"/><path d="M11 13v-6"/><path d="M15 13V6"/></svg>';
             statsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -3691,12 +3689,12 @@ function setupLibrary() {
         }
         const bosses = list.filter(m => m.tier === 'boss');
         const minions = list.filter(m => m.tier !== 'boss');
-        appendGroup('Bosses', bosses);
-        appendGroup('Minions', minions);
+        appendGroup('Bossit', bosses);
+        appendGroup('Minionit', minions);
         if (countEl) {
             countEl.textContent = list.length < LIBRARY_MOBS.length
-                ? `— ${list.length} / ${LIBRARY_MOBS.length} mobs`
-                : `— click to load`;
+                ? `— ${list.length} / ${LIBRARY_MOBS.length} mobia`
+                : `— klikkaa ladataksesi`;
         }
     }
 
@@ -3807,7 +3805,7 @@ function setupLibrary() {
             saveCurrentAnimation();
             loadAnimationData(state.projectAnimations[animSelect.value]);
             state.currentAnimName = animSelect.value;
-            setStatus(`Animation: ${animSelect.value} — press play`);
+            setStatus(`Animaatio: ${animSelect.value} — paina toistoa`);
         });
     }
 
@@ -3822,13 +3820,13 @@ function setupLibrary() {
         state.currentAnimName = name;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[name]);
-        setStatus(`New animation: ${name}`);
+        setStatus(`Uusi animaatio: ${name}`);
     });
 
     document.getElementById('anim-dup').addEventListener('click', () => {
         saveCurrentAnimation();
         const src = state.currentAnimName;
-        if (!src || !state.projectAnimations[src]) { setStatus('No animation to duplicate'); return; }
+        if (!src || !state.projectAnimations[src]) { setStatus('Ei animaatiota monistettavaksi'); return; }
         let name = src + '_copy';
         let n = 1;
         while (state.projectAnimations[name]) name = `${src}_copy_${n++}`;
@@ -3836,27 +3834,27 @@ function setupLibrary() {
         state.currentAnimName = name;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[name]);
-        setStatus(`Duplicated: ${src} → ${name}`);
+        setStatus(`Monistettu: ${src} → ${name}`);
     });
 
     document.getElementById('anim-rename').addEventListener('click', () => {
-        if (!state.currentAnimName) { setStatus('No animation to rename'); return; }
+        if (!state.currentAnimName) { setStatus('Ei animaatiota nimeämättä uudelleen'); return; }
         saveCurrentAnimation();
         const old = state.currentAnimName;
         const name = (prompt('New animation name:', old) || '').trim();
         if (!name || name === old) return;
-        if (state.projectAnimations[name]) { setStatus(`Name already taken: ${name}`); return; }
+        if (state.projectAnimations[name]) { setStatus(`Nimi on jo käytössä: ${name}`); return; }
         state.projectAnimations[name] = state.projectAnimations[old];
         delete state.projectAnimations[old];
         state.currentAnimName = name;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[name]);
-        setStatus(`Renamed: ${old} → ${name}`);
+        setStatus(`Nimetty uudelleen: ${old} → ${name}`);
     });
 
     document.getElementById('anim-del').addEventListener('click', () => {
         const names = Object.keys(state.projectAnimations);
-        if (names.length <= 1) { setStatus('At least one animation is required'); return; }
+        if (names.length <= 1) { setStatus('Vähintään yksi animaatio vaaditaan'); return; }
         if (!confirm(`Delete animation "${state.currentAnimName}"?`)) return;
         saveCurrentAnimation();
         delete state.projectAnimations[state.currentAnimName];
@@ -3864,7 +3862,7 @@ function setupLibrary() {
         state.currentAnimName = next;
         refreshAnimationSelect();
         loadAnimationData(state.projectAnimations[next]);
-        setStatus(`Deleted — now: ${next}`);
+        setStatus(`Poistettu — nyt: ${next}`);
     });
 
     // 🕺 Auto: Spore-tyylinen animaatiogenerointi luurangosta
@@ -3881,7 +3879,7 @@ function generateAutoAnimations() {
     const { animations, analysis } = generateAutoAnimationsForModel(state.model);
     const names = Object.keys(animations);
     if (!names.length) {
-        setStatus('No skeleton — add cubes first');
+        setStatus('Ei luurankoa — lisää ensin kuutioita');
         return;
     }
     state.projectAnimations = animations;
@@ -3895,7 +3893,7 @@ function generateAutoAnimations() {
     if (analysis.wings.length >= 2) parts.push('wings');
     if (analysis.tail) parts.push('tail');
     if (analysis.head) parts.push('head');
-    setStatus(`Generated ${names.join(', ')} — skeleton: ${parts.join(', ')}. Edit keyframes or export in a pack.`);
+    setStatus(`Luotu ${names.join(', ')} — luuranko: ${parts.join(', ')}. Muokkaa avainruutuja tai vie pakettina.`);
     scheduleAutosave();
 }
 
@@ -4112,10 +4110,10 @@ function setupVoxelDrop() {
         const hasGlb = list.some(f => /^.*\.glb$/i.test(f.name));
         const hasObj = list.some(f => /^.*\.obj$/i.test(f.name));
         if (!hasGlb && !hasObj) {
-            setStatus('Drop a .glb or .obj file (may include .mtl + texture image)', 'error');
+            setStatus('Pudota .glb- tai .obj-tiedosto (voi sisältää .mtl + tekstuurikuvan)', 'error');
             return;
         }
-        setStatus('Reading files…');
+        setStatus('Luetaan tiedostoja…');
         await tick();
         const buffers = new Map();
         for (const f of list) buffers.set(f.name, await f.arrayBuffer());
@@ -4123,7 +4121,7 @@ function setupVoxelDrop() {
         const baseName = primary.name.replace(/\.(glb|obj)$/i, '');
         const heightBlocks = Math.max(0.5, Math.min(20, parseFloat(heightInput.value) || 2));
         const voxel = parseInt(sizeSelect.value, 10) || 2;
-        setStatus('Voxelizing… (large models may take a moment)');
+        setStatus('Vokseloidaan… (isot mallit voivat kestää hetken)');
         await tick();
         try {
             const mob = await voxelizeModel(buffers, { name: baseName, heightBlocks, voxel });
@@ -4133,7 +4131,7 @@ function setupVoxelDrop() {
             if (refreshLibraryUI) refreshLibraryUI();
             loadLibraryMob(mob);
             const cubes = mob.model.bones.reduce((n, b) => n + b.cubes.length, 0);
-            setStatus(`${mob.name} voxelized — ${mob.model.bones.length} bones, ${cubes} cubes, ${mob.size} blocks. Loaded into the editor!`, 'ok');
+            setStatus(`${mob.name} vokseloitu — ${mob.model.bones.length} luuta, ${cubes} kuutiota, ${mob.size} lohkoa. Ladattu editoriin!`, 'ok');
         } catch (err) {
             setStatus(err && err.message ? err.message : String(err), 'error');
         }
@@ -4181,7 +4179,7 @@ function loadLibraryMob(mob) {
     applyGamePreviewDefault(); // Game Preview päälle latauksen jälkeen (oletus)
     scheduleAutosave();
     const tierTxt = mob.tier === 'boss' ? 'BOSS' : 'minion';
-    setStatus(`${mob.name} (${tierTxt}, ${mob.size} blocks, score ${mob.score}) loaded — model, texture and animations ready. Press play to preview.`);
+    setStatus(`${mob.name} (${tierTxt}, ${mob.size} lohkoa, pisteet ${mob.score}) ladattu — malli, tekstuuri ja animaatiot valmiina. Paina toistoa esikatsellaksesi.`);
 }
 
 /** Uuden mobin aloittaminen pohjasta: malli + väripohjatekstuuri. */
@@ -4208,8 +4206,7 @@ function loadTemplate(tpl) {
     });
     applyGamePreviewDefault(); // Game Preview päälle latauksen jälkeen (oletus)
     updateProjectNameLabel();
-    scheduleAutosave();
-    setStatus(`${tpl.name} template created — edit cubes, paint in the UV editor or in 3D`);
+    scheduleAutosave();        setStatus(`${tpl.name}-pohja luotu — muokkaa kuutioita, maalaa UV-editorissa tai 3D:ssä`);
 }
 
 /**
@@ -4229,8 +4226,7 @@ function mirrorCopy() {
         const bd = state.model.bones[state.selectedBone];
         target.push(...bd.cubes);
         mirrorName = bd.name;
-    } else {
-        setStatus('Select a cube or bone to mirror first');
+    } else {        setStatus('Valitse ensin kuutio tai luu peilattavaksi');
         return;
     }
     if (target.length === 0) return;
@@ -4262,7 +4258,7 @@ function mirrorCopy() {
         selectBone(state.selectedBone);
     }
     scheduleAutosave();
-    setStatus(`Mirrored ${created.length} cubes: ${mirrorName} → ${mirrorName}_mirror`);
+    setStatus(`Peilattiin ${created.length} kuutiota: ${mirrorName} → ${mirrorName}_peili`);
 }
 
 // ==================== OMIA OLENTOJA ('Omat olennot') ====================
@@ -4284,7 +4280,7 @@ function putMyCreatures(list) {
         localStorage.setItem(MY_CREATURES_KEY, JSON.stringify(list));
     } catch (e) {
         console.warn('My Creatures save failed:', e);
-        setStatus('Save failed — is browser storage full?');
+        setStatus('Tallennus epäonnistui — onko selaimen tallennustila täynnä?');
     }
 }
 
@@ -4394,15 +4390,14 @@ function loadMyCreature(id) {
     applyPreviewOptions(entry.previewOptions || null);
     state.sourceCategory = entry.sourceCategory || 'voxel';
     scheduleAutosave();
-    setStatus(`"${mob.name}" loaded — ${mob.size} blocks, HP ${state.packOptions.health}, damage ${state.packOptions.damage}`);
+    setStatus(`"${mob.name}" ladattu — ${mob.size} lohkoa, HP ${state.packOptions.health}, vahinko ${state.packOptions.damage}`);
 }
 
 /** Poista tallennettu olento galleriasta. */
 function deleteMyCreature(id) {
     const list = getMyCreatures().filter(e => e.id !== id);
     putMyCreatures(list);
-    renderMyCreatures();
-    setStatus('Creature deleted from My Creatures');
+    renderMyCreatures();        setStatus('Olento poistettu kohdasta Omat olennot');
 }
 
 /** Piirrä 'Omat olennot' -ruudukko (kortti: emoji, nimi, koko, luut, statit). */
@@ -4722,7 +4717,7 @@ function setupFileIO() {
             previewOptions: getPreviewOptions()
         };
         downloadJson(data, `${state.model.modelId.replace('geometry.', '')}.mobstudio.json`);
-        setStatus('Project saved');
+        setStatus('Projekti tallennettu');
     });
 
     document.getElementById('btn-open').addEventListener('click', () => {
@@ -4757,7 +4752,7 @@ function setupFileIO() {
                     // Preview-asetukset (päivä/yö, taustaväri) palautuvat
                     applyPreviewOptions(data.previewOptions);
                     scheduleAutosave();
-                    setStatus(`Opened: ${file.name}`);
+                    setStatus(`Avattu: ${file.name}`);
                 } else {
                     alert('Not a valid Freebuff Mob Studio project file.');
                 }
@@ -4784,7 +4779,7 @@ function setupFileIO() {
         rebuildModel();
         if (state.uvEditor) state.uvEditor.draw();
         scheduleAutosave();
-        setStatus('Texture reset to cube colors');
+        setStatus('Tekstuuri palautettu kuutioiden väreihin');
     });
 
     document.getElementById('file-input-texture').addEventListener('change', (e) => {
@@ -4838,7 +4833,7 @@ function setupFileIO() {
                 applyTextureDataURL();
                 rebuildModel();
                 scheduleAutosave();
-                setStatus(`Imported Blockbench model: ${file.name} (${parsed.model.bones.reduce((n, b) => n + b.cubes.length, 0)} cubes${parsed.animation ? ', animation included' : ''})`);
+                setStatus(`Tuotu Blockbench-malli: ${file.name} (${parsed.model.bones.reduce((n, b) => n + b.cubes.length, 0)} kuutiota${parsed.animation ? ', animaatio mukana' : ''})`);
             } catch (err) {
                 alert('Failed to import .bbmodel: ' + err.message);
             }
@@ -4866,7 +4861,7 @@ function setupFileIO() {
         a.click();
         URL.revokeObjectURL(url);
         const cubeCount = state.model.bones.reduce((n, b) => n + (b.cubes ? b.cubes.length : 0), 0);
-        setStatus(`Blockbench file saved (${id}.bbmodel) — ${cubeCount} cubes, ${animations ? Object.keys(animations).length + ' animations' : 'no animations'}, texture ${textureDataURL ? 'included' : 'missing'}`);
+        setStatus(`Blockbench-tiedosto tallennettu (${id}.bbmodel) — ${cubeCount} kuutiota, ${animations ? Object.keys(animations).length + ' animaatiota' : 'ei animaatioita'}, tekstuuri ${textureDataURL ? 'mukana' : 'puuttuu'}`);
     });
 
     document.getElementById('btn-import-bedrock').addEventListener('click', () => {
@@ -4884,7 +4879,7 @@ function setupFileIO() {
                 state.model = parseBedrockGeometry(json);
                 deselectAll();
                 rebuildModel();
-                setStatus(`Imported: ${file.name}`);
+                setStatus(`Tuotu: ${file.name}`);
             } catch (err) {
                 alert('Failed to parse Bedrock geometry: ' + err.message);
             }
@@ -4896,29 +4891,29 @@ function setupFileIO() {
     document.getElementById('btn-export-bedrock').addEventListener('click', () => {
         const json = exportBedrockGeometry(state.model);
         downloadJson(json, `${state.model.modelId.replace('geometry.', '')}_bedrock.json`);
-        setStatus('Exported Bedrock geometry');
+        setStatus('Bedrock-geometria viety');
     });
 
     document.getElementById('btn-export-java').addEventListener('click', () => {
         const json = exportJavaModel(state.model);
         downloadJson(json, `${state.model.modelId.replace('geometry.', '')}_java.json`);
-        setStatus('Exported Java Edition model');
+        setStatus('Java Edition -malli viety');
     });
 
     document.getElementById('btn-export-anim-bedrock').addEventListener('click', () => {
         const animations = currentAnimations();
-        if (!animations) { setStatus('No animations to export — add keyframes first'); return; }
+        if (!animations) { setStatus('Ei animaatioita vietäväksi — lisää ensin avainruutuja'); return; }
         const json = exportBedrockAnimations(state.model, animations);
         downloadJson(json, `${state.model.modelId.replace('geometry.', '')}_animations.json`);
-        setStatus('Exported animations (Bedrock .animation.json)');
+        setStatus('Animaatiot viety (Bedrock .animation.json)');
     });
 
     document.getElementById('btn-export-anim-java').addEventListener('click', () => {
         const animations = currentAnimations();
-        if (!animations) { setStatus('No animations to export — add keyframes first'); return; }
+        if (!animations) { setStatus('Ei animaatioita vietäväksi — lisää ensin avainruutuja'); return; }
         const json = exportJavaAnimations(state.model, animations);
         downloadJson(json, `${state.model.modelId.replace('geometry.', '')}_geckolib.json`);
-        setStatus('Exported animations (Java/GeckoLib .animation.json)');
+        setStatus('Animaatiot viety (Java/GeckoLib .animation.json)');
     });
 
     // ---- 📦 resurssipaketti ---------------------------------------
@@ -5104,7 +5099,7 @@ function setupFileIO() {
  */
 function exportScreenshot() {
     if (!renderer) {
-        setStatus('3D view is not available (WebGL off) — cannot take a PNG');
+        setStatus('3D-näkymä ei ole käytettävissä (WebGL pois) — PNG:tä ei voida tallentaa');
         return;
     }
 
@@ -5490,7 +5485,7 @@ function applyBodyPatterns() {
     }
     state.texture.needsUpdate = true;
     if (state.uvEditor) state.uvEditor.draw();
-    setStatus(`Patterned ${n} cubes with ${kind} — the pattern flows coherently across the whole body.`);
+    setStatus(`Kuviotettu ${n} kuutiota (${kind}) — kuvio jatkuu yhtenäisenä koko kehon yli.`);
     scheduleAutosave();
     return n;
 }
@@ -5526,7 +5521,7 @@ function uvIslandBounds(cube) {
 function uvAlignSelected() {
     const idxs = uvSelectedIndices();
     if (!idxs.length) {
-        setStatus('Select cubes first — Shift+click to multi-select');
+        setStatus('Valitse ensin kuutioita — Shift+klik monivalintaan');
         return 0;
     }
     const GRID = 4;
@@ -5549,7 +5544,7 @@ function uvAlignSelected() {
     applyAllBoxUVs();
     if (state.uvEditor) state.uvEditor.draw();
     scheduleAutosave();
-    setStatus(`Aligned ${n} cube UV${n === 1 ? '' : 's'} to the ${GRID}px texture grid — patterns line up across cubes.`);
+    setStatus(`Kohdistettu ${n} kuution UV ${GRID}px-tekstuuriruudukkoon — kuviot jatkuvat kuutioiden yli.`);
     return n;
 }
 
@@ -5561,7 +5556,7 @@ function uvAlignSelected() {
 function uvScaleSelected(factor) {
     const idxs = uvSelectedIndices();
     if (!idxs.length) {
-        setStatus('Select cubes first — Shift+click to multi-select');
+        setStatus('Valitse ensin kuutioita — Shift+klik monivalintaan');
         return 0;
     }
     const f = (factor === 0.5) ? 0.5 : 2;
@@ -5591,7 +5586,7 @@ function uvScaleSelected(factor) {
     applyAllBoxUVs();
     if (state.uvEditor) state.uvEditor.draw();
     scheduleAutosave();
-    setStatus(`Scaled ${n} cube UV${n === 1 ? '' : 's'} ×${f} — texture density ${f === 2 ? 'doubled' : 'halved'}.`);
+    setStatus(`Skaalattu ${n} kuution UV ×${f} — tekstuuritiheys ${f === 2 ? 'kaksinkertaistui' : 'puolittui'}.`);
     return n;
 }
 
@@ -5603,7 +5598,7 @@ function uvScaleSelected(factor) {
 function uvMirrorSelected(vertical) {
     const idxs = uvSelectedIndices();
     if (!idxs.length) {
-        setStatus('Select cubes first — Shift+click to multi-select');
+        setStatus('Valitse ensin kuutioita — Shift+klik monivalintaan');
         return 0;
     }
     const texW = state.model.textureWidth || 16;
@@ -5632,7 +5627,7 @@ function uvMirrorSelected(vertical) {
     applyAllBoxUVs();
     if (state.uvEditor) state.uvEditor.draw();
     scheduleAutosave();
-    setStatus(`Mirrored ${n} cube UV${n === 1 ? '' : 's'} across the texture ${vertical ? 'vertical' : 'horizontal'} center.`);
+    setStatus(`Peilattu ${n} kuution UV tekstuurin ${vertical ? 'pysty' : 'vaaka'}keskiön yli.`);
     return n;
 }
 
@@ -6628,9 +6623,9 @@ animate();
 if (!state.webgl) {
     // No WebGL: 3D viewport stays dark but everything else works.
     canvas.style.background = '#161b22';
-    setStatus('Editor works without the 3D view (WebGL off) — open it in a browser with WebGL enabled');
+    setStatus('Editori toimii ilman 3D-näkymää (WebGL pois) — avaa se WebGL-tukevassa selaimessa');
 } else {
-    setStatus('Freebuff Mob Studio ready — Add cubes and bones to start building');
+    setStatus('Freebuff Mob Studio valmis — lisää kuutioita ja luita aloittaaksesi rakentamisen');
 }
 window.__MOB_STUDIO = state;  // dev/debug handle
 window.__MOB_STUDIO.renderer = renderer;

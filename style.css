@@ -164,17 +164,25 @@ input[type="checkbox"] { accent-color: var(--accent); }
     background: var(--button-bg);
     color: var(--text);
     border: 1px solid var(--border);
-    padding: 4px 10px;
-    border-radius: var(--radius-sm);
+    padding: 5px 11px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 12px;
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, color 0.15s;
 }
 
 .topbar-actions button:hover,
 .action-btn:hover {
     background: var(--button-hover);
     border-color: var(--border-strong);
+    color: #fff;
+}
+
+.topbar-actions button:focus-visible,
+.action-btn:focus-visible,
+.tool-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
 }
 
 /* Tuo/Vie -valikot (details/summary — ei JS:ää): pitää yläpalkin
@@ -1191,15 +1199,27 @@ input[type="checkbox"] { accent-color: var(--accent); }
 .panel-section {
     padding: 12px 12px 10px;
     border-bottom: 1px solid var(--border);
+    position: relative;
 }
 
 .panel-section h3 {
-    font-size: 11px;
+    font-size: 10px;
     text-transform: uppercase;
     color: var(--text-muted);
-    letter-spacing: 0.8px;
-    margin-bottom: 8px;
-    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.panel-section h3::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--accent);
+    opacity: .85;
 }
 
 /* Toolbox */
@@ -1243,10 +1263,10 @@ input[type="checkbox"] { accent-color: var(--accent); }
 /* Action buttons */
 .action-btn {
     width: 100%;
-    padding: 6px 10px;
+    padding: 7px 10px;
     margin-bottom: 4px;
     text-align: left;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
 }
 
 /* Add Element -rivi: harvinaisemmat toiminnot (Mirror Copy, Symmetry)
