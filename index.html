@@ -11,18 +11,18 @@
         <header id="topbar">
             <div class="logo">Freebuff Mob Studio <span id="project-name-label" class="project-name"></span></div>
             <div class="topbar-actions">
-                <button id="btn-new" title="New Project">New</button>
-                <button id="btn-save" title="Save project file">Save</button>
-                <button id="btn-open" title="Open project file">Open</button>
+                <button id="btn-new" title="Uusi projekti">Uusi</button>
+                <button id="btn-save" title="Tallenna projektitiedosto">Tallenna</button>
+                <button id="btn-open" title="Avaa projektitiedosto">Avaa</button>
                 <details class="menu" id="menu-import">
-                    <summary title="Import model from file (⌘I)">Import… <kbd>⌘I</kbd></summary>
+                    <summary title="Tuo malli tiedostosta (⌘I)">Tuo… <kbd>⌘I</kbd></summary>
                     <div class="menu-items">
                         <button id="btn-import-bbmodel" title="Import Blockbench (.bbmodel)">Blockbench…</button>
                         <button id="btn-import-bedrock" title="Import Bedrock (.geo.json)">Bedrock…</button>
                     </div>
                 </details>
                 <details class="menu" id="menu-export">
-                    <summary title="Export model or animations (⌘E)">Export… <kbd>⌘E</kbd></summary>
+                    <summary title="Vie malli tai animaatiot (⌘E)">Vie… <kbd>⌘E</kbd></summary>
                     <div class="menu-items">
                         <button id="btn-export-bbmodel" title="Export Blockbench (.bbmodel) — model, textures and animations as a Blockbench project">Blockbench…</button>
                         <button id="btn-export-bedrock" title="Export Bedrock (.geo.json)">Bedrock…</button>
@@ -31,40 +31,40 @@
                         <button id="btn-export-anim-java" title="Export animations (GeckoLib .animation.json, Java)">Animations (GeckoLib)…</button>
                     </div>
                 </details>
-                <button id="btn-export-pack" title="Download a ready resource pack (.zip) — model + textures + animations for the game">Pack</button>
-                <button id="btn-screenshot" title="Save a PNG of the mob from the current camera angle (2× resolution)">Save PNG</button>
+                <button id="btn-export-pack" title="Lataa valmis resurssipaketti (.zip) — malli + tekstuurit + animaatiot peliin">Paketoi</button>
+                <button id="btn-screenshot" title="Tallenna mobista PNG nykyisestä kamerakulmasta (2× tarkkuus)">Tallenna PNG</button>
             </div>
         </header>
 
         <div id="workspace">
             <aside id="left-panel">
                 <div id="start-hint" class="start-hint">
-                    <strong>New here?</strong> 1. Pick a base below → 2. Attach parts → 3. Reshape → 4. Save
-                    <button id="start-hint-close" title="Dismiss" aria-label="Dismiss">✕</button>
+                    <strong>Uusi käyttäjä?</strong> 1. Valitse pohja → 2. Kiinnitä osia → 3. Muotoile → 4. Tallenna
+                    <button id="start-hint-close" title="Sulje" aria-label="Sulje">✕</button>
                 </div>
                 <div class="panel-section" style="order:1">
-                    <h3>Toolbox</h3>
+                    <h3>Työkalut</h3>
                     <div id="toolbox" class="tool-grid">
-                        <button class="tool-btn active" data-tool="select" title="Select"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
-                        <button class="tool-btn" data-tool="move" title="Move (V)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg></button>
-                        <button class="tool-btn" data-tool="rotate" title="Rotate"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
-                        <button class="tool-btn" data-tool="scale" title="Scale"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7"/></svg></button>
-                        <button class="tool-btn" data-tool="paint" title="Paint texture in 3D — paint directly on the model (P)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
-                        <button class="tool-btn" data-tool="pipette" title="Color picker — sample a color from the model (I)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h4L20 8l-4-4L2 18v4z"/><path d="M15 5l4 4"/></svg></button>
-                        <button class="tool-btn" data-tool="reshape" title="Reshape — drag to stretch the body like Spore: up/down = height, left/right = width, hold Shift = length"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="12" height="8" rx="1"/><path d="M12 2v6M10 4l2-2 2 2M12 22v-6M10 20l2 2 2-2M3 12h3M2 10l2 2 2-2M21 12h-3M20 10l2 2-2 2"/></svg></button>
-                        <button class="tool-btn" data-tool="face" title="Face details — click an eye/mouth part, then drag to slide it across the head surface like Spore"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="2"/><circle cx="15" cy="10" r="2"/><path d="M8 15c1.2 1.2 2.8 1.8 4 1.8s2.8-.6 4-1.8"/></svg></button>
+                        <button class="tool-btn active" data-tool="select" title="Valitse"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
+                        <button class="tool-btn" data-tool="move" title="Siirrä (V)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg></button>
+                        <button class="tool-btn" data-tool="rotate" title="Pyöritä (R)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+                        <button class="tool-btn" data-tool="scale" title="Venytä (S)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7"/></svg></button>
+                        <button class="tool-btn" data-tool="paint" title="Maalaa tekstuuria 3D:ssä — maalaa suoraan mallin pintaan (P)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
+                        <button class="tool-btn" data-tool="pipette" title="Väripoimija — poimi väri mallista (I)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h4L20 8l-4-4L2 18v4z"/><path d="M15 5l4 4"/></svg></button>
+                        <button class="tool-btn" data-tool="reshape" title="Muotoile — vedä venyttääksesi kehoa kuin Spore: ylös/alas = korkeus, vasen/oikea = leveys, pidä Shift = pituus"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="12" height="8" rx="1"/><path d="M12 2v6M10 4l2-2 2 2M12 22v-6M10 20l2 2 2-2M3 12h3M2 10l2 2 2-2M21 12h-3M20 10l2 2-2 2"/></svg></button>
+                        <button class="tool-btn" data-tool="face" title="Kasvojen yksityiskohdat — klikkaa silmä-/suuosaa ja vedä siirtääksesi sitä pään pinnalla kuin Spore"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="2"/><circle cx="15" cy="10" r="2"/><path d="M8 15c1.2 1.2 2.8 1.8 4 1.8s2.8-.6 4-1.8"/></svg></button>
                     </div>
                 </div>
 
                 <div class="panel-section collapsible" id="lib-section" style="order:6">
-                    <h3>Mob Library <span class="hint" id="mob-count"></span></h3>
+                    <h3>Mob-kirjasto <span class="hint" id="mob-count"></span></h3>
                     <div class="lib-tabs">
-                        <button type="button" class="lib-tab active" data-libview="library">Library</button>
-                        <button type="button" class="lib-tab" data-libview="mine">My Creatures</button>
+                        <button type="button" class="lib-tab active" data-libview="library">Kirjasto</button>
+                        <button type="button" class="lib-tab" data-libview="mine">Omat olennot</button>
                     </div>
                     <div id="lib-view-library">
                     <div class="mob-library-tools">
-                        <input id="mob-search" type="search" placeholder="Search mobs…" autocomplete="off" />
+                        <input id="mob-search" type="search" placeholder="Etsi mobeja…" autocomplete="off" />
                         <select id="mob-sort" title="Sort">
                             <option value="default">Default</option>
                             <option value="biggest">Largest first</option>
@@ -86,7 +86,7 @@
                         </label>
                     </div>
                     <div id="mob-library" class="mob-grid"></div>
-                    <button type="button" id="voxel-toggle" class="collapse-toggle">Voxelize a 3D model ▸</button>
+                    <button type="button" id="voxel-toggle" class="collapse-toggle">Vokseloi 3D-malli ▸</button>
                     <div class="voxel-dropzone advanced" id="voxel-dropzone" title="Drop a GLB/OBJ model here — voxelized right in the browser">
                         <div class="voxel-drop-row">
                             <svg class="voxel-drop-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
@@ -113,40 +113,40 @@
                     </div>
                     </div>
                     <div id="lib-view-mine" hidden>
-                        <button id="btn-save-creature" class="action-btn" title="Save the current creature (model + texture + animations + stats) to My Creatures">Save Current Creature</button>
+                        <button id="btn-save-creature" class="action-btn" title="Tallenna nykyinen olento (malli + tekstuuri + animaatiot + tilastot) omiksi olennoiksi">Tallenna nykyinen olento</button>
                         <div id="my-creatures-grid" class="mob-grid"></div>
-                        <div id="my-creatures-empty" class="modal-hint">No saved creatures yet. Build a creature and press Save — it stays in the library in your browser.</div>
+                        <div id="my-creatures-empty" class="modal-hint">Ei vielä tallennettuja olentoja. Rakenna olento ja paina Tallenna — se säilyy kirjastossa selaimessasi.</div>
                     </div>
                 </div>
 
                 <div class="panel-section" style="order:2">
-                    <h3>Add Element</h3>
+                    <h3>Lisää elementti</h3>
                     <div class="add-row">
-                        <button id="btn-add-cube" class="action-btn add-cube-big" title="Add a cube (right-click: more options)">+ Cube</button>
-                        <button id="btn-add-group" class="action-btn" title="Add a bone/group (right-click: more options)">+ Bone/Group</button>
-                        <button id="btn-add-more" class="action-btn" title="More — Mirror Copy and Symmetry">⋯</button>
+                        <button id="btn-add-cube" class="action-btn add-cube-big" title="Lisää kuutio (oikea klikkaus: lisää vaihtoehtoja)">+ Kuutio</button>
+                        <button id="btn-add-group" class="action-btn" title="Lisää luu/ryhmä (oikea klikkaus: lisää vaihtoehtoja)">+ Luu/Ryhmä</button>
+                        <button id="btn-add-more" class="action-btn" title="Lisää — peilikopio ja symmetria">⋯</button>
                     </div>
                 </div>
 
                 <div id="add-context-menu" hidden style="order:3">
-                    <button id="ctx-mirror-copy" title="Copy the selected cube/bone as a mirror image to the opposite side">Mirror Copy</button>
-                    <button id="ctx-symmetry" title="Symmetry edit — edit one side (move/rotate/scale), the other mirrors live">Symmetry</button>
+                    <button id="ctx-mirror-copy" title="Kopioi valittu kuutio/luu peilikuvana vastakkaiselle puolelle">Peilikopio</button>
+                    <button id="ctx-symmetry" title="Symmetriamuokkaus — muokkaa toista puolta, toinen peilautuu livenä">Symmetria</button>
                 </div>
 
                 <div class="panel-section" style="order:4">
-                    <h3>Parts (Spore)</h3>
-                    <label class="chk"><input type="checkbox" id="part-mirror" checked> Mirror (side pairs)</label>
+                    <h3>Osat (Spore)</h3>
+                    <label class="chk"><input type="checkbox" id="part-mirror" checked> Peilaa (parit)</label>
                     <div id="part-grid" class="mob-grid"></div>
                 </div>
 
                 <div class="panel-section" style="order:5">
-                    <h3>New Mob Template</h3>
-                    <button id="btn-randomize" class="action-btn" title="Build a random creature from Spore parts — random bone, surface, mirroring and color for each part. Click again for a new one.">Randomize</button>
+                    <h3>Uuden mobin pohja</h3>
+                    <button id="btn-randomize" class="action-btn" title="Tee satunnainen olento Spore-osista — satunnainen luu, pinta, peilaus ja väri jokaiselle osalle. Klikkaa uudelleen uutta varten.">Satunnaista</button>
                     <div id="template-grid" class="mob-grid"></div>
                 </div>
 
                 <div class="panel-section collapsible advanced" style="order:7">
-                    <h3>Bones / Hierarchy (B)</h3>
+                    <h3>Luut / hierarkia (B)</h3>
                     <div id="bone-tree"></div>
                 </div>
             </aside>
@@ -154,7 +154,7 @@
             <main id="viewport">
                 <canvas id="three-canvas"></canvas>
                 <div id="viewport-overlay">
-                    <span id="viewport-info">Left-click: orbit | Right-click: pan | Scroll: zoom</span>
+                    <span id="viewport-info">Vasen klikkaus: kierrä · Oikea: siirrä · Rullaus: zoom</span>
                 </div>
                 <div id="render-warning" title="Click to select the first invalid cube" hidden>
                     <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 15 14H1z"/><path d="M8 6v4"/><path d="M8 12h.01"/></svg> <span id="render-warning-text"></span>
@@ -164,10 +164,10 @@
 
             <aside id="right-panel">
                 <div class="panel-section">
-                    <h3>Properties</h3>
+                    <h3>Ominaisuudet</h3>
                     <div id="properties-panel">
                         <div class="prop-group">
-                            <label>Position</label>
+                            <label>Sijainti</label>
                             <div class="input-row">
                                 <input type="number" id="prop-pos-x" step="0.5" value="0" placeholder="X">
                                 <input type="number" id="prop-pos-y" step="0.5" value="0" placeholder="Y">
@@ -175,7 +175,7 @@
                             </div>
                         </div>
                         <div class="prop-group">
-                            <label>Rotation</label>
+                            <label>Kierto</label>
                             <div class="input-row">
                                 <input type="number" id="prop-rot-x" step="1" value="0" placeholder="X">
                                 <input type="number" id="prop-rot-y" step="1" value="0" placeholder="Y">
@@ -183,7 +183,7 @@
                             </div>
                         </div>
                         <div class="prop-group">
-                            <label>Size</label>
+                            <label>Koko</label>
                             <div class="input-row">
                                 <input type="number" id="prop-size-x" step="0.5" value="1" min="0.25" placeholder="W">
                                 <input type="number" id="prop-size-y" step="0.5" value="1" min="0.25" placeholder="H">
@@ -191,7 +191,7 @@
                             </div>
                         </div>
                         <div class="prop-group">
-                            <label>Origin</label>
+                            <label>Alkupiste</label>
                             <div class="input-row">
                                 <input type="number" id="prop-origin-x" step="0.5" value="0" placeholder="X">
                                 <input type="number" id="prop-origin-y" step="0.5" value="0" placeholder="Y">
@@ -199,19 +199,19 @@
                             </div>
                         </div>
                         <div class="prop-group">
-                            <label>Name</label>
+                            <label>Nimi</label>
                             <input type="text" id="prop-name" value="" placeholder="element_name">
                         </div>
                         <div class="prop-group" id="prop-material-group">
-                            <label>Material</label>
+                            <label>Materiaali</label>
                             <div class="input-row">
-                                <label class="prop-mini">Opacity</label>
-                                <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="1" title="Transparency — lower is more see-through">
+                                <label class="prop-mini">Läpinäkyvyys</label>
+                                <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="1" title="Läpinäkyvyys — pienempi = läpinäkyvämpi">
                                 <input type="number" id="prop-opacity-num" min="0.05" max="1" step="0.05" value="1" style="width:52px">
                             </div>
                             <div class="input-row">
-                                <label class="prop-mini">Glow</label>
-                                <input type="range" id="prop-emissive" min="0" max="3" step="0.1" value="0" title="Emissive intensity — glows independent of lighting">
+                                <label class="prop-mini">Hehku</label>
+                                <input type="range" id="prop-emissive" min="0" max="3" step="0.1" value="0" title="Hehkun voimakkuus — hehkuu valosta riippumatta">
                                 <input type="number" id="prop-emissive-num" min="0" max="3" step="0.1" value="0" style="width:52px">
                             </div>
                         </div>
@@ -219,24 +219,24 @@
                 </div>
 
                 <div class="panel-section collapsible advanced">
-                    <h3>Locators <button id="btn-add-locator" class="action-btn" style="float:right;padding:2px 8px" title="Add a locator (attachment point for items / particles)">+ Add</button></h3>
+                    <h3>Kiinnityspisteet <button id="btn-add-locator" class="action-btn" style="float:right;padding:2px 8px" title="Lisää kiinnityspiste (esineiden/hiukkasten kiinnityskohta)">+ Lisää</button></h3>
                     <div id="locator-list" style="display:flex;flex-direction:column;gap:4px">
-                        <span style="opacity:.55;font-size:11px">Attachment points for items &amp; particles (e.g. leash, held items).</span>
+                        <span style="opacity:.55;font-size:11px">Esineiden &amp; hiukkasten kiinnityspisteet (esim. talutin, pidetty esine).</span>
                     </div>
                 </div>
 
                 <div class="panel-section" id="part-edit-section" hidden>
-                    <h3>Part (Spore)</h3>
+                    <h3>Osa (Spore)</h3>
                     <div class="prop-group">
-                        <label id="part-edit-title">Part</label>
+                        <label id="part-edit-title">Osa</label>
                         <div class="input-row">
-                            <input type="color" id="part-edit-color" value="#c68642" title="Color the whole part">
-                            <button id="part-edit-rand-color" class="action-btn" title="Random color"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><circle cx="6.5" cy="6.5" r=".5"/><circle cx="17.5" cy="6.5" r=".5"/><circle cx="6.5" cy="17.5" r=".5"/><circle cx="17.5" cy="17.5" r=".5"/></svg></button>
-                            <button id="part-edit-exit" class="action-btn" title="Edit individual cubes">Cube Mode</button>
+                            <input type="color" id="part-edit-color" value="#c68642" title="Väritä koko osa">
+                            <button id="part-edit-rand-color" class="action-btn" title="Satunnainen väri"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><circle cx="6.5" cy="6.5" r=".5"/><circle cx="17.5" cy="6.5" r=".5"/><circle cx="6.5" cy="17.5" r=".5"/><circle cx="17.5" cy="17.5" r=".5"/></svg></button>
+                            <button id="part-edit-exit" class="action-btn" title="Muokkaa yksittäisiä kuutioita">Kuutiotila</button>
                         </div>
                     </div>
                     <div class="prop-group">
-                        <label>Scale from pivot (1.0 = original)</label>
+                        <label>Mittakaava nivelestä (1.0 = alkuperäinen)</label>
                         <div class="input-row">
                             <input type="number" id="part-scale-x" step="0.05" min="0.15" value="1" placeholder="X" title="Scale X">
                             <input type="number" id="part-scale-y" step="0.05" min="0.15" value="1" placeholder="Y" title="Scale Y">
@@ -245,7 +245,7 @@
                         <button id="part-scale-reset" class="action-btn">↺ Reset Size</button>
                     </div>
                     <div class="prop-group">
-                        <label>Rotation from pivot (°, relative)</label>
+                        <label>Kierto nivelestä (°, suhteellinen)</label>
                         <div class="input-row">
                             <input type="number" id="part-rot-x" step="5" value="0" placeholder="X" title="Rotation X">
                             <input type="number" id="part-rot-y" step="5" value="0" placeholder="Y" title="Rotation Y">
@@ -255,19 +255,19 @@
                 </div>
 
                 <div class="panel-section">
-                    <h3>Color &amp; Texture</h3>
+                    <h3>Väri &amp; tekstuuri</h3>
                     <div class="prop-group">
-                        <label>Cube Color (fills its texture faces)</label>
+                        <label>Kuution väri (täyttää sen tekstuuripinnat)</label>
                         <div class="input-row">
                             <input type="color" id="prop-color" value="#ffffff">
                         </div>
                     </div>
-                    <button id="btn-load-texture" class="action-btn">Load Texture</button>
-                    <button id="btn-remove-texture" class="action-btn">Reset Texture</button>
+                    <button id="btn-load-texture" class="action-btn">Lataa tekstuuri</button>
+                    <button id="btn-remove-texture" class="action-btn">Palauta tekstuuri</button>
                 </div>
 
                 <div class="panel-section collapsible advanced">
-                    <h3>UV Editor</h3>
+                    <h3>UV-editori</h3>
                     <div class="uv-toolbar">
                         <button class="tool-btn uv-tool active" data-uvtool="select" title="Select / Move faces"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
                         <button class="tool-btn uv-tool" data-uvtool="fill" title="Fill face with color"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 11-8-8-8.6 8.6a2 2 0 0 0 0 2.8l5.2 5.2c.8.8 2 .8 2.8 0L19 11Z"/><path d="m5 2 5 5"/><path d="M2 13h15"/><path d="M22 20a2 2 0 1 1-4 0c0-1.6 1.7-2.4 2-4 .3 1.6 2 2.4 2 4Z"/></svg></button>
@@ -300,27 +300,27 @@
                 </div>
 
                 <div class="panel-section">
-                    <h3>Display Settings</h3>
+                    <h3>Näyttöasetukset</h3>
                     <div id="display-settings">
                         <div class="input-row">
-                            <label>Wireframe</label>
+                            <label>Lankamalli</label>
                             <input type="checkbox" id="chk-wireframe">
                         </div>
                         <div class="input-row">
-                            <label>Grid</label>
+                            <label>Ruudukko</label>
                             <input type="checkbox" id="chk-grid" checked>
                         </div>
                         <div class="input-row">
-                            <label>Background</label>
+                            <label>Tausta</label>
                             <input type="color" id="bg-color" value="#1a1a2e">
                         </div>
                         <div class="input-row">
-                            <label>Game Preview</label>
-                            <input type="checkbox" id="chk-game-preview" title="Game-like preview: Minecraft lighting, soft shadows and the glow layer">
+                            <label>Peliesikatselu</label>
+                            <input type="checkbox" id="chk-game-preview" title="Pelimäinen esikatselu: Minecraft-valaistus, pehmeät varjot ja hehkukerros">
                         </div>
                         <div class="input-row">
-                            <label>Night</label>
-                            <input type="checkbox" id="chk-game-night" title="Night: dark sky, moonlight and stronger glow layers">
+                            <label>Yö</label>
+                            <input type="checkbox" id="chk-game-night" title="Yö: tumma taivas, kuunvalo ja voimakkaampi hehku">
                         </div>
                     </div>
                 </div>
@@ -333,14 +333,14 @@
             <button id="anim-dup" title="Duplicate current animation">⧉</button>
             <button id="anim-rename" title="Rename animation">✏</button>
             <button id="anim-del" title="Delete animation"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
-            <button id="anim-auto" title="Auto-generate walk/idle/attack animations from the skeleton — Spore style">Auto</button>
-            <button id="anim-pose" title="Pose mode — scrub time by hand without playback">Pose</button>
-            <button id="anim-play" title="Play / Pause (Space)">▶</button>
-            <button id="btn-test" title="Test Creature — the creature walks on the ground, camera follows. Space = jump. Click again to exit">Test</button>
-            <button id="anim-add-key" title="Add keyframe for selected bone">+ Key</button>
-            <button id="anim-copy" title="Copy pose — save the current pose of all bones">Copy Pose</button>
-            <button id="anim-paste" title="Paste pose — paste the copied pose as keyframes at the current time">Paste Pose</button>
-            <button id="anim-mirror" title="Mirror pose — mirror the pose (right → left) at the same frame">Mirror Pose</button>
+            <button id="anim-auto" title="Tee kävely/idle/hyökkäys-animaatiot automaattisesti luurangosta — Spore-tyyliin">Auto</button>
+            <button id="anim-pose" title="Poseeraustila — siirrä aikaa käsin ilman toistoa">Pose</button>
+            <button id="anim-play" title="Toista / Tauko (Space)">▶</button>
+            <button id="btn-test" title="Testiolento — olento kävelee maatasolla, kamera seuraa. Space = hyppy. Klikkaa uudelleen lopettaaksesi">Testi</button>
+            <button id="anim-add-key" title="Lisää keyframe valitulle luulle">+ Avain</button>
+            <button id="anim-copy" title="Kopioi asento — tallenna kaikkien luiden nykyinen asento">Kopioi asento</button>
+            <button id="anim-paste" title="Liitä asento — liitä kopioitu asento keyframeinä nykyhetkeen">Liitä asento</button>
+            <button id="anim-mirror" title="Peilaa asento — peilaa asento (oikea → vasen) samassa framessa">Peilaa asento</button>
             <button id="anim-clear" title="Clear animation"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
             <div class="anim-time-wrap">
                 <div class="anim-track">
@@ -349,7 +349,7 @@
                 </div>
                 <span id="anim-time-label">0</span>
             </div>
-            <label class="anim-length">Length
+            <label class="anim-length">Pituus
                 <input type="number" id="anim-length" min="1" max="500" value="40">
             </label>
         </div>
@@ -585,39 +585,39 @@
                     <path d="M24 24 42 14 42 34 24 44Z" fill="#d4a45c" opacity=".65"/>
                 </svg>
                 <h1>Freebuff Mob Studio</h1>
-                <p class="start-sub">Build Minecraft mobs — Spore-style parts, Blockbench-style tools</p>
+                <p class="start-sub">Rakenna Minecraft-mobeja — Spore-tyyliset osat, Blockbench-tyyliset työkalut</p>
             </div>
             <div class="start-actions">
                 <button id="start-empty" class="start-btn start-primary">
                     <span class="start-icon" aria-hidden="true">➕</span>
-                    <span class="start-label"><strong>New Project</strong><small>Start from scratch — cubes, bones and Spore parts</small></span>
+                    <span class="start-label"><strong>Uusi projekti</strong><small>Aloita tyhjästä — kuutiot, luut ja Spore-osat</small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
                 <button id="start-continue" class="start-btn" hidden>
                     <span class="start-icon" aria-hidden="true">⏱️</span>
-                    <span class="start-label"><strong>Continue Last Project</strong><small id="start-continue-meta"></small></span>
+                    <span class="start-label"><strong>Jatka edellistä projektia</strong><small id="start-continue-meta"></small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
                 <button id="start-library" class="start-btn">
                     <span class="start-icon" aria-hidden="true">📚</span>
-                    <span class="start-label"><strong>Load a Mob</strong><small>Ready-made mobs — pick one and start editing</small></span>
+                    <span class="start-label"><strong>Lataa mob kirjastosta</strong><small>Valmiita mobeja — valitse yksi ja ala muokata</small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
                 <button id="start-randomize" class="start-btn">
                     <span class="start-icon" aria-hidden="true">🎲</span>
-                    <span class="start-label"><strong>Randomize</strong><small>Surprise me — a random creature in one click</small></span>
+                    <span class="start-label"><strong>Satunnaista</strong><small>Yllätä minut — satunnainen olento yhdellä klikkauksella</small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
             </div>
             <div class="start-footer">
-                <label class="chk"><input type="checkbox" id="start-dont-show" checked> Don't show this again</label>
-                <button id="start-skip" class="start-skip">Skip →</button>
+                <label class="chk"><input type="checkbox" id="start-dont-show" checked> Älä näytä tätä enää</label>
+                <button id="start-skip" class="start-skip">Ohita →</button>
             </div>
             <div class="start-tips">
-                <span class="start-kbd">⌘I Import · ⌘E Export · ⌘Z Undo
+                <span class="start-kbd">⌘I Tuonti · ⌘E Vienti · ⌘Z Kumoa
                     <button id="start-shortcuts-btn" class="start-help" title="Show all shortcuts" aria-label="Show all shortcuts">?</button>
                 </span>
-                <a class="start-gallery" href="examples/gallery/index.html" target="_blank" rel="noopener">Example Gallery</a>
+                <a class="start-gallery" href="examples/gallery/index.html" target="_blank" rel="noopener">Esimerkkigalleria</a>
                 <span id="start-gallery-hint" class="start-gen-hint" hidden>Gallery missing — generate: <code>node tools/export-example-shots.mjs --library</code></span>
             </div>
         </div>

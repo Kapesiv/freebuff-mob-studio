@@ -6809,7 +6809,7 @@ let staleCleanupRemoved = 0;
         if (libTab) libTab.click();
         const search = document.getElementById('mob-search');
         if (search) search.focus();
-        setStatus('Pick a mob from the library — click a card to load it');
+        setStatus('Valitse mob kirjastosta — klikkaa korttia ladataksesi sen');
     });
     document.getElementById('start-empty').addEventListener('click', () => {
         close();

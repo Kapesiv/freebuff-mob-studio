@@ -19,7 +19,7 @@ function pc(name, origin, size, color, rotation = [0, 0, 0]) {
 export const MOB_PARTS = [
     // ==================== JALAT ====================
     {
-        id: 'leg_short', name: 'Short Leg', emoji: '🦵', category: 'jalat',
+        id: 'leg_short', name: 'Lyhyt jalka', emoji: '🦵', category: 'jalat',
         symmetric: true, attach: { bone: 'body', at: 'bottom' },
         bones: [
             pb('leg', [0, 0, 0], [
@@ -28,7 +28,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'leg_long', name: 'Long Leg', emoji: '🦿', category: 'jalat',
+        id: 'leg_long', name: 'Pitkä jalka', emoji: '🦿', category: 'jalat',
         symmetric: true, attach: { bone: 'body', at: 'bottom' },
         bones: [
             pb('leg', [0, 0, 0], [
@@ -37,7 +37,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'leg_paw', name: 'Paw', emoji: '🐾', category: 'jalat',
+        id: 'leg_paw', name: 'Tassu', emoji: '🐾', category: 'jalat',
         symmetric: true, attach: { bone: 'body', at: 'bottom' },
         // Nivelöity: jalka + tassu (pivot nilkassa) — tassu koukistuu kävelyssä
         bones: [
@@ -50,7 +50,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'leg_bird', name: 'Bird Leg', emoji: '🦩', category: 'jalat',
+        id: 'leg_bird', name: 'Lintujalka', emoji: '🦩', category: 'jalat',
         symmetric: true, attach: { bone: 'body', at: 'bottom' },
         // Nivelöity: reisi + jalkaterä (pivot nilkassa)
         bones: [
@@ -63,7 +63,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'leg_spider', name: 'Spider Leg', emoji: '🕷️', category: 'jalat',
+        id: 'leg_spider', name: 'Hämähäkkijalka', emoji: '🕷️', category: 'jalat',
         symmetric: true, attach: { bone: 'body', at: 'side' },
         // Nivelöity: reisi + sääri — sääri ojentuu hiipimisessä
         bones: [
@@ -76,7 +76,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'tentacle', name: 'Tentacle', emoji: '🐙', category: 'jalat',
+        id: 'tentacle', name: 'Lonkero', emoji: '🐙', category: 'jalat',
         symmetric: false, attach: { bone: 'body', at: 'bottom' },
         // Nivelöity: lonkero taipuu kahdesta nivelenpäästä — idlessä aaltoilee
         bones: [
@@ -91,7 +91,7 @@ export const MOB_PARTS = [
 
     // ==================== KÄDET ====================
     {
-        id: 'arm', name: 'Arm', emoji: '💪', category: 'kädet',
+        id: 'arm', name: 'Käsi', emoji: '💪', category: 'kädet',
         symmetric: true, attach: { bone: 'body', at: 'side' },
         bones: [
             pb('arm', [0, 0, 0], [
@@ -100,7 +100,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'arm_claw', name: 'Claw Arm', emoji: '🦞', category: 'kädet',
+        id: 'arm_claw', name: 'Kynsikäsi', emoji: '🦞', category: 'kädet',
         symmetric: true, attach: { bone: 'body', at: 'side' },
         // Nivelöity: käsivarsi + kynsi (pivot ranteessa) — kynsi nytkähtää iskussa
         bones: [
@@ -115,7 +115,7 @@ export const MOB_PARTS = [
 
     // ==================== PÄÄT & KASVOT ====================
     {
-        id: 'head_round', name: 'Round Head', emoji: '🗿', category: 'päät',
+        id: 'head_round', name: 'Pyöreä pää', emoji: '🗿', category: 'päät',
         symmetric: false, attach: { bone: 'head', at: 'top' },
         bones: [
             pb('head', [0, 0, 0], [
@@ -124,7 +124,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'snout', name: 'Snout', emoji: '👃', category: 'päät',
+        id: 'snout', name: 'Kuono', emoji: '👃', category: 'päät',
         symmetric: false, attach: { bone: 'head', at: 'front' },
         bones: [
             pb('snout', [0, 0, 0], [
@@ -133,7 +133,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'horn', name: 'Horns', emoji: '🐐', category: 'päät',
+        id: 'horn', name: 'Sarvet', emoji: '🐐', category: 'päät',
         symmetric: true, attach: { bone: 'head', at: 'top' },
         // Nivelöity: sarvi + kärki (pivot kärjen tyvessä) — kärki huojuu kevyesti
         bones: [
@@ -146,7 +146,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'eye_big', name: 'Big Eyes', emoji: '👀', category: 'päät',
+        id: 'eye_big', name: 'Isot silmät', emoji: '👀', category: 'päät',
         symmetric: true, attach: { bone: 'head', at: 'front' },
         bones: [
             pb('eye', [0, 0, 0], [
@@ -156,7 +156,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'fangs', name: 'Fangs', emoji: '🦷', category: 'päät',
+        id: 'fangs', name: 'Kulmahampaat', emoji: '🦷', category: 'päät',
         symmetric: false, attach: { bone: 'head', at: 'front' },
         bones: [
             pb('fang', [0, 0, 0], [
@@ -166,7 +166,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'beak', name: 'Beak', emoji: '🐤', category: 'päät',
+        id: 'beak', name: 'Nokka', emoji: '🐤', category: 'päät',
         symmetric: false, attach: { bone: 'head', at: 'front' },
         bones: [
             pb('beak', [0, 0, 0], [
@@ -177,7 +177,7 @@ export const MOB_PARTS = [
 
     // ==================== HÄNNÄT ====================
     {
-        id: 'tail_short', name: 'Stub Tail', emoji: '🐰', category: 'hännät',
+        id: 'tail_short', name: 'Töpöhäntä', emoji: '🐰', category: 'hännät',
         symmetric: false, attach: { bone: 'body', at: 'back' },
         bones: [
             pb('tail', [0, 0, 0], [
@@ -186,7 +186,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'tail_long', name: 'Long Tail', emoji: '🐍', category: 'hännät',
+        id: 'tail_long', name: 'Pitkä häntä', emoji: '🐍', category: 'hännät',
         symmetric: false, attach: { bone: 'body', at: 'back' },
         // Nivelöity: tyvi + kärkiosa — aalto kulkee pitkin häntää
         bones: [
@@ -199,7 +199,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'tail_spike', name: 'Spike Tail', emoji: '🦖', category: 'hännät',
+        id: 'tail_spike', name: 'Piikkihäntä', emoji: '🦖', category: 'hännät',
         symmetric: false, attach: { bone: 'body', at: 'back' },
         // Nivelöity: tyvi + piikit — piikit huojuvat hännän heilunnan mukaan
         bones: [
@@ -215,7 +215,7 @@ export const MOB_PARTS = [
 
     // ==================== SIIVET ====================
     {
-        id: 'wing_bat', name: 'Bat Wing', emoji: '🦇', category: 'siivet',
+        id: 'wing_bat', name: 'Lepakkosiipi', emoji: '🦇', category: 'siivet',
         symmetric: true, attach: { bone: 'body', at: 'side' },
         bones: [
             pb('wing', [0, 0, 0], [
@@ -225,7 +225,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'wing_bird', name: 'Bird Wing', emoji: '🪽', category: 'siivet',
+        id: 'wing_bird', name: 'Lintusiipi', emoji: '🪽', category: 'siivet',
         symmetric: true, attach: { bone: 'body', at: 'side' },
         bones: [
             pb('wing', [0, 0, 0], [
@@ -235,7 +235,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'fin', name: 'Fin', emoji: '🐠', category: 'siivet',
+        id: 'fin', name: 'Evä', emoji: '🐠', category: 'siivet',
         symmetric: true, attach: { bone: 'body', at: 'side' },
         bones: [
             pb('fin', [0, 0, 0], [
@@ -246,7 +246,7 @@ export const MOB_PARTS = [
 
     // ==================== MUUT ====================
     {
-        id: 'spike_back', name: 'Back Spikes', emoji: '🦔', category: 'muut',
+        id: 'spike_back', name: 'Selkäpiikit', emoji: '🦔', category: 'muut',
         symmetric: false, attach: { bone: 'body', at: 'top' },
         bones: [
             pb('spike', [0, 0, 0], [
@@ -257,7 +257,7 @@ export const MOB_PARTS = [
         ]
     },
     {
-        id: 'ear', name: 'Ears', emoji: '🐰', category: 'muut',
+        id: 'ear', name: 'Korvat', emoji: '🐰', category: 'muut',
         symmetric: true, attach: { bone: 'head', at: 'top' },
         bones: [
             pb('ear', [0, 0, 0], [
@@ -268,10 +268,10 @@ export const MOB_PARTS = [
 ];
 
 export const PART_CATEGORIES = [
-    { id: 'jalat', name: 'Legs', emoji: '🦵' },
-    { id: 'kädet', name: 'Arms', emoji: '💪' },
-    { id: 'päät', name: 'Heads & Faces', emoji: '🗿' },
-    { id: 'hännät', name: 'Tails', emoji: '🐍' },
-    { id: 'siivet', name: 'Wings & Fins', emoji: '🪽' },
-    { id: 'muut', name: 'Other', emoji: '✨' }
+    { id: 'jalat', name: 'Jalat', emoji: '🦵' },
+    { id: 'kädet', name: 'Kädet', emoji: '💪' },
+    { id: 'päät', name: 'Päät & Kasvot', emoji: '🗿' },
+    { id: 'hännät', name: 'Hännät', emoji: '🐍' },
+    { id: 'siivet', name: 'Siivet & Evät', emoji: '🪽' },
+    { id: 'muut', name: 'Muut', emoji: '✨' }
 ];

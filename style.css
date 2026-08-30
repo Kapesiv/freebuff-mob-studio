@@ -335,7 +335,7 @@ input[type="checkbox"] { accent-color: var(--accent); }
     position: relative;
 }
 .start-primary::after {
-    content: 'New project';
+    content: 'Uusi projekti';
     position: absolute;
     top: -8px;
     right: 10px;
