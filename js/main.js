@@ -2439,7 +2439,13 @@ function findPartAttachBone(part, opts = {}) {
 /** Kiinnityspisteen siirtymä luun pivotista mallin uloimpaan pintaan (osat kasvattavat mallia). */
 function partAttachOffset(part, bone, at) {
     const dir = at || part.attach.at;
-    const g = modelBBox();
+    // Pinta lasketaan KOHTELUUN omasta bounding boxista, ei koko mallista:
+    // muuten jo aiemmin lisätyt osat (esim. sarvet päässä) nostaisivat
+    // seuraavan osan väärälle korkeudelle (selkäpiikit leijuivat ilmassa).
+    // Jos luulla ei ole kuutioita, pudotaan koko mallin bboxiin.
+    const boneBox = boneCubeBBox(bone);
+    const hasCubes = Number.isFinite(boneBox.mn[0]);
+    const g = hasCubes ? boneBox : modelBBox();
     const p = bone.pivot;
     switch (dir) {
         case 'bottom': return [0, g.mn[1] - p[1], 0];
