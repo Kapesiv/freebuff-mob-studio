@@ -2277,8 +2277,17 @@ function addCube() {
     });
 
     rebuildModel();
+    // Valitse uusi kuutio heti — gizmo kiinnittyy ja näet tarkalleen mitä lisäsit
+    for (let i = 0; i < state.cubes.length; i++) {
+        const cd = findCubeData(i);
+        if (cd && cd.name === cubeName) {
+            state.selectedCubes = [];
+            doSelectCube(i, false);
+            setStatus(`Added ${cubeName} — drag it with V (Move), R rotates, S resizes`);
+            break;
+        }
+    }
     scheduleAutosave();
-    setStatus(`Added ${cubeName} to ${bone.name}`);
 }
 
 function addBone() {
@@ -6521,8 +6530,56 @@ function setupUVEditor() {
     setTimeout(() => state.uvEditor.resize(), 50);
 }
 
+/**
+ * Yksinkertaistettu UI aloittelijoille: edistyneet osiot (Bones/Hierarchy,
+ * Locators, UV-editori, Voxelize) ovat oletuksena kollapsattuja klikattavan
+ * otsikon taakse, ja aloitusvihje näyttää 4-vaiheisen rakennuspolun.
+ */
+function setupSimplifiedUI() {
+    // Kollapsattavat osiot: klikkaus otsikosta avaa/sulkee sisällön
+    for (const section of document.querySelectorAll('.panel-section.collapsible')) {
+        const h3 = section.querySelector(':scope > h3');
+        if (!h3) continue;
+        h3.addEventListener('click', (e) => {
+            // Älä sulje, jos klikkaus osui sisäiseen nappiin (esim. + Add)
+            if (e.target.closest('button')) return;
+            section.classList.toggle('panel-collapsed');
+        });
+        // Edistyneet osiot piilossa oletuksena
+        if (section.classList.contains('advanced')) section.classList.add('panel-collapsed');
+    }
+
+    // Mob Library oletuksena kollapsissa — rakennustyökalut näkyvät ensin
+    const libSection = document.getElementById('lib-section');
+    if (libSection) libSection.classList.add('panel-collapsed');
+
+    // Voxelize-kytkin (edistynyt): avaa/sulkee pudotusalueen
+    const voxelToggle = document.getElementById('voxel-toggle');
+    const voxelDrop = document.getElementById('voxel-dropzone');
+    if (voxelToggle && voxelDrop) {
+        voxelDrop.style.display = 'none';
+        voxelToggle.addEventListener('click', () => {
+            const open = voxelDrop.style.display !== 'none';
+            voxelDrop.style.display = open ? 'none' : '';
+            voxelToggle.classList.toggle('open', !open);
+        });
+    }
+
+    // Aloitusvihje: sulje ja muista sulkeminen
+    const hint = document.getElementById('start-hint');
+    const hintClose = document.getElementById('start-hint-close');
+    if (hint && hintClose) {
+        if (localStorage.getItem('start-hint-dismissed') === '1') hint.hidden = true;
+        hintClose.addEventListener('click', () => {
+            hint.hidden = true;
+            localStorage.setItem('start-hint-dismissed', '1');
+        });
+    }
+}
+
 // ==================== INIT ====================
 updateProjectNameLabel();
+setupSimplifiedUI();
 setupToolbar();
 setupPropertyInputs();
 setupLocatorPanel();
@@ -6744,6 +6801,9 @@ let staleCleanupRemoved = 0;
 
     document.getElementById('start-library').addEventListener('click', () => {
         close();
+        // Avaa kirjasto-osio jos se on kollapsissa
+        const libSection = document.getElementById('lib-section');
+        if (libSection) libSection.classList.remove('panel-collapsed');
         // Siirry 📚 Kirjasto -välilehdelle ja kohdista haku
         const libTab = document.querySelector('.lib-tab[data-libview="library"]');
         if (libTab) libTab.click();

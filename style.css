@@ -42,6 +42,93 @@ body {
 
 input[type="checkbox"] { accent-color: var(--accent); }
 
+/* ---- Yksinkertaistettu UI: kollapsattavat osiot ---- */
+.panel-section.collapsible > h3 {
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.panel-section.collapsible > h3::before {
+    content: '▾';
+    font-size: 10px;
+    opacity: .7;
+    transition: transform .12s ease;
+}
+.panel-section.collapsible.panel-collapsed > h3::before {
+    transform: rotate(-90deg);
+}
+.panel-section.collapsible.panel-collapsed > :not(h3) {
+    display: none;
+}
+
+/* + Cube -painike (ensisijainen rakennustoiminto) */
+.add-cube-big {
+    flex: 1;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 12px;
+    border-color: var(--accent);
+    background: linear-gradient(180deg, rgba(212, 164, 92, 0.16), rgba(212, 164, 92, 0.05));
+}
+.add-cube-big:hover {
+    background: rgba(212, 164, 92, 0.22);
+    border-color: var(--accent-hover);
+}
+
+/* Voxelize-kytkin (edistynyt) */
+.collapse-toggle {
+    display: block;
+    width: 100%;
+    margin: 8px 0 4px;
+    padding: 5px 8px;
+    background: var(--button-bg);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    cursor: pointer;
+    text-align: left;
+}
+.collapse-toggle:hover {
+    background: var(--button-hover);
+    color: var(--text);
+}
+.collapse-toggle.open::before {
+    content: '▾ ';
+}
+.collapse-toggle::before {
+    content: '▸ ';
+}
+
+/* Aloittelijan opastusbanneri */
+.start-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 10px;
+    padding: 8px 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    font-size: 11.5px;
+    line-height: 1.35;
+}
+.start-hint strong { color: var(--accent); }
+.start-hint button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 4px;
+}
+.start-hint button:hover { color: var(--text); }
+.start-hint[hidden] { display: none; }
+
 #app {
     display: flex;
     flex-direction: column;
@@ -180,10 +267,10 @@ input[type="checkbox"] { accent-color: var(--accent); }
     background: var(--bg-elevated);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-lg);
-    padding: 30px 34px 22px;
-    width: min(520px, 92vw);
+    padding: 34px 38px 24px;
+    width: min(560px, 92vw);
     box-shadow: var(--shadow-lg);
-    text-align: center;
+    text-align: left;
     animation: start-slide 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes start-slide {
@@ -193,16 +280,18 @@ input[type="checkbox"] { accent-color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
     #start-screen, .start-card { animation: none; }
 }
-.start-logo { font-size: 42px; }
+.start-head { text-align: center; }
+.start-logo { font-size: 44px; }
 .start-card h1 {
-    font-size: 21px;
-    margin: 8px 0 4px;
+    font-size: 23px;
+    margin: 10px 0 4px;
     color: var(--text);
+    letter-spacing: 0.2px;
 }
-.start-hint {
+.start-sub {
     color: var(--text-dim, #a0a8b0);
     font-size: 13px;
-    margin: 0 0 20px;
+    margin: 0 0 24px;
 }
 .start-actions {
     display: flex;
@@ -217,14 +306,27 @@ input[type="checkbox"] { accent-color: var(--accent); }
     background: var(--button-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: 13px 16px;
+    padding: 12px 16px;
     cursor: pointer;
     color: var(--text);
-    transition: background 0.15s, border-color 0.15s;
+    transition: background 0.15s, border-color 0.15s, transform 0.12s ease;
 }
 .start-btn:hover {
     background: var(--button-hover);
     border-color: var(--accent);
+    transform: translateX(2px);
+}
+.start-icon {
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
 }
 .start-primary {
     border-color: var(--accent);

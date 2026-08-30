@@ -38,7 +38,11 @@
 
         <div id="workspace">
             <aside id="left-panel">
-                <div class="panel-section">
+                <div id="start-hint" class="start-hint">
+                    <strong>New here?</strong> 1. Pick a base below → 2. Attach parts → 3. Reshape → 4. Save
+                    <button id="start-hint-close" title="Dismiss" aria-label="Dismiss">✕</button>
+                </div>
+                <div class="panel-section" style="order:1">
                     <h3>Toolbox</h3>
                     <div id="toolbox" class="tool-grid">
                         <button class="tool-btn active" data-tool="select" title="Select"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
@@ -52,7 +56,7 @@
                     </div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section collapsible" id="lib-section" style="order:6">
                     <h3>Mob Library <span class="hint" id="mob-count"></span></h3>
                     <div class="lib-tabs">
                         <button type="button" class="lib-tab active" data-libview="library">Library</button>
@@ -82,7 +86,8 @@
                         </label>
                     </div>
                     <div id="mob-library" class="mob-grid"></div>
-                    <div class="voxel-dropzone" id="voxel-dropzone" title="Drop a GLB/OBJ model here — voxelized right in the browser">
+                    <button type="button" id="voxel-toggle" class="collapse-toggle">Voxelize a 3D model ▸</button>
+                    <div class="voxel-dropzone advanced" id="voxel-dropzone" title="Drop a GLB/OBJ model here — voxelized right in the browser">
                         <div class="voxel-drop-row">
                             <svg class="voxel-drop-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5V8Z"/><path d="M3 8l9 5 9-5"/><path d="M12 13v8"/></svg>
                             <div class="voxel-drop-text">
@@ -114,33 +119,33 @@
                     </div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section" style="order:2">
                     <h3>Add Element</h3>
                     <div class="add-row">
-                        <button id="btn-add-cube" class="action-btn" title="Add a cube (right-click: more options)">+ Cube</button>
+                        <button id="btn-add-cube" class="action-btn add-cube-big" title="Add a cube (right-click: more options)">+ Cube</button>
                         <button id="btn-add-group" class="action-btn" title="Add a bone/group (right-click: more options)">+ Bone/Group</button>
                         <button id="btn-add-more" class="action-btn" title="More — Mirror Copy and Symmetry">⋯</button>
                     </div>
                 </div>
 
-                <div id="add-context-menu" hidden>
+                <div id="add-context-menu" hidden style="order:3">
                     <button id="ctx-mirror-copy" title="Copy the selected cube/bone as a mirror image to the opposite side">Mirror Copy</button>
                     <button id="ctx-symmetry" title="Symmetry edit — edit one side (move/rotate/scale), the other mirrors live">Symmetry</button>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section" style="order:4">
                     <h3>Parts (Spore)</h3>
                     <label class="chk"><input type="checkbox" id="part-mirror" checked> Mirror (side pairs)</label>
                     <div id="part-grid" class="mob-grid"></div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section" style="order:5">
                     <h3>New Mob Template</h3>
                     <button id="btn-randomize" class="action-btn" title="Build a random creature from Spore parts — random bone, surface, mirroring and color for each part. Click again for a new one.">Randomize</button>
                     <div id="template-grid" class="mob-grid"></div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section collapsible advanced" style="order:7">
                     <h3>Bones / Hierarchy (B)</h3>
                     <div id="bone-tree"></div>
                 </div>
@@ -213,7 +218,7 @@
                     </div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section collapsible advanced">
                     <h3>Locators <button id="btn-add-locator" class="action-btn" style="float:right;padding:2px 8px" title="Add a locator (attachment point for items / particles)">+ Add</button></h3>
                     <div id="locator-list" style="display:flex;flex-direction:column;gap:4px">
                         <span style="opacity:.55;font-size:11px">Attachment points for items &amp; particles (e.g. leash, held items).</span>
@@ -261,7 +266,7 @@
                     <button id="btn-remove-texture" class="action-btn">Reset Texture</button>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section collapsible advanced">
                     <h3>UV Editor</h3>
                     <div class="uv-toolbar">
                         <button class="tool-btn uv-tool active" data-uvtool="select" title="Select / Move faces"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
@@ -573,40 +578,46 @@
          (kuvaustyökalut / CI). -->
     <div id="start-screen" hidden>
         <div class="start-card">
-            <svg class="start-logo" viewBox="0 0 48 48" aria-hidden="true">
-                <path d="M24 4 42 14 24 24 6 14Z" fill="#d4a45c" opacity=".9"/>
-                <path d="M6 14 24 24 24 44 6 34Z" fill="#d4a45c" opacity=".4"/>
-                <path d="M24 24 42 14 42 34 24 44Z" fill="#d4a45c" opacity=".65"/>
-            </svg>
-            <h1>Freebuff Mob Studio</h1>
-            <p class="start-hint">What would you like to do?</p>
+            <div class="start-head">
+                <svg class="start-logo" viewBox="0 0 48 48" aria-hidden="true">
+                    <path d="M24 4 42 14 24 24 6 14Z" fill="#d4a45c" opacity=".9"/>
+                    <path d="M6 14 24 24 24 44 6 34Z" fill="#d4a45c" opacity=".4"/>
+                    <path d="M24 24 42 14 42 34 24 44Z" fill="#d4a45c" opacity=".65"/>
+                </svg>
+                <h1>Freebuff Mob Studio</h1>
+                <p class="start-sub">Build Minecraft mobs — Spore-style parts, Blockbench-style tools</p>
+            </div>
             <div class="start-actions">
                 <button id="start-empty" class="start-btn start-primary">
-                    <span class="start-label"><strong>New Project</strong><small>Empty project — cubes, bones, animations and Spore parts</small></span>
+                    <span class="start-icon" aria-hidden="true">➕</span>
+                    <span class="start-label"><strong>New Project</strong><small>Start from scratch — cubes, bones and Spore parts</small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
                 <button id="start-continue" class="start-btn" hidden>
+                    <span class="start-icon" aria-hidden="true">⏱️</span>
                     <span class="start-label"><strong>Continue Last Project</strong><small id="start-continue-meta"></small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
                 <button id="start-library" class="start-btn">
-                    <span class="start-label"><strong>Load a Mob from the Library</strong><small>143 ready-made mobs — Deep Void, vanilla and voxel animals</small></span>
+                    <span class="start-icon" aria-hidden="true">📚</span>
+                    <span class="start-label"><strong>Load a Mob</strong><small>Ready-made mobs — pick one and start editing</small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
                 <button id="start-randomize" class="start-btn">
-                    <span class="start-label"><strong>Randomize</strong><small>Random creature from Spore parts in one click</small></span>
+                    <span class="start-icon" aria-hidden="true">🎲</span>
+                    <span class="start-label"><strong>Randomize</strong><small>Surprise me — a random creature in one click</small></span>
                     <svg class="start-chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
                 </button>
             </div>
             <div class="start-footer">
-                <label class="chk"><input type="checkbox" id="start-dont-show" checked> Don't show again</label>
-                <button id="start-skip" class="start-skip">Continue to Editor →</button>
+                <label class="chk"><input type="checkbox" id="start-dont-show" checked> Don't show this again</label>
+                <button id="start-skip" class="start-skip">Skip →</button>
             </div>
             <div class="start-tips">
                 <span class="start-kbd">⌘I Import · ⌘E Export · ⌘Z Undo
                     <button id="start-shortcuts-btn" class="start-help" title="Show all shortcuts" aria-label="Show all shortcuts">?</button>
                 </span>
-                <a class="start-gallery" href="examples/gallery/index.html" target="_blank" rel="noopener">View the Example Gallery</a>
+                <a class="start-gallery" href="examples/gallery/index.html" target="_blank" rel="noopener">Example Gallery</a>
                 <span id="start-gallery-hint" class="start-gen-hint" hidden>Gallery missing — generate: <code>node tools/export-example-shots.mjs --library</code></span>
             </div>
         </div>
