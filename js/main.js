@@ -2265,10 +2265,40 @@ function addCube() {
         (totalCubes % 4) * 16,
         Math.floor(totalCubes / 4) * 16
     ];
+    // Sijoita uusi kuutio MALLIN YLÄPUOLELLE (ei kiinteään "pivot + 8"):
+    // pienissä malleissa (esim. Stalker) kiinteä lisäys vei kuution kauas
+    // kameran näkymän ulkopuolelle, eikä siihen saanut kiinni. Lasketaan
+    // mallin oikea MAAILMAboxi (huomioi luiden rotaatiot), ja käännetään
+    // haluttu maailmapiste kohdeluun paikalliseen origin-avaruuteen.
+    const SIZE = 4;
+    const wbb = modelWorldBBox();
+    const hasCubes = isFinite(wbb.mn[0]);
+    // Kuution keskipiste maailmassa: mallin päällä, keskitetty X/Z.
+    const cx = hasCubes ? (wbb.mn[0] + wbb.mx[0]) / 2 : 0;
+    const cz = hasCubes ? (wbb.mn[2] + wbb.mx[2]) / 2 : 0;
+    const cy = (hasCubes ? wbb.mx[1] : 0) + 2 + SIZE / 2;
+    // Muunna maailmapiste kohdeluun paikalliseksi originiksi: luuryhmän
+    // world-matriisi kertoo miten origin+size/2−pivot sijoittuu maailmaan,
+    // joten origin = M⁻¹·W + pivot − size/2.
+    const bi = state.model.bones.indexOf(bone);
+    const group = bi >= 0 ? state.bones[bi] : null;
+    let origin;
+    if (group) {
+        group.updateWorldMatrix(true, true);
+        const inv = group.matrixWorld.clone().invert();
+        const local = new THREE.Vector3(cx, cy, cz).applyMatrix4(inv);
+        origin = [
+            local.x + bone.pivot[0] - SIZE / 2,
+            local.y + bone.pivot[1] - SIZE / 2,
+            local.z + bone.pivot[2] - SIZE / 2
+        ];
+    } else {
+        origin = [cx - SIZE / 2, cy - SIZE / 2, cz - SIZE / 2];
+    }
     bone.cubes.push({
         name: cubeName,
-        origin: [bone.pivot[0], bone.pivot[1] + 8, bone.pivot[2]],
-        size: [4, 4, 4],
+        origin,
+        size: [SIZE, SIZE, SIZE],
         rotation: [0, 0, 0],
         uv: { offset: autoUV },
         mirror: false
@@ -2281,11 +2311,40 @@ function addCube() {
         if (cd && cd.name === cubeName) {
             state.selectedCubes = [];
             doSelectCube(i, false);
+            // Jos kuutio jäi ruudun ulkopuolelle (pieni malli + tiukka zoom),
+            // siirrä kamera niin että se näkyy ja siihen saa kiinni.
+            frameToNewCube(state.cubes[i]);
             setStatus(`Lisätty ${cubeName} — vedä V:llä (siirto), R kääntää, S venyttää`);
             break;
         }
     }
     scheduleAutosave();
+}
+
+// Varmistaa että juuri lisätty kuutio näkyy kameran kuvakulmassa: jos se
+// on ruudun ulkopuolella (pieni malli + tiukka zoom), siirretään kameran
+// kohdetta kuution suuntaan ilman zoomausta, jotta siihen saa kiinni.
+function frameToNewCube(mesh) {
+    if (!state.orbitControls || !state.camera) return;
+    mesh.updateWorldMatrix(true, true);
+    const center = new THREE.Vector3();
+    mesh.getWorldPosition(center);
+    state.camera.updateMatrixWorld(true);
+    // Onko kuutio jo ruudulla? Projektoidaan ja katsotaan reunoja.
+    const v = center.clone().project(state.camera);
+    const rect = canvas.getBoundingClientRect();
+    const px = ((v.x + 1) / 2) * rect.width;
+    const py = ((1 - v.y) / 2) * rect.height;
+    const margin = 80;
+    if (px > -margin && px < rect.width + margin && py > -margin && py < rect.height + margin) {
+        return; // näkyy jo
+    }
+    // Ei näy → siirrä kohde kuution kohdalle, kamera seuraa saman verran.
+    const target = state.orbitControls.target;
+    const delta = center.clone().sub(target);
+    state.orbitControls.target.copy(center);
+    state.camera.position.add(delta);
+    state.orbitControls.update();
 }
 
 function addBone() {
@@ -2302,6 +2361,185 @@ function addBone() {
     rebuildModel();
     scheduleAutosave();
     setStatus(`Lisätty luu: ${name}`);
+}
+
+// ==================== 3D-ESIKATSEUT (SPORE-PALETTI JA POHJAT) ====================
+// Renderöi jokaisen annetun kohteen (osa tai pohja) pieneksi 3D-kuvaksi
+// (oikeat kuutiot ja värit) Sporen paletin tyyliin. Jokainen entry on
+// { key, bones[] } (bones[i].cubes sisältävät origin/size/rotation/color).
+// Palauttaa Map<key, dataURL>. Jos WebGL ei ole käytettävissä, palauttaa
+// tyhjän kartan → napit käyttävät emojia. Renderöijä vapautetaan heti.
+function buildVoxelThumbMap(entries) {
+    const map = new Map();
+    if (!renderer || !entries) return map; // ei 3D:ta → emoji-laatat
+    let r = null;
+    try {
+        r = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+        r.setPixelRatio(1);
+        r.setSize(96, 96);
+        r.setClearColor(0x000000, 0); // läpinäkyvä tausta
+        const s = new THREE.Scene();
+        s.add(new THREE.AmbientLight(0xffffff, 0.9));
+        const d1 = new THREE.DirectionalLight(0xffffff, 1.15);
+        d1.position.set(3, 5, 4);
+        s.add(d1);
+        const d2 = new THREE.DirectionalLight(0xffffff, 0.4);
+        d2.position.set(-4, -2, -5);
+        s.add(d2);
+        const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 300);
+        const geoCache = new Map();
+        const mkGeo = (x, y, z) => {
+            const k = x + 'x' + y + 'x' + z;
+            let g = geoCache.get(k);
+            if (!g) { g = new THREE.BoxGeometry(x, y, z); geoCache.set(k, g); }
+            return g;
+        };
+        for (const entry of entries) {
+            const bones = entry.bones || [];
+            const group = new THREE.Group();
+            let mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+            for (const b of bones) {
+                for (const cq of (b.cubes || [])) {
+                    const geo = mkGeo(cq.size[0], cq.size[1], cq.size[2]);
+                    const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(cq.color || '#888888') });
+                    const m = new THREE.Mesh(geo, mat);
+                    const cx = cq.origin[0] + cq.size[0] / 2;
+                    const cy = cq.origin[1] + cq.size[1] / 2;
+                    const cz = cq.origin[2] + cq.size[2] / 2;
+                    m.position.set(cx, cy, cz);
+                    if (cq.rotation && cq.rotation.some(v => v)) {
+                        const [rx, ry, rz] = cq.rotation.map(v => THREE.MathUtils.degToRad(v));
+                        m.rotation.set(rx, ry, rz);
+                    }
+                    group.add(m);
+                    for (let i = 0; i < 3; i++) {
+                        mn[i] = Math.min(mn[i], cq.origin[i]);
+                        mx[i] = Math.max(mx[i], cq.origin[i] + cq.size[i]);
+                    }
+                }
+            }
+            if (!group.children.length) { map.set(entry.key, ''); continue; }
+            s.add(group);
+            const center = [0, 1, 2].map(i => (mn[i] + mx[i]) / 2);
+            const ext = Math.max(1, Math.max(mx[0] - mn[0], mx[1] - mn[1], mx[2] - mn[2]));
+            const dist = ext * 2.15;
+            cam.near = 0.1; cam.far = 300;
+            cam.updateProjectionMatrix();
+            cam.position.set(center[0] + dist, center[1] + dist * 1.15, center[2] + dist);
+            cam.lookAt(center[0], center[1], center[2]);
+            r.render(s, cam);
+            let url = '';
+            try { url = r.domElement.toDataURL('image/png'); } catch (e) { url = ''; }
+            map.set(entry.key, url);
+            s.remove(group);
+        }
+    } catch (e) {
+        console.warn('Esikatselukuvien renderöinti epäonnistui:', e.message);
+    } finally {
+        if (r) { try { r.dispose(); r.forceContextLoss && r.forceContextLoss(); } catch (e) { /* ohitetaan */ } }
+    }
+    return map;
+}
+
+function buildPartThumbMap() {
+    return buildVoxelThumbMap(MOB_PARTS.map(p => ({ key: p.id, bones: p.bones })));
+}
+
+// ==================== OSAN VETÄMINEN OLENNON PÄÄLLE (DRAG&DROP) ====================
+// Vedä osa vasemmasta paletista suoraan olennon päälle — se kiinnittyy
+// siihen luuhun ja pinnalle, johon pudotat (Spore-tyyli).
+
+let partDragActive = false;
+
+function startPartDrag(partId) {
+    partDragActive = true;
+    const hint = document.getElementById('part-drop-hint');
+    if (hint) hint.textContent = 'Vedä osa olennon päälle ja pudota';
+}
+
+function endPartDrag() {
+    partDragActive = false;
+    const hint = document.getElementById('part-drop-hint');
+    if (hint) hint.classList.remove('visible');
+    canvas.style.cursor = '';
+}
+
+/** Kasvon normaalin dominanssi → osan kiinnityspinta (top/bottom/front/back/side). */
+function attachAtFromWorldNormal(n) {
+    const ax = Math.abs(n.x), ay = Math.abs(n.y), az = Math.abs(n.z);
+    if (ay >= ax && ay >= az) return n.y > 0 ? 'top' : 'bottom';
+    if (az >= ax) return n.z < 0 ? 'front' : 'back';
+    return 'side';
+}
+
+/** Päivitä vihje-ikkuna + kursorin tila osoittimen alla olevan osan mukaan. */
+function updatePartDropState(ev) {
+    const hint = document.getElementById('part-drop-hint');
+    if (!renderer || ev.target !== canvas) {
+        canvas.style.cursor = 'no-drop';
+        if (hint) hint.classList.remove('visible');
+        return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(state.cubes, false);
+    if (!hits.length) {
+        canvas.style.cursor = 'no-drop';
+        if (hint) hint.classList.remove('visible');
+        return;
+    }
+    const mesh = hits[0].object;
+    const idx = state.cubes.indexOf(mesh);
+    const bone = findBoneForCube(idx);
+    const at = attachAtFromWorldNormal(hits[0].face.normal.clone().transformDirection(mesh.matrixWorld));
+    const atLabel = { top: 'Ylä', bottom: 'Ala', front: 'Etu', back: 'Taka', side: 'Sivu' }[at] || at;
+    if (hint) {
+        hint.textContent = '→ ' + (bone ? bone.name : '?') + ' · ' + atLabel;
+        hint.classList.add('visible');
+    }
+    canvas.style.cursor = 'copy';
+}
+
+/** Pudotus: kiinnitä osa osuman luuhun ja pinnalle. */
+function onPartDrop(ev) {
+    ev.preventDefault();
+    ev.stopPropagation();
+    endPartDrag();
+    const partId = ev.dataTransfer ? ev.dataTransfer.getData('application/x-part-id') : '';
+    if (!partId) { setStatus('Vedä osa vasemmasta paletista olennon päälle'); return; }
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = ((ev.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((ev.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const hits = raycaster.intersectObjects(state.cubes, false);
+    if (!hits.length) { setStatus('Pudota osa olennon päälle'); return; }
+    const mesh = hits[0].object;
+    const idx = state.cubes.indexOf(mesh);
+    const bone = findBoneForCube(idx);
+    if (!bone) { setStatus('Ei kohdeluuta — pudota olennon pintaan'); return; }
+    const at = attachAtFromWorldNormal(hits[0].face.normal.clone().transformDirection(mesh.matrixWorld));
+    const mirrorChk = document.getElementById('part-mirror');
+    addPartToModel(partId, { boneName: bone.name, at, mirror: !mirrorChk || mirrorChk.checked });
+    setStatus(`Kiinnitettiin osa → ${bone.name} (${{ top: 'Ylä', bottom: 'Ala', front: 'Etu', back: 'Taka', side: 'Sivu' }[at]})`);
+}
+
+function setupPartDragDrop() {
+    // dragover tarvitsee preventDefaultin, että drop sallitaan — päivitetään
+    // samalla vihje siitä mihin osa kiinnittyy.
+    canvas.addEventListener('dragover', (ev) => {
+        if (!partDragActive) return;
+        ev.preventDefault();
+        updatePartDropState(ev);
+    });
+    canvas.addEventListener('drop', (ev) => {
+        if (!partDragActive) return;
+        onPartDrop(ev);
+    });
+    canvas.addEventListener('dragleave', (ev) => {
+        if (ev.target === canvas) endPartDrag();
+    });
 }
 
 // ==================== OSAN KIINNITYSVALIKKO ====================
@@ -2344,7 +2582,7 @@ function openPartAttachDialog(partId, opts = {}) {
     copiesSel.disabled = !!forced;
 
     pendingPartId = partId;
-    document.getElementById('part-attach-title').textContent = `Attach ${part.name}`;
+    document.getElementById('part-attach-title').textContent = `Kiinnitä: ${part.name}`;
     document.getElementById('part-attach-dialog').style.display = 'flex';
 }
 
@@ -2411,6 +2649,33 @@ function modelBBox() {
     for (const bone of state.model.bones) {
         const { mn: a, mx: b } = boneCubeBBox(bone);
         for (let i = 0; i < 3; i++) { mn[i] = Math.min(mn[i], a[i]); mx[i] = Math.max(mx[i], b[i]); }
+    }
+    return { mn, mx };
+}
+
+/** Mallin MAAILMAkoordinaattiboxi renderöidyistä mesh-objekteista.
+ * Toisin kuin modelBBox (databoxi), tämä huomioi luiden rotaatiot ja
+ * hierarkian — siis sen, mitä käyttäjä oikeasti näkee ruudulla. */
+function modelWorldBBox() {
+    const mn = [Infinity, Infinity, Infinity];
+    const mx = [-Infinity, -Infinity, -Infinity];
+    for (const mesh of state.cubes) {
+        mesh.updateWorldMatrix(true, true);
+        const g = mesh.geometry;
+        if (!g.boundingBox) g.computeBoundingBox();
+        const bb = g.boundingBox;
+        for (let i = 0; i < 8; i++) {
+            const v = new THREE.Vector3(
+                (i & 1) ? bb.max.x : bb.min.x,
+                (i & 2) ? bb.max.y : bb.min.y,
+                (i & 4) ? bb.max.z : bb.min.z
+            );
+            mesh.localToWorld(v);
+            for (let k = 0; k < 3; k++) {
+                mn[k] = Math.min(mn[k], v.getComponent(k));
+                mx[k] = Math.max(mx[k], v.getComponent(k));
+            }
+        }
     }
     return { mn, mx };
 }
@@ -3744,6 +4009,16 @@ function setupLibrary() {
     // ---- Oma malli → vokselointi selaimessa (drag & drop GLB/OBJ) ----
     setupVoxelDrop();
 
+    // ---- Vasemman paneelin välilehdet (Työkalut / Osat / Pohja / Kirjasto) ----
+    // Vähentää näkymän meteliä: vain aktiivisen välilehden sisältö näkyy.
+    document.querySelectorAll('#left-tabs .lt-tab').forEach(t => {
+        t.addEventListener('click', () => {
+            document.querySelectorAll('#left-tabs .lt-tab').forEach(x => x.classList.toggle('active', x === t));
+            const panel = document.getElementById('left-panel');
+            if (panel) panel.dataset.activeTab = t.dataset.tab;
+        });
+    });
+
     // ---- '🧬 Omat olennot' -välilehti: tallenna/lataa/poista omia olentoja ----
     document.querySelectorAll('.lib-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -3763,22 +4038,30 @@ function setupLibrary() {
     const randomizeBtn = document.getElementById('btn-randomize');
     if (randomizeBtn) randomizeBtn.addEventListener('click', randomizeCreature);
 
-    // Uuden mobin pohjat — valmiit luurangot aloittamiseen
+    // Uuden mobin pohjat — valmiit luurangot aloittamiseen (kuvallinen ruudukko)
+    let tplThumbs = new Map();
+    try { tplThumbs = buildVoxelThumbMap(MOB_TEMPLATES.map(t => ({ key: t.id, bones: t.model.bones }))); } catch (e) { /* emoji-laatat fallback */ }
     const tplContainer = document.getElementById('template-grid');
     if (tplContainer) {
         for (const tpl of MOB_TEMPLATES) {
             const btn = document.createElement('button');
-            btn.className = 'mob-btn';
+            btn.className = 'mob-btn part-tile';
             btn.title = tpl.description;
-            btn.innerHTML = `<span>${tpl.name}</span>`;
+            const thumb = tplThumbs.get(tpl.id);
+            btn.innerHTML = thumb
+                ? `<span class="part-thumb"><img src="${thumb}" alt="" draggable="false"></span><span class="part-name">${tpl.name}</span>`
+                : `<span class="mob-emoji-tile">${tpl.emoji || '🧩'}</span><span class="mob-name">${tpl.name}</span>`;
             btn.addEventListener('click', () => openNewMobDialog(tpl.id));
             tplContainer.appendChild(btn);
         }
     }
     // ---- Spore-tyylinen osapaletti: valmiita osia, jotka kiinnittyvät malliin ----
+    // Esikatselukuvat renderöidään kerran pieniksi 3D-kuviksi (Sporen osapaletin
+    // tyyliin). Jos WebGL:ää ei ole, käytetään emoji-laattoja.
     const partGrid = document.getElementById('part-grid');
     if (partGrid) {
         const mirrorChk = document.getElementById('part-mirror');
+        const partThumbs = buildPartThumbMap();
         for (const cat of PART_CATEGORIES) {
             const parts = MOB_PARTS.filter(p => p.category === cat.id);
             if (!parts.length) continue;
@@ -3788,11 +4071,27 @@ function setupLibrary() {
             partGrid.appendChild(header);
             for (const part of parts) {
                 const btn = document.createElement('button');
-                btn.className = 'mob-btn part-btn';
-                btn.title = part.name + (part.symmetric ? ' — mirrored to both sides' : '');
-                btn.innerHTML = `<span>${part.name}</span>`;
+                btn.className = 'mob-btn part-btn part-tile';
+                btn.title = `${part.name}${part.symmetric ? ' — peilipari molemmille puolille' : ''}\nVasen klikkaus = kiinnitä heti · Oikea klikkaus = asetukset (luu / pinta / kpl)`;
+                const thumb = partThumbs.get(part.id);
+                btn.innerHTML = thumb
+                    ? `<span class="part-thumb"><img src="${thumb}" alt="" draggable="false"></span><span class="part-name">${part.name}</span>`
+                    : `<span class="mob-emoji-tile">${part.emoji || '🧩'}</span><span class="mob-name">${part.name}</span>`;
+                // Vasen klikkaus: kiinnitä heti oletusasennolla (Spore-tyyli)
                 btn.addEventListener('click', () => {
-                    // Avaa kiinnitysvalikko: luu + pinta valittavissa ennen kiinnitystä
+                    addPartToModel(part.id, { mirror: !mirrorChk || mirrorChk.checked });
+                });
+                // Raahaus: vedä osa suoraan olennon päälle (drag & drop)
+                btn.draggable = true;
+                btn.addEventListener('dragstart', (ev) => {
+                    ev.dataTransfer.setData('application/x-part-id', part.id);
+                    ev.dataTransfer.effectAllowed = 'copy';
+                    startPartDrag(part.id);
+                });
+                btn.addEventListener('dragend', () => endPartDrag());
+                // Oikea klikkaus: avaa asennusdialogi (luu, pinta, kpl-määrä)
+                btn.addEventListener('contextmenu', (ev) => {
+                    ev.preventDefault();
                     openPartAttachDialog(part.id, { mirror: !mirrorChk || mirrorChk.checked });
                 });
                 partGrid.appendChild(btn);
@@ -3802,6 +4101,7 @@ function setupLibrary() {
 
     setupPartAttachDialog();
     setupPartEditPanel();
+    setupPartDragDrop();
 
     // Vaihda animaatiota (tallennetaan ensin nykyinen, ladataan valittu)
     const animSelect = document.getElementById('anim-select');

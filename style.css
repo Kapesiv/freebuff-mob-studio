@@ -876,6 +876,39 @@ input[type="checkbox"] { accent-color: var(--accent); }
     margin-top: 0;
 }
 
+/* Spore-tyylinen osalaatta: 3D-esikatselukuva + nimi */
+.part-tile {
+    padding: 5px 4px 5px;
+    gap: 5px;
+}
+.part-tile .part-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+.part-tile .part-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+}
+.part-tile .part-name {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
 .voxel-dropzone {
     margin-top: 8px;
     padding: 8px 10px;
@@ -1202,6 +1235,48 @@ input[type="checkbox"] { accent-color: var(--accent); }
     position: relative;
 }
 
+/* Vasemman paneelin välilehdet: vain aktiivisen sisältö näkyy */
+#left-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 0 10px 4px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-panel, #181a20);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.lt-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 4px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.lt-tab:hover {
+    color: var(--text);
+}
+.lt-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+#left-panel [data-panel] {
+    display: none;
+}
+#left-panel[data-active-tab="tools"] [data-panel="tools"],
+#left-panel[data-active-tab="parts"] [data-panel="parts"],
+#left-panel[data-active-tab="base"] [data-panel="base"],
+#left-panel[data-active-tab="library"] [data-panel="library"] {
+    display: block;
+}
+
 .panel-section h3 {
     font-size: 10px;
     text-transform: uppercase;
@@ -1476,6 +1551,20 @@ input[type="checkbox"] { accent-color: var(--accent); }
     color: var(--text-muted);
     pointer-events: none;
     white-space: nowrap;
+}
+
+/* Vedettävän osan pudotusvihje — näkyy kun osaa raahataan olennon päälle */
+#part-drop-hint {
+    display: none;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    font-size: 12px;
+    padding: 6px 16px;
+}
+#part-drop-hint.visible {
+    display: inline-block;
 }
 
 /* Reshape live-lukema — näkyy kahvan vedon aikana (W × H × D blocks) */

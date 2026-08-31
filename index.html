@@ -37,12 +37,18 @@
         </header>
 
         <div id="workspace">
-            <aside id="left-panel">
+            <aside id="left-panel" data-active-tab="tools">
+                <div id="left-tabs" role="tablist" aria-label="Työtilan välilehdet">
+                    <button type="button" class="lt-tab active" data-tab="tools">Työkalut</button>
+                    <button type="button" class="lt-tab" data-tab="parts">Osat</button>
+                    <button type="button" class="lt-tab" data-tab="base">Pohja</button>
+                    <button type="button" class="lt-tab" data-tab="library">Kirjasto</button>
+                </div>
                 <div id="start-hint" class="start-hint">
                     <strong>Uusi käyttäjä?</strong> 1. Valitse pohja → 2. Kiinnitä osia → 3. Muotoile → 4. Tallenna
                     <button id="start-hint-close" title="Sulje" aria-label="Sulje">✕</button>
                 </div>
-                <div class="panel-section" style="order:1">
+                <div class="panel-section" data-panel="tools" style="order:1">
                     <h3>Työkalut</h3>
                     <div id="toolbox" class="tool-grid">
                         <button class="tool-btn active" data-tool="select" title="Valitse"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
@@ -56,7 +62,7 @@
                     </div>
                 </div>
 
-                <div class="panel-section collapsible" id="lib-section" style="order:6">
+                <div class="panel-section collapsible" data-panel="library" id="lib-section" style="order:6">
                     <h3>Mob-kirjasto <span class="hint" id="mob-count"></span></h3>
                     <div class="lib-tabs">
                         <button type="button" class="lib-tab active" data-libview="library">Kirjasto</button>
@@ -118,7 +124,7 @@
                     </div>
                 </div>
 
-                <div class="panel-section" style="order:2">
+                <div class="panel-section" data-panel="tools" style="order:2">
                     <h3>Lisää elementti</h3>
                     <div class="add-row">
                         <button id="btn-add-cube" class="action-btn add-cube-big" title="Lisää kuutio (oikea klikkaus: lisää vaihtoehtoja)">+ Kuutio</button>
@@ -132,19 +138,19 @@
                     <button id="ctx-symmetry" title="Symmetriamuokkaus — muokkaa toista puolta, toinen peilautuu livenä">Symmetria</button>
                 </div>
 
-                <div class="panel-section" style="order:4">
+                <div class="panel-section" data-panel="parts" style="order:4">
                     <h3>Osat (Spore)</h3>
                     <label class="chk"><input type="checkbox" id="part-mirror" checked> Peilaa (parit)</label>
                     <div id="part-grid" class="mob-grid"></div>
                 </div>
 
-                <div class="panel-section" style="order:5">
+                <div class="panel-section" data-panel="base" style="order:5">
                     <h3>Uuden mobin pohja</h3>
                     <button id="btn-randomize" class="action-btn" title="Tee satunnainen olento Spore-osista — satunnainen luu, pinta, peilaus ja väri jokaiselle osalle. Klikkaa uudelleen uutta varten.">Satunnaista</button>
                     <div id="template-grid" class="mob-grid"></div>
                 </div>
 
-                <div class="panel-section collapsible advanced" style="order:7">
+                <div class="panel-section collapsible advanced" data-panel="tools" style="order:7">
                     <h3>Luut / hierarkia (B)</h3>
                     <div id="bone-tree"></div>
                 </div>
@@ -154,6 +160,7 @@
                 <canvas id="three-canvas"></canvas>
                 <div id="viewport-overlay">
                     <span id="viewport-info">Vasen klikkaus: kierrä · Oikea: siirrä · Rullaus: zoom</span>
+                    <span id="part-drop-hint">Vedä osa olennon päälle ja pudota</span>
                 </div>
                 <div id="render-warning" title="Click to select the first invalid cube" hidden>
                     <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 15 14H1z"/><path d="M8 6v4"/><path d="M8 12h.01"/></svg> <span id="render-warning-text"></span>
