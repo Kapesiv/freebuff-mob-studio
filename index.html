@@ -50,7 +50,7 @@
                 </div>
                 <div class="panel-section" data-panel="tools" style="order:1">
                     <h3>Työkalut</h3>
-                    <p class="tab-hint">Valitse työkalu ja muokkaa olentoa — <b>V</b> siirtää, <b>R</b> kääntää, <b>S</b> venyttää.</p>
+                    <div class="tab-hint"><span>Valitse työkalu ja muokkaa olentoa — <b>V</b> siirtää, <b>R</b> kääntää, <b>S</b> venyttää.</span><button type="button" class="tab-hint-close" title="Piilota ohjeet" aria-label="Piilota ohjeet">✕</button></div>
                     <div id="toolbox" class="tool-grid">
                         <button class="tool-btn active" data-tool="select" title="Valitse"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
                         <button class="tool-btn" data-tool="move" title="Siirrä (V)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg></button>
@@ -65,7 +65,7 @@
 
                 <div class="panel-section collapsible" data-panel="library" id="lib-section" style="order:6">
                     <h3>Mob-kirjasto <span class="hint" id="mob-count"></span></h3>
-                    <p class="tab-hint">Lataa valmis mob — tai tallenna oma luomuksesi <b>Omat olennot</b> -välilehdellä.</p>
+                    <div class="tab-hint"><span>Lataa valmis mob — tai tallenna oma luomuksesi <b>Omat olennot</b> -välilehdellä.</span><button type="button" class="tab-hint-close" title="Piilota ohjeet" aria-label="Piilota ohjeet">✕</button></div>
                     <div class="lib-tabs">
                         <button type="button" class="lib-tab active" data-libview="library">Kirjasto</button>
                         <button type="button" class="lib-tab" data-libview="mine">Omat olennot</button>
@@ -142,14 +142,14 @@
 
                 <div class="panel-section" data-panel="parts" style="order:4">
                     <h3>Osat (Spore)</h3>
-                    <p class="tab-hint">Vedä osa olennon päälle — <b>vasen klikkaus</b> kiinnittää heti, <b>oikea</b> avaa asennuksen.</p>
+                    <div class="tab-hint"><span>Vedä osa olennon päälle — <b>vasen klikkaus</b> kiinnittää heti, <b>oikea</b> avaa asennuksen.</span><button type="button" class="tab-hint-close" title="Piilota ohjeet" aria-label="Piilota ohjeet">✕</button></div>
                     <label class="chk"><input type="checkbox" id="part-mirror" checked> Peilaa (parit)</label>
                     <div id="part-grid" class="mob-grid"></div>
                 </div>
 
                 <div class="panel-section" data-panel="base" style="order:5">
                     <h3>Uuden mobin pohja</h3>
-                    <p class="tab-hint">Valitse pohja mistä lähdet — tai kokeile <b>Satunnaista</b>.</p>
+                    <div class="tab-hint"><span>Valitse pohja mistä lähdet — tai kokeile <b>Satunnaista</b>.</span><button type="button" class="tab-hint-close" title="Piilota ohjeet" aria-label="Piilota ohjeet">✕</button></div>
                     <button id="btn-randomize" class="action-btn" title="Tee satunnainen olento Spore-osista — satunnainen luu, pinta, peilaus ja väri jokaiselle osalle. Klikkaa uudelleen uutta varten.">Satunnaista</button>
                     <div id="template-grid" class="mob-grid"></div>
                 </div>

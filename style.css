@@ -1425,6 +1425,9 @@ input[type="checkbox"] { accent-color: var(--accent); }
 }
 
 .tab-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
     font-size: 11px;
     color: var(--text-muted);
     line-height: 1.45;
@@ -1433,6 +1436,23 @@ input[type="checkbox"] { accent-color: var(--accent); }
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
+}
+.tab-hint > span { flex: 1; min-width: 0; }
+.tab-hint-close {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 11px;
+    line-height: 1;
+    padding: 1px 2px;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+}
+.tab-hint-close:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
 }
 /* Ohjeet piilotetaan automaattisesti kun käyttäjä on avannut sovelluksen muutaman kerran */
 body.hints-hidden .tab-hint { display: none; }

@@ -6981,9 +6981,16 @@ function setupSimplifiedUI() {
     let hintCount = parseInt(localStorage.getItem(hintsKey) || '0', 10) || 0;
     hintCount += 1;
     localStorage.setItem(hintsKey, String(hintCount));
-    if (hintCount >= 4) {
+    if (hintCount >= 4 || localStorage.getItem('tab-hints-dismissed') === '1') {
         document.body.classList.add('hints-hidden');
     }
+    // Sulje-rasti: käyttäjä voi piilottaa ohjeet itse heti (myös ennen 4. käynnistystä)
+    document.querySelectorAll('.tab-hint-close').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.body.classList.add('hints-hidden');
+            localStorage.setItem('tab-hints-dismissed', '1');
+        });
+    });
 
     // Aloitusvihje: sulje ja muista sulkeminen
     const hint = document.getElementById('start-hint');
