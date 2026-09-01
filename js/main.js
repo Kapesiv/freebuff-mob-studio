@@ -6975,6 +6975,16 @@ function setupSimplifiedUI() {
         });
     }
 
+    // Välilehtien ohjetekstit: näytetään ensimmäisinä käynnistyskertoina,
+    // sitten piilotetaan automaattisesti (kokeneempi käyttäjä ei tarvitse niitä).
+    const hintsKey = 'tab-hints-count';
+    let hintCount = parseInt(localStorage.getItem(hintsKey) || '0', 10) || 0;
+    hintCount += 1;
+    localStorage.setItem(hintsKey, String(hintCount));
+    if (hintCount >= 4) {
+        document.body.classList.add('hints-hidden');
+    }
+
     // Aloitusvihje: sulje ja muista sulkeminen
     const hint = document.getElementById('start-hint');
     const hintClose = document.getElementById('start-hint-close');

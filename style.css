@@ -1434,6 +1434,8 @@ input[type="checkbox"] { accent-color: var(--accent); }
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
 }
+/* Ohjeet piilotetaan automaattisesti kun käyttäjä on avannut sovelluksen muutaman kerran */
+body.hints-hidden .tab-hint { display: none; }
 .tab-hint b {
     color: var(--text);
     font-weight: 700;
