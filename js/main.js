@@ -7091,8 +7091,10 @@ if (!state.webgl) {
     // No WebGL: 3D viewport stays dark but everything else works.
     canvas.style.background = '#161b22';
     setStatus('Editori toimii ilman 3D-näkymää (WebGL pois) — avaa se WebGL-tukevassa selaimessa');
+} else if (!state.cubes.length) {
+    setStatus('Aloita: valitse pohja (1 · Aloita) tai lisää kuutio (+ Kuutio, 3 · Muotoile)');
 } else {
-    setStatus('Freebuff Mob Studio valmis — lisää kuutioita ja luita aloittaaksesi rakentamisen');
+    setStatus(`Valmis — ${state.cubes.length} kuutiota · klikkaa kuutiota valitaksesi · ▶ toistaa animaation · Testi kävelyttää olennon`);
 }
 window.__MOB_STUDIO = state;  // dev/debug handle
 window.__MOB_STUDIO.renderer = renderer;

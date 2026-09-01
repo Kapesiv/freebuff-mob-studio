@@ -739,6 +739,27 @@ input[type="checkbox"] { accent-color: var(--accent); }
     border-color: var(--accent);
 }
 
+.anim-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.anim-group + .anim-group {
+    border-left: 1px solid var(--border);
+    padding-left: 10px;
+}
+
+.anim-group-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    opacity: 0.75;
+    margin-right: 2px;
+    user-select: none;
+}
+
 .anim-time-wrap {
     flex: 1 1 280px;
     min-width: 160px;
@@ -1491,18 +1512,39 @@ body.hints-hidden .tab-hint { display: none; }
     background: var(--button-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
-    padding: 6px;
+    padding: 5px 6px 4px;
     cursor: pointer;
     transition: all 0.15s;
     text-align: center;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 2px;
     color: var(--text-muted);
 }
 
 .tool-btn svg {
     display: block;
+}
+
+.tool-btn kbd {
+    font-family: inherit;
+    font-size: 8.5px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 1.5px 4px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+}
+
+.tool-btn:hover kbd,
+.tool-btn.active kbd {
+    color: #fff;
+    border-color: var(--accent);
 }
 
 .tool-btn:hover {

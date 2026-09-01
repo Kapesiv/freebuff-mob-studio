@@ -53,11 +53,11 @@
                     <div class="tab-hint"><span>Valitse työkalu ja muokkaa olentoa — <b>V</b> siirtää, <b>R</b> kääntää, <b>S</b> venyttää.</span><button type="button" class="tab-hint-close" title="Piilota ohjeet" aria-label="Piilota ohjeet">✕</button></div>
                     <div id="toolbox" class="tool-grid">
                         <button class="tool-btn active" data-tool="select" title="Valitse"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l7 17 2.5-7.5L21 11z"/></svg></button>
-                        <button class="tool-btn" data-tool="move" title="Siirrä (V)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg></button>
-                        <button class="tool-btn" data-tool="rotate" title="Pyöritä (R)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
-                        <button class="tool-btn" data-tool="scale" title="Venytä (S)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7"/></svg></button>
-                        <button class="tool-btn" data-tool="paint" title="Maalaa tekstuuria 3D:ssä — maalaa suoraan mallin pintaan (P)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg></button>
-                        <button class="tool-btn" data-tool="pipette" title="Väripoimija — poimi väri mallista (I)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h4L20 8l-4-4L2 18v4z"/><path d="M15 5l4 4"/></svg></button>
+                        <button class="tool-btn" data-tool="move" title="Siirrä (V)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg><kbd>V</kbd></button>
+                        <button class="tool-btn" data-tool="rotate" title="Pyöritä (R)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.7L21 8"/><path d="M21 3v5h-5"/></svg><kbd>R</kbd></button>
+                        <button class="tool-btn" data-tool="scale" title="Venytä (S)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7"/></svg><kbd>S</kbd></button>
+                        <button class="tool-btn" data-tool="paint" title="Maalaa tekstuuria 3D:ssä — maalaa suoraan mallin pintaan (P)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.06 11.9l8.07-8.06a2.85 2.85 0 1 1 4.03 4.03l-8.06 8.08"/><path d="M7.07 14.94c-1.66 0-3 1.35-3 3.02 0 1.33-2.5 1.52-2 2.02 1.08 1.1 2.49 2.02 4 2.02 2.2 0 4-1.8 4-4.04a3.01 3.01 0 0 0-3-3.02z"/></svg><kbd>P</kbd></button>
+                        <button class="tool-btn" data-tool="pipette" title="Väripoimija — poimi väri mallista (I)"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h4L20 8l-4-4L2 18v4z"/><path d="M15 5l4 4"/></svg><kbd>I</kbd></button>
                         <button class="tool-btn" data-tool="reshape" title="Muotoile — vedä venyttääksesi kehoa kuin Spore: ylös/alas = korkeus, vasen/oikea = leveys, pidä Shift = pituus"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="8" width="12" height="8" rx="1"/><path d="M12 2v6M10 4l2-2 2 2M12 22v-6M10 20l2 2 2-2M3 12h3M2 10l2 2 2-2M21 12h-3M20 10l2 2-2 2"/></svg></button>
                         <button class="tool-btn" data-tool="face" title="Kasvojen yksityiskohdat — klikkaa silmä-/suuosaa ja vedä siirtääksesi sitä pään pinnalla kuin Spore"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="10" r="2"/><circle cx="15" cy="10" r="2"/><path d="M8 15c1.2 1.2 2.8 1.8 4 1.8s2.8-.6 4-1.8"/></svg></button>
                     </div>
@@ -364,19 +364,28 @@
 
         <div id="animation-bar">
             <select id="anim-select" title="Animaatiot" style="display:none"></select>
-            <button id="anim-new" title="Uusi animaatio">＋</button>
-            <button id="anim-dup" title="Monista nykyinen animaatio">⧉</button>
-            <button id="anim-rename" title="Nimeä animaatio uudelleen">✏</button>
-            <button id="anim-del" title="Poista animaatio"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
-            <button id="anim-auto" title="Tee kävely/idle/hyökkäys-animaatiot automaattisesti luurangosta — Spore-tyyliin">Auto</button>
-            <button id="anim-pose" title="Poseeraustila — siirrä aikaa käsin ilman toistoa">Pose</button>
-            <button id="anim-play" title="Toista / Tauko (Space)">▶</button>
-            <button id="btn-test" title="Testiolento — olento kävelee maatasolla, kamera seuraa. Space = hyppy. Klikkaa uudelleen lopettaaksesi">Testi</button>
-            <button id="anim-add-key" title="Lisää keyframe valitulle luulle">+ Avain</button>
-            <button id="anim-copy" title="Kopioi asento — tallenna kaikkien luiden nykyinen asento">Kopioi asento</button>
-            <button id="anim-paste" title="Liitä asento — liitä kopioitu asento keyframeinä nykyhetkeen">Liitä asento</button>
-            <button id="anim-mirror" title="Peilaa asento — peilaa asento (oikea → vasen) samassa framessa">Peilaa asento</button>
-            <button id="anim-clear" title="Tyhjennä animaatio"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+            <div class="anim-group" data-group="anims">
+                <span class="anim-group-label">Animaatio</span>
+                <button id="anim-new" title="Uusi animaatio">＋</button>
+                <button id="anim-dup" title="Monista nykyinen animaatio">⧉</button>
+                <button id="anim-rename" title="Nimeä animaatio uudelleen">✏</button>
+                <button id="anim-del" title="Poista animaatio"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+            </div>
+            <div class="anim-group" data-group="play">
+                <span class="anim-group-label">Toisto</span>
+                <button id="anim-auto" title="Tee kävely/idle/hyökkäys-animaatiot automaattisesti luurangosta — Spore-tyyliin">Auto</button>
+                <button id="anim-pose" title="Poseeraustila — siirrä aikaa käsin ilman toistoa">Pose</button>
+                <button id="anim-play" title="Toista / Tauko (Space)">▶</button>
+                <button id="btn-test" title="Testiolento — olento kävelee maatasolla, kamera seuraa. Space = hyppy. Klikkaa uudelleen lopettaaksesi">Testi</button>
+            </div>
+            <div class="anim-group" data-group="keys">
+                <span class="anim-group-label">Avaimet</span>
+                <button id="anim-add-key" title="Lisää keyframe valitulle luulle">+ Avain</button>
+                <button id="anim-copy" title="Kopioi asento — tallenna kaikkien luiden nykyinen asento">Kopioi asento</button>
+                <button id="anim-paste" title="Liitä asento — liitä kopioitu asento keyframeinä nykyhetkeen">Liitä asento</button>
+                <button id="anim-mirror" title="Peilaa asento — peilaa asento (oikea → vasen) samassa framessa">Peilaa asento</button>
+                <button id="anim-clear" title="Tyhjennä animaatio"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+            </div>
             <div class="anim-time-wrap">
                 <div class="anim-track">
                     <canvas id="anim-keys" title="Avainruudut — vedä pistettä siirtääksesi avainruutua"></canvas>
