@@ -1259,6 +1259,27 @@ input[type="checkbox"] { accent-color: var(--accent); }
     color: var(--text-muted);
     cursor: pointer;
     transition: color 0.15s, border-color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.lt-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--bg-elev, #23262e);
+    color: var(--text-muted);
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 1;
+}
+.lt-tab.active .lt-num {
+    background: var(--accent);
+    color: #101217;
 }
 .lt-tab:hover {
     color: var(--text);
@@ -1267,6 +1288,71 @@ input[type="checkbox"] { accent-color: var(--accent); }
     color: var(--accent);
     border-bottom-color: var(--accent);
 }
+
+/* Referenssikuva: näkyy viewportin oikeassa laidassa, josta voi katsoa mallia */
+#ref-toggle {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 6;
+    padding: 5px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: rgba(24, 26, 32, 0.85);
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+#ref-toggle:hover { border-color: var(--accent); color: var(--accent); }
+#ref-toggle.on { border-color: var(--accent); color: var(--accent); }
+#ref-panel {
+    position: absolute;
+    top: 46px;
+    right: 10px;
+    z-index: 6;
+    width: 210px;
+    max-height: calc(100% - 60px);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: rgba(24, 26, 32, 0.92);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+#ref-panel[hidden] { display: none; }
+.ref-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+}
+.ref-actions { display: flex; align-items: center; gap: 6px; }
+.ref-opacity { display: flex; align-items: center; }
+.ref-opacity input[type="range"] { width: 64px; height: 4px; }
+#ref-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0 2px;
+}
+#ref-close:hover { color: var(--text); }
+#ref-img {
+    width: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+    background: repeating-conic-gradient(#22252d 0% 25%, #1a1d24 0% 50%) 0 0 / 14px 14px;
+    max-height: 320px;
+}
+.ref-foot { display: flex; }
+.ref-foot .action-btn { width: 100%; padding: 4px 8px; font-size: 11px; }
 #left-panel [data-panel] {
     display: none;
 }
@@ -1275,6 +1361,67 @@ input[type="checkbox"] { accent-color: var(--accent); }
 #left-panel[data-active-tab="base"] [data-panel="base"],
 #left-panel[data-active-tab="library"] [data-panel="library"] {
     display: block;
+}
+
+/* ---- Oikea paneeli: välilehdet (Muokkaa / Näyttö) + vain valitun kohteen muokkaus ---- */
+#right-tabs {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+}
+.rt-tab {
+    flex: 1;
+    min-width: 0;
+    padding: 7px 4px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+}
+.rt-tab:hover {
+    color: var(--text);
+}
+.rt-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+#right-panel [data-rpanel] {
+    display: none;
+}
+/* hidden-attribuutti (osa/kuutio-valinta) voittaa aina tab-näkyvyyssäännöt */
+#right-panel [data-rpanel][hidden],
+#right-empty[hidden] { display: none !important; }
+#right-panel[data-active-tab="edit"] [data-rpanel="edit"],
+#right-panel[data-active-tab="display"] [data-rpanel="display"] {
+    display: block;
+}
+/* Vain aktiivisen Muokkaa-välilehden tyhjä tila näkyy (Näyttö-välilehdellä ei koskaan) */
+#right-panel[data-active-tab="edit"] #right-empty {
+    display: flex;
+}
+#right-empty {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    padding: 18px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-input);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+    text-align: center;
+}
+#right-empty strong {
+    color: var(--text);
+    font-size: 13px;
 }
 
 .panel-section h3 {

@@ -37,14 +37,14 @@
         </header>
 
         <div id="workspace">
-            <aside id="left-panel" data-active-tab="tools">
+            <aside id="left-panel" data-active-tab="base">
                 <div id="left-tabs" role="tablist" aria-label="Työtilan välilehdet">
-                    <button type="button" class="lt-tab active" data-tab="tools">Työkalut</button>
-                    <button type="button" class="lt-tab" data-tab="parts">Osat</button>
-                    <button type="button" class="lt-tab" data-tab="base">Pohja</button>
-                    <button type="button" class="lt-tab" data-tab="library">Kirjasto</button>
+                    <button type="button" class="lt-tab" data-tab="base"><span class="lt-num">1</span>Aloita</button>
+                    <button type="button" class="lt-tab" data-tab="parts"><span class="lt-num">2</span>Rakenna</button>
+                    <button type="button" class="lt-tab" data-tab="tools"><span class="lt-num">3</span>Muotoile</button>
+                    <button type="button" class="lt-tab" data-tab="library"><span class="lt-num">4</span>Kirjasto</button>
                 </div>
-                <div id="start-hint" class="start-hint">
+                <div id="start-hint" class="start-hint" hidden>
                     <strong>Uusi käyttäjä?</strong> 1. Valitse pohja → 2. Kiinnitä osia → 3. Muotoile → 4. Tallenna
                     <button id="start-hint-close" title="Sulje" aria-label="Sulje">✕</button>
                 </div>
@@ -162,14 +162,39 @@
                     <span id="viewport-info">Vasen klikkaus: kierrä · Oikea: siirrä · Rullaus: zoom</span>
                     <span id="part-drop-hint">Vedä osa olennon päälle ja pudota</span>
                 </div>
+                <div id="ref-panel" hidden>
+                    <div class="ref-head">
+                        <span>Referenssi</span>
+                        <span class="ref-actions">
+                            <label class="ref-opacity" title="Referenssikuvan läpinäkyvyys">
+                                <input type="range" id="ref-opacity" min="0.15" max="1" step="0.05" value="0.85">
+                            </label>
+                            <button id="ref-close" title="Sulje referenssi">✕</button>
+                        </span>
+                    </div>
+                    <img id="ref-img" alt="Referenssikuva">
+                    <div class="ref-foot">
+                        <button id="ref-choose" class="action-btn" title="Lataa referenssikuva — esim. kuva mobista jota haluat matkia">Vaihda kuva…</button>
+                        <input type="file" id="ref-file" accept="image/*" hidden>
+                    </div>
+                </div>
+                <button id="ref-toggle" title="Näytä referenssikuva sivulla — lataa esim. kuva mobista jota haluat matkia">🖼 Referenssi</button>
                 <div id="render-warning" title="Click to select the first invalid cube" hidden>
                     <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.5 15 14H1z"/><path d="M8 6v4"/><path d="M8 12h.01"/></svg> <span id="render-warning-text"></span>
                 </div>
                 <div id="reshape-readout" hidden><span id="reshape-readout-text"></span></div>
             </main>
 
-            <aside id="right-panel">
-                <div class="panel-section">
+            <aside id="right-panel" data-active-tab="edit">
+                <div id="right-tabs" role="tablist" aria-label="Oikean paneelin välilehdet">
+                    <button type="button" class="rt-tab active" data-rtab="edit">Muokkaa</button>
+                    <button type="button" class="rt-tab" data-rtab="display">Näyttö</button>
+                </div>
+                <div id="right-empty" class="right-empty">
+                    <strong>Ei valintaa</strong>
+                    <span>Klikkaa kuutiota 3D-näkymässä tai valitse osa vasemmasta paletista — sen muokkaus tulee tänne.</span>
+                </div>
+                <div class="panel-section" data-rpanel="edit">
                     <h3>Ominaisuudet</h3>
                     <div id="properties-panel">
                         <div class="prop-group">
@@ -224,14 +249,14 @@
                     </div>
                 </div>
 
-                <div class="panel-section collapsible advanced">
+                <div class="panel-section collapsible advanced" data-rpanel="display">
                     <h3>Kiinnityspisteet <button id="btn-add-locator" class="action-btn" style="float:right;padding:2px 8px" title="Lisää kiinnityspiste (esineiden/hiukkasten kiinnityskohta)">+ Lisää</button></h3>
                     <div id="locator-list" style="display:flex;flex-direction:column;gap:4px">
                         <span style="opacity:.55;font-size:11px">Esineiden &amp; hiukkasten kiinnityspisteet (esim. talutin, pidetty esine).</span>
                     </div>
                 </div>
 
-                <div class="panel-section" id="part-edit-section" hidden>
+                <div class="panel-section" id="part-edit-section" data-rpanel="edit" hidden>
                     <h3>Osa (Spore)</h3>
                     <div class="prop-group">
                         <label id="part-edit-title">Osa</label>
@@ -260,7 +285,7 @@
                     </div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section" data-rpanel="edit">
                     <h3>Väri &amp; tekstuuri</h3>
                     <div class="prop-group">
                         <label>Kuution väri (täyttää sen tekstuuripinnat)</label>
@@ -272,7 +297,7 @@
                     <button id="btn-remove-texture" class="action-btn">Palauta tekstuuri</button>
                 </div>
 
-                <div class="panel-section collapsible advanced">
+                <div class="panel-section collapsible advanced" data-rpanel="edit">
                     <h3>UV-editori</h3>
                     <div class="uv-toolbar">
                         <button class="tool-btn uv-tool active" data-uvtool="select" title="Valitse / siirrä kasvoja"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
@@ -305,7 +330,7 @@
                     </div>
                 </div>
 
-                <div class="panel-section">
+                <div class="panel-section" data-rpanel="display">
                     <h3>Näyttöasetukset</h3>
                     <div id="display-settings">
                         <div class="input-row">

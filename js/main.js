@@ -1470,6 +1470,7 @@ function doSelectCube(idx, multi) {
             highlightBoneTree();
         }
         if (cubeData) showProperties(cubeData, boneData);
+        updateRightPanel();
         setStatus(`Valittu ${state.selectedCubes.length} kuutiota — ominaisuudet koskevat kaikkia (Shift+klik lisää/poistaa)`);
         if (state.uvEditor) state.uvEditor.draw();
         return;
@@ -1492,7 +1493,9 @@ function doSelectCube(idx, multi) {
 
     // Attach transform controls
     transformControls.attach(mesh);
-    showProperties(cubeData, boneData);        setStatus(`Valittu: ${cubeData.name}`);
+    showProperties(cubeData, boneData);
+    updateRightPanel();
+    setStatus(`Valittu: ${cubeData.name}`);
     if (state.uvEditor) state.uvEditor.draw(); // päivitä UV-editorin kasvovärit
 }
 
@@ -1518,6 +1521,7 @@ function selectBone(index) {
     }
 
     highlightBoneTree();
+    updateRightPanel();
     if (bone) {
         setStatus(`Valittu luu: ${bone.name} — paina R pyörittääksesi, V siirtääksesi`);
     }
@@ -1588,7 +1592,43 @@ function deselectAll() {
 
     highlightBoneTree();
     setStatus('Valmis');
+    updateRightPanel();
     if (state.uvEditor) state.uvEditor.draw(); // piilota kasvovärit kun ei valintaa
+}
+
+/** Päivitä oikea paneeli: näytä vain valitun kohteen muokkaus (Blockbench-tyyli). */
+function updateRightPanel() {
+    const hasCube = state.selectedCube !== null;
+    const hasPart = !!state.selectedPart;
+
+    // Kuutioon liittyvät osiot (Ominaisuudet, Väri & tekstuuri, UV-editori)
+    // näkyvät vain kun kuutio on valittu — osa-valinnassa niitä ei näytetä.
+    const cubeSections = [
+        document.getElementById('properties-panel') ? document.getElementById('properties-panel').closest('.panel-section') : null,
+        document.getElementById('btn-load-texture') ? document.getElementById('btn-load-texture').closest('.panel-section') : null,
+        document.getElementById('uv-canvas') ? document.getElementById('uv-canvas').closest('.panel-section') : null,
+    ];
+    for (const sec of cubeSections) {
+        if (sec) sec.hidden = !hasCube;
+    }
+
+    // Tyhjä tila: näkyy kun mikään kohde ei ole valittuna (vain Muokkaa-välilehdellä — CSS hoitaa tabin).
+    const empty = document.getElementById('right-empty');
+    if (empty) {
+        empty.hidden = hasCube || hasPart;
+        if (!hasCube && !hasPart) {
+            const bone = (state.selectedBone !== null && state.model.bones[state.selectedBone]) ? state.model.bones[state.selectedBone] : null;
+            const strong = empty.querySelector('strong');
+            const span = empty.querySelector('span');
+            if (bone) {
+                strong.textContent = `Luu: ${bone.name}`;
+                span.textContent = 'Liikuta gizmolla (V siirrä · R kierrä) tai napsauta kuutiota sen muokkaukseen.';
+            } else {
+                strong.textContent = 'Ei valintaa';
+                span.textContent = 'Klikkaa kuutiota 3D-näkymässä tai valitse osa vasemmasta paletista — sen muokkaus tulee tänne.';
+            }
+        }
+    }
 }
 
 // ==================== SPORE-OSAN MUOKKAUS ====================
@@ -1648,7 +1688,9 @@ function selectPart(inst) {
         }
     }
     highlightBoneTree();
-    showPartPanel(inst);        setStatus(`Osa valittu: ${inst.label} — vedä gizmolla (G siirto · R kierto · skaalaustyökalu), väri ja koko oikealla`);
+    showPartPanel(inst);
+    updateRightPanel();
+    setStatus(`Osa valittu: ${inst.label} — vedä gizmolla (G siirto · R kierto · skaalaustyökalu), väri ja koko oikealla`);
 }
 
 /** Poistu osatilasta yksittäiskuutioiden hienosäätöön (kuutiotila). */
@@ -4018,6 +4060,18 @@ function setupLibrary() {
             if (panel) panel.dataset.activeTab = t.dataset.tab;
         });
     });
+
+    // ---- Oikean paneelin välilehdet (Muokkaa / Näyttö) ----
+    // Blockbench-tyyli: Muokkaa näyttää vain valitun kohteen tiedot,
+    // Näyttö sisältää näyttöasetukset ja kiinnityspisteet.
+    document.querySelectorAll('#right-tabs .rt-tab').forEach(t => {
+        t.addEventListener('click', () => {
+            document.querySelectorAll('#right-tabs .rt-tab').forEach(x => x.classList.toggle('active', x === t));
+            const panel = document.getElementById('right-panel');
+            if (panel) panel.dataset.activeTab = t.dataset.rtab;
+        });
+    });
+    updateRightPanel();
 
     // ---- '🧬 Omat olennot' -välilehti: tallenna/lataa/poista omia olentoja ----
     document.querySelectorAll('.lib-tab').forEach(tab => {
@@ -6929,6 +6983,41 @@ function setupSimplifiedUI() {
         hintClose.addEventListener('click', () => {
             hint.hidden = true;
             localStorage.setItem('start-hint-dismissed', '1');
+        });
+    }
+
+    // ---- Referenssikuva: lataa kuva (esim. mob jota haluat matkia) ja
+    // näytä se viewportin oikeassa laidassa koko rakentamisen ajan ----
+    const refToggle = document.getElementById('ref-toggle');
+    const refPanel = document.getElementById('ref-panel');
+    const refImg = document.getElementById('ref-img');
+    const refFile = document.getElementById('ref-file');
+    const refChoose = document.getElementById('ref-choose');
+    const refClose = document.getElementById('ref-close');
+    const refOpacity = document.getElementById('ref-opacity');
+    if (refToggle && refPanel && refImg && refFile) {
+        refToggle.addEventListener('click', () => {
+            if (refPanel.hidden && !refImg.src) { refFile.click(); return; }
+            refPanel.hidden = !refPanel.hidden;
+            refToggle.classList.toggle('on', !refPanel.hidden);
+        });
+        if (refChoose) refChoose.addEventListener('click', () => refFile.click());
+        refFile.addEventListener('change', () => {
+            const f = refFile.files && refFile.files[0];
+            if (!f) return;
+            const url = URL.createObjectURL(f);
+            refImg.src = url;
+            refPanel.hidden = false;
+            refToggle.classList.add('on');
+            refToggle.textContent = '🖼 Referenssi';
+            setStatus('Referenssikuva ladattu — näkyy sivulla, josta voit ottaa mallia. Säädä läpinäkyvyyttä liukusäätimellä.');
+        });
+        if (refClose) refClose.addEventListener('click', () => {
+            refPanel.hidden = true;
+            refToggle.classList.remove('on');
+        });
+        if (refOpacity) refOpacity.addEventListener('input', () => {
+            refImg.style.opacity = refOpacity.value;
         });
     }
 }
